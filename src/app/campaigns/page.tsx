@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { DatePresetControl } from "@/components/shell/date-preset-control";
-import { Card } from "@/components/ui/card";
 import { Note } from "@/components/ui/note";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatDateRange } from "@/domain/format";
@@ -19,28 +18,24 @@ export default async function CampaignsPage() {
   return (
     <>
       <PageHeader
+        eyebrow={client.name}
         title="Campaigns"
-        description={`${client.name} · ${rows.length} campaigns`}
-        actions={
+        description={
           <>
-            <span className="text-xs text-ink-muted">
-              {formatDateRange(periods.current)}{" "}
-              <span className="text-ink-faint">vs {comparison}</span>
-            </span>
-            <DatePresetControl value={workspace.preset} />
+            {formatDateRange(periods.current)}{" "}
+            <span className="text-ink-faint">compared with the {comparison}</span>
           </>
         }
+        actions={<DatePresetControl value={workspace.preset} />}
       />
-      <Card className="overflow-hidden">
-        <CampaignsTable
-          rows={rows}
-          currency={client.currency}
-          vocabulary={conversionVocabulary(client.type)}
-          comparison={comparison}
-          showRoas={tracksRevenue(client)}
-        />
-      </Card>
-      <Note className="mt-3">
+      <CampaignsTable
+        rows={rows}
+        currency={client.currency}
+        vocabulary={conversionVocabulary(client.type)}
+        comparison={comparison}
+        showRoas={tracksRevenue(client)}
+      />
+      <Note className="mt-4">
         Ad set and ad drilldown, saved filters and column controls arrive with the campaign
         analysis release.
       </Note>

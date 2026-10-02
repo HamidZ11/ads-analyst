@@ -8,17 +8,19 @@ import {
   getClientPeriodSummary,
   getTrailingSeries,
 } from "@/features/analytics/queries";
-import { AccountStructure } from "@/features/overview/account-structure";
-import { OverviewKpis } from "@/features/overview/overview-kpis";
+import { AccountStrip } from "@/features/overview/account-strip";
+import { KpiBand } from "@/features/overview/kpi-band";
+import { PerformanceChart } from "@/features/overview/performance-chart";
+import { PeriodSummary } from "@/features/overview/period-summary";
 import { SpendByCampaign } from "@/features/overview/spend-by-campaign";
-import { TrendFrame } from "@/features/overview/trend-frame";
+import { TopCampaigns } from "@/features/overview/top-campaigns";
 import { getWorkspace } from "@/features/workspace/server";
 
 export const metadata: Metadata = { title: "Overview" };
 
 export default async function OverviewPage() {
   const workspace = await getWorkspace();
-  const { repository, client, adAccount, periods, comparison, today } = workspace;
+  const { repository, client, periods, comparison, today } = workspace;
   const summary = getClientPeriodSummary(repository, client, periods);
   const trend = getTrailingSeries(repository, client, today, 30);
   const campaignRows = getCampaignRows(repository, client, periods);
@@ -27,29 +29,31 @@ export default async function OverviewPage() {
   return (
     <>
       <PageHeader
+        eyebrow={client.name}
         title="Overview"
-        description={`${client.name} · Meta Ads${adAccount ? ` · ${adAccount.externalId}` : ""}`}
-        actions={
+        description={
           <>
-            <span className="text-xs text-ink-muted">
-              {formatDateRange(periods.current)}{" "}
-              <span className="text-ink-faint">vs {comparison}</span>
-            </span>
-            <DatePresetControl value={workspace.preset} />
+            {formatDateRange(periods.current)}{" "}
+            <span className="text-ink-faint">compared with the {comparison}</span>
           </>
         }
+        actions={<DatePresetControl value={workspace.preset} />}
       />
-      <div className="flex flex-col gap-4">
-        <OverviewKpis workspace={workspace} summary={summary} />
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="min-w-0">
-            <TrendFrame workspace={workspace} series={trend} />
-          </div>
-          <div className="flex flex-col gap-4">
-            <SpendByCampaign workspace={workspace} rows={campaignRows} />
-            <AccountStructure workspace={workspace} structure={structure} />
-          </div>
-        </div>
+
+      <KpiBand workspace={workspace} summary={summary} chartedKey="spend" />
+
+      <div className="mt-10 grid gap-10 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <PerformanceChart workspace={workspace} series={trend} />
+        <PeriodSummary workspace={workspace} summary={summary} campaignRows={campaignRows} />
+      </div>
+
+      <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <SpendByCampaign workspace={workspace} rows={campaignRows} />
+        <TopCampaigns workspace={workspace} rows={campaignRows} />
+      </div>
+
+      <div className="mt-12">
+        <AccountStrip workspace={workspace} structure={structure} />
       </div>
     </>
   );

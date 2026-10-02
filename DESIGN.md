@@ -4,12 +4,14 @@ Concrete implementation rules for every UI pass. If a rule here conflicts with a
 
 ## 1. Principles (as rules)
 
-1. The data is the loudest thing on the page. Chrome is quiet: white surfaces, hairline borders, grey text, one blue.
-2. Density is a feature. Default to 13px body text, 32–40px rows and 16px card padding. Add space between groups, not inside them.
-3. Blue means "selected" or "the series you are looking at". It is never decoration.
-4. Every number has a comparison or a target next to it, or it does not belong on a KPI tile.
-5. Placeholders are honest. An unfinished area says what it will do and when; it never shows fabricated findings.
-6. One system. New UI extends `src/components/ui/`; it does not import a second component library.
+1. The data is the loudest thing on the page. Chrome is quiet: a white page, hairline borders, grey text, one blue.
+2. One composition, not a grid of boxes. A page is composed of open sections separated by whitespace, headings and hairline dividers. A bordered or tinted container is used only when grouping genuinely aids comprehension: a table, a ranked list, an aside that must read as one unit.
+3. Hierarchy comes from typography and spacing before colour or containers: a 24px title, 14px section headings, 13px body, 12px supporting labels, strong numerals.
+4. Density is a feature. Default to 13px body text, 40–44px rows and 16px padding. Add space between sections (40px) and groups (24px), not inside components.
+5. Blue means "selected", "active" or "the series you are looking at". It is never decoration and never a fill for structure.
+6. Every number has a comparison or a target next to it, or it does not belong in the metric band.
+7. Placeholders are honest. An unfinished area says what it will do and when; it never shows fabricated findings.
+8. One system. New UI extends `src/components/ui/`; it does not import a second component library.
 
 ## 2. Colour tokens
 
@@ -47,37 +49,40 @@ Rules
 
 ## 3. Surface hierarchy
 
-- Level 0: `canvas`.
-- Level 1: `surface` with `border` and `shadow-xs` (0 1px 1px rgba(16,24,40,0.04)). Cards, sidebar, header bars.
-- Level 2: floating menus and sheets: `surface`, `border`, `shadow-md`.
-- Inside a card, use `surface-subtle` for table headers and footers. Do not nest a bordered card inside a bordered card; use a divider.
+- Page: `surface` (white). Content sits directly on it. No shadows on static surfaces.
+- Navigation rail and mobile sheet: `canvas` (pale cool grey) with a hairline right border. It is the only persistently tinted region.
+- Outlined container: `surface` with `border`, 8px radius. For tables, ranked lists and the KPI band only.
+- Subtle panel: `surface-subtle`, borderless, 8px radius. For asides that must read as one unit (the Overview period summary).
+- Floating: menus and sheets use `surface` (or `canvas` for the sheet), `border`, `shadow-md`.
+- Inside a container use `surface-subtle` for table footers; never nest a bordered container in a bordered container.
 
 ## 4. Blue accent usage
 
-Allowed: primary button, active nav item (soft fill + strong text), selected segment, selected table row (soft fill at 40%), focused input border, the selected chart series and its highlight band, links in body copy, the "Selected" badge.
-Not allowed: card headers, KPI numerals, icons at rest, decorative bars, borders at rest, large fills.
+Allowed: primary button, active nav item (soft fill + strong text + accent icon), selected segment indicator, selected table row (soft fill at 40%), focused input border, the selected-period chart series and its highlight band, the end marker on the latest value, the 2px rule and label of the metric currently charted in the KPI band, links and "All campaigns" style actions, the "Selected" badge and selected client mark.
+Not allowed: section headings, KPI numerals, icons at rest, spend-distribution bars (these are `chart-muted`), borders at rest, large fills, more than one blue element per metric.
 
 ## 5. Typography
 
-Font: Inter via `next/font`, system-ui fallback. Letter-spacing −0.01em on headings.
+Font: Inter via `next/font`, system-ui fallback. Letter-spacing −0.01em on headings and numerals (`tracking-tight` on 24px+).
 
-| Token       | Size / line | Use                                                   |
-| ----------- | ----------- | ----------------------------------------------------- |
-| `text-2xs`  | 11 / 16     | Uppercase labels, axis ticks, pills, nav group labels |
-| `text-xs`   | 12 / 16     | Captions, descriptions, table meta, deltas            |
-| `text-sm`   | 13 / 20     | Body, table cells, nav items, inputs                  |
-| `text-base` | 14 / 22     | Card titles when a card is the page's main object     |
-| `text-lg`   | 16 / 24     | Secondary numerals (account structure counts)         |
-| `text-xl`   | 18 / 26     | Page title                                            |
-| `text-2xl`  | 22 / 28     | Reserved                                              |
-| `text-3xl`  | 26 / 32     | KPI numerals                                          |
+| Token       | Size / line | Use                                                                           |
+| ----------- | ----------- | ----------------------------------------------------------------------------- |
+| `text-2xs`  | 11 / 16     | Axis ticks, nav group labels (uppercase), menu section labels (uppercase)     |
+| `text-xs`   | 12 / 16     | Supporting labels, table headers, captions, deltas, metric labels             |
+| `text-sm`   | 13 / 20     | Body, table cells, nav items, inputs, section headings (600)                  |
+| `text-base` | 14 / 22     | Product name in the rail, card titles when the card is the page's main object |
+| `text-lg`   | 16 / 24     | Reserved                                                                      |
+| `text-xl`   | 18 / 26     | Reserved                                                                      |
+| `text-2xl`  | 24 / 32     | Page title (600, tight) and KPI numerals (600, tight)                         |
+| `text-3xl`  | 28 / 34     | A single hero number, when a page has one                                     |
 
 Rules
 
 - Weights: 400 body, 500 labels and nav, 600 titles and numerals. Never 700+.
 - Numerals in tables, ticks and inline comparisons use `tabular`. KPI numerals use proportional figures.
-- Uppercase is only for 11px labels with `tracking-wide`.
-- Section/card titles are sentence case. No trailing colons.
+- Uppercase is used only for navigation group labels and menu section labels. Table headers, metric labels and card titles are sentence case.
+- Page header anatomy: 12px eyebrow (client name), 24px title, 13px description with the period and comparison in muted and faint ink.
+- Section/card titles are sentence case, 13px semibold. No trailing colons.
 
 ## 6. Spacing rhythm
 
@@ -92,46 +97,52 @@ Rules
 
 ## 7. Layout regions
 
-Taken from the wireframe reference: sidebar → page header → main → optional right rail.
+Taken from the wireframe reference: rail → page header → open sections → optional right rail.
 
-- Sidebar: fixed 240px from 1024px. Top: product mark + agency, then client switcher. Middle: grouped primary nav. Bottom: data-status line. Nothing else.
-- Page header: title (18px) left, one-line description below it, compact controls right (period label + preset control). It is per page, not a global bar.
-- Main: max width 1440px, centred.
-- Right rail: a 340px column on ≥1024px for contextual panels (spend breakdown, structure, later: insights). Below 1024px it stacks under the main column.
-- No bottom bar. Status lives in the sidebar footer.
-- Mobile (<1024px): 48px top bar with menu button, product mark and compact client switcher; sidebar becomes a 280px left sheet.
+- Rail: fixed 240px from 1024px on `canvas`. Top: 28px product mark + agency, then the client switcher. Middle: grouped primary nav. Bottom: a two-line data-status note. Nothing else.
+- Page: white, max width 1440px, gutters 16 / 24 / 40px at <640 / ≥640 / ≥1024, vertical padding 24 / 32px.
+- Page header: eyebrow, 24px title, one-line description left; compact controls right. Per page, not a global bar.
+- Sections: separated by 40–48px of whitespace; each has a 13px semibold heading with optional supporting line and right-aligned legend or count.
+- Right rail: a 300px column on ≥1280px for one contextual panel (Overview only in APP 01). Below 1280px it stacks under the main column. Do not force a rail onto other pages.
+- Closing strip: inline facts above a hairline (account structure, coverage) rather than a card.
+- No bottom bar. Mobile (<1024px): 48px white top bar with menu button, product mark and compact client switcher; the rail becomes a 280px left sheet on `canvas`.
 
-## 8. Cards
+## 8. Cards and open sections
 
-`rounded-lg` (8px), `border`, `surface`, `shadow-xs`. Header = optional 14px muted icon + 13px semibold title + optional 12px muted description, with compact controls aligned right (a dropdown, a legend, a count). Body padding per §6. Footer uses `surface-subtle` with a top border. No card may be empty: if there is no content, render an `EmptyState` inside it.
+Default to an open section: heading row (13px semibold title, optional 12px supporting line, right-aligned legend/count), 16–20px gap, content. Reach for a container only when the content is a table or ranked list (outlined) or an aside that must read as one unit (subtle). Containers have 8px radius, no shadow, and never a header bar of their own on the Overview; the section heading sits above the container. `CardHeader` remains for pages where a card is the primary object (Insights sections, Settings groups). No card may be empty: if there is no content, render an `EmptyState`.
 
-## 8a. Creative placeholders
+## 8a. KPI band
+
+Six metrics render as one grouped band, not six cards: an outlined container whose cells are separated by hairlines (`gap-px` over `border`). Cell anatomy: 12px label in `ink-muted` (sentence case), 24px numeral in `ink` (600, tight, `whitespace-nowrap`, never truncated), a 12px line with the delta (text variant, coloured by desirability) and "vs previous 7 days", and an optional 12px `ink-faint` target note ("12.4% under £28 target"). The metric drawn in the chart below carries a 2px `accent` top rule and an `accent-strong` label. No sparklines and no icons in the band; the dominant chart carries the trend. Grid: 2 / 3 / 6 columns at <768 / ≥768 / ≥1280; a cell needs about 150px of inner width.
+
+## 8b. Creative placeholders and cards
 
 Until imported creatives carry imagery, a creative's thumbnail is `{ tone, aspect, motif }` rendered by `CreativeThumbnail`.
 
 - Tone (seven muted fills with a matching ink) gives colour variety; motif gives compositional variety. Both are seed data, not derived from the creative name.
 - Motifs are abstract compositions on a 100×100 canvas drawn only in the tone ink at 15–85% opacity and the surface colour at 40–90%: `ugc`, `talking-head`, `product`, `before-after`, `carousel`, `clinical`, `testimonial`, `offer`, `catalogue`, `routine`, `screen`. They suggest a kind of creative; they never depict a brand, face, product or stock scene.
 - Letterbox (`xMidYMid meet`) into the frame; never crop a motif. In the large size a 20px type marker sits bottom-left and the aspect label bottom-right; the small size shows the motif alone.
-- Adjacent cards in a grid should differ in motif or tone. When adding seed creatives, pick the motif that matches the creative's format first, then a tone not used by its neighbours.
-- No photographs, no external images, no gradients, no text beyond a single glyph or step number.
+- Creative card anatomy (editorial, artwork first): full-bleed 4:3 thumbnail on top; 16px padding; 12px meta line (type · ads · campaigns); 13px semibold two-line title; hairline; a four-column metric row (12px label over 13px semibold tabular value, delta beneath where one exists); CTR with delta and a 96×28 sparkline on the closing row. Outlined container, hover darkens the border only (micro). Grid 1 / 2 / 3 / 4 columns at <640 / ≥640 / ≥1280 / ≥1536 with 20px gaps.
+- Adjacent cards should differ in motif or tone. No photographs, no external images, no gradients, no text beyond a single glyph or step number.
 
 ## 9. Tables
 
-- Always wrapped in `overflow-x-auto`; never let a table widen the page.
-- Header row: `surface-subtle`, 11px uppercase `ink-muted`, 36px, bottom border.
-- Body rows: 40px, 13px, horizontal dividers only (`border`), hover `surface-subtle`. No vertical rules, no zebra striping.
-- Numeric columns right-aligned with `tabular`. Primary numeric column (spend) in `ink` at 500; others `ink-secondary` at 400.
-- Entity cells: name in `ink` 500, one 11px meta line beneath (objective, counts). Truncate at 360px.
-- Sortable headers are buttons with `aria-sort` and a 12px arrow; the active column's arrow is `accent`.
-- A totals row in `tfoot` when more than one row is visible.
+- Always wrapped in `overflow-x-auto` inside an outlined container; never let a table widen the page. The toolbar (search, filter, count) sits above the container, not inside it.
+- Header row: 40px, 12px medium `ink-muted`, sentence case, bottom hairline, white background. Sortable headers are buttons with `aria-sort`; the sort arrow is visible only on the active column (in `accent`) and on hover elsewhere.
+- Body rows: 44px, 13px, horizontal hairlines only, hover `surface-subtle` (micro transition). No vertical rules, no zebra striping.
+- Numeric columns right-aligned with `tabular`. The primary numeric column (spend) is `ink` at 500; the rest are `ink-secondary` at 400.
+- Entity cells: name in `ink` 500 with a 12px `ink-muted` meta line beneath (objective, counts). Truncate at 380px. Non-delivering rows drop to `ink-muted`.
+- A totals row in `tfoot` on `surface-subtle` when more than one row is visible.
 - Real semantics: `caption` (visually hidden), `th scope="col"`.
 
 ## 10. Navigation
 
-- Grouped lists with 11px uppercase group labels (`ink-faint`).
-- Items: 16px icon at 1.75 stroke, 13px 500 label. Active: `accent-soft` fill, `accent-strong` text, 2.25 stroke. Hover: `surface-hover`. `aria-current="page"` on the active link.
-- Client switcher: 40px button, initials mark (accent fill when selected), name + type/currency line, chevrons icon. Menu uses radio semantics with a check indicator.
-- Breadcrumbs are not used in APP 01; the page header carries context.
+- Rail on `canvas`. Product mark 28px ink square with the glyph, 14px semibold product name, 12px agency name beneath.
+- Grouped lists with 11px uppercase group labels (`ink-faint`), 20px between groups.
+- Items: 32px, 13px, 16px icon at 1.75 stroke in `ink-muted`; hover `surface-active` fill and `ink` text. Active: `accent-soft` fill, `accent-strong` 500 text, icon in `accent` at 2.1 stroke. `aria-current="page"` on the active link.
+- Client switcher: 40px white control on the grey rail, initials mark (accent fill when selected), name + type/currency line, chevrons icon that turns `accent-strong` while open. Menu uses radio semantics with a check indicator.
+- Footer: a green status dot with "Meta Ads · demo data" and an `ink-faint` coverage line. No borders.
+- Breadcrumbs are not used; the page header's eyebrow carries client context.
 
 ## 11. Inputs and controls
 
@@ -150,14 +161,14 @@ Until imported creatives carry imagery, a creative's thumbnail is `{ tone, aspec
 
 ## 13. Charts
 
-- One axis per chart. Two measures → two stacked small multiples (see Overview trend), never dual axes.
-- Line 2px, round joins. Area wash at 10% opacity of the series colour. Gridlines 1px `chart-grid`, three per chart (max, half, zero). Ticks 11px `ink-faint`, nice numbers (1/2/2.5/5 × 10ⁿ).
-- Selected period: `chart-primary`; earlier period: `chart-muted`. The selected period gets an `accent-soft` band at 40%.
-- Legend top-right of the card header when a chart has ≥2 series or two periods. Single-series sparklines have no legend.
-- Sparklines: 88×26, 1.5px line, 2.5px end dot with a white ring, previous period muted.
-- Bars (spend breakdown): 6px tall, `accent` on an `accent-soft` track, label and value in text tokens.
-- Interactive layer (crosshair, tooltip) and a chart library arrive in APP 02. Until then charts are static SVG with `vector-effect: non-scaling-stroke`.
-- No animation on charts in APP 01.
+- Open framing: a section heading row (13px semibold title, 12px range line) with the legend right-aligned; the chart sits directly on the page with no border or card.
+- One axis per chart. Two measures → stacked small multiples (Overview: daily spend at 240px, daily conversions at 120px beneath a hairline), never dual axes.
+- Line 2px (selected period) and 1.75px (earlier), round joins. Area wash 8% (selected) and 10% of `chart-muted` (earlier). Gridlines: two hairlines in `chart-grid` plus a `border` baseline. Ticks 11px `ink-faint` in a 48px column, nice numbers (1/2/2.5/5 × 10ⁿ).
+- Selected period: `chart-primary` series over an `accent-soft` band at 35% with a hairline `accent-border` left edge. Earlier period: `chart-muted`. An 8px `chart-primary` end marker with a white ring sits on the latest value.
+- Legend top-right of the section heading when a chart has ≥2 series or two periods. Single-series sparklines have no legend.
+- Sparklines (creative cards only): 96×28, 1.5px line, 2.5px end dot with a white ring, previous period muted.
+- Spend-distribution bars: 4px tall, `chart-muted` on a `surface-active` track; label and value in text tokens. Blue is not used here.
+- Interactive layer (crosshair, tooltip) and a chart library arrive in APP 02. Until then charts are static SVG with `vector-effect: non-scaling-stroke`. No animation on charts in APP 01.
 
 ## 14. Icons
 
@@ -173,10 +184,9 @@ lucide-react only. 16px in navigation, 14px in card headers and KPI tiles, 12px 
 ## 16. Responsive principles
 
 - Breakpoints used: 640 (sm), 768 (md), 1024 (lg), 1280 (xl), 1536 (2xl).
-- KPI grid: 2 columns below 768, 3 columns from 768 up. Six metrics render as two rows of three. Tiles never go six across: with a side-by-side sparkline a tile needs about 280px of inner width to keep a 26px numeral and its comparison line unclipped, and six across gives under 150px even at 1440.
-- KPI tile below 640: the sparkline is dropped and the delta pill sits under the numeral, so two tiles fit at 360 without clipping. Numerals are `whitespace-nowrap` and never `truncate`; the comparison line may wrap to two lines.
-- Overview: main + 340px rail from 1024; stacked below.
-- Creatives grid: 1 / 2 / 3 / 4 columns at <640 / 640 / 1280 / 1536.
+- KPI band: 2 / 3 / 6 columns at <768 / ≥768 / ≥1280. Without sparklines a cell needs about 150px of inner width, so six across fits from 1280 (≈162px) and 1440 (≈190px).
+- Overview rail: main + 300px rail from 1280; stacked below. Lower section: 2:3 split (spend distribution, top campaigns) from 1024; stacked below.
+- Creatives grid: 1 / 2 / 3 / 4 columns at <640 / 640 / 1280 / 1536 with 4:3 artwork on top.
 - Tables keep their columns and scroll horizontally inside the card. Do not hide numeric columns to avoid scrolling.
 - Page header stacks (title above controls) below 768.
 - Minimum tap target 32px; menu and dialog triggers 32px square.
@@ -184,7 +194,7 @@ lucide-react only. 16px in navigation, 14px in card headers and KPI tiles, 12px 
 
 ## 17. Density rules
 
-- Three KPI tiles per row on desktop; never more than four. Order metrics by importance so the first row carries spend, revenue and conversions.
+- The KPI band holds six metrics in one row from 1280; order them by importance (spend, revenue, conversions, cost per conversion, ROAS, CTR). Never add a seventh; never give a metric its own card.
 - Card descriptions are one line. Longer explanations go in `Note` or documentation.
 - A list panel shows at most six items plus an "n other" aggregate.
 - Prefer a 40px table row over a card per record once there are more than eight records.
@@ -196,7 +206,7 @@ lucide-react only. 16px in navigation, 14px in card headers and KPI tiles, 12px 
 - No radii above 8px on containers; 4px on chips and pills. No fully round buttons.
 - No shadows beyond `shadow-xs` on static surfaces and `shadow-md` on floating ones.
 - No second accent colour, no coloured ID chips, no more than one pill per table row.
-- No bento mosaics or oversized hero cards. Cards are sized by their content.
+- No bento mosaics, oversized hero cards or card-per-widget grids. Cards are sized by their content and used only for tables, ranked lists and single asides.
 - No dual-axis charts, no rainbow categorical palettes, no number on every data point.
 - No motion outside the rules in §20: no `transition: all`, no scale pops or spring bounce on controls, no blur, no ambient or looping motion, no animated gradients, no confetti or particles, no dramatic card lift on hover.
 - No dark theme in APP 01 (tokens are structured to allow one later).
@@ -207,6 +217,7 @@ lucide-react only. 16px in navigation, 14px in card headers and KPI tiles, 12px 
 - Layout wireframe: the region model in §7 (sidebar, main, right rail), and the decision not to ship a bottom bar or an icon rail in APP 01.
 - Rituals dashboard (dark): nav group labels with count badges (deferred), inline "increase compared to last week" comparison text (adopted as the KPI comparison line), chart legends with a period chip top-right.
 - Deliberately not copied: coloured ID chips, vertical table rules, dark theme, hatched bar fills, progress rings, breadcrumb top bar, global search.
+- APP 01.5 direction pass: the same screenshots re-read for composition rather than components. Taken: the light screen's single analysis surface (metrics directly above the chart), its grey rail against a white page, and its quiet sentence-case table headers; the wireframe's open main column with a single contextual rail; the dark screen's inline comparison sentence beneath a numeral. Rejected: the card-per-widget grid the first pass had drifted into.
 
 ## 20. Motion
 

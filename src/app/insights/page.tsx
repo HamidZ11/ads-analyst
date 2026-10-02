@@ -24,17 +24,16 @@ export default async function InsightsPage() {
   return (
     <>
       <PageHeader
+        eyebrow={client.name}
         title="Insights"
-        description={`${client.name} · what changed, where efficiency is slipping, where money is wasted, and where to scale`}
-        actions={
+        description={
           <>
-            <span className="text-xs text-ink-muted">
-              {formatDateRange(periods.current)}{" "}
-              <span className="text-ink-faint">vs {comparison}</span>
-            </span>
-            <DatePresetControl value={workspace.preset} />
+            What changed, where efficiency is slipping, where money is wasted and where to scale
+            · {formatDateRange(periods.current)}{" "}
+            <span className="text-ink-faint">compared with the {comparison}</span>
           </>
         }
+        actions={<DatePresetControl value={workspace.preset} />}
       />
       <p className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-muted">
         <span className="font-medium text-ink-secondary">Evaluation scope</span>

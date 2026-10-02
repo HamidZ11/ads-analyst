@@ -77,21 +77,21 @@ export function CreativeGrid({
   ];
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SegmentedControl
           label="Filter by creative type"
           options={TYPE_OPTIONS}
           value={type}
           onChange={setType}
         />
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 text-xs text-ink-muted">
             Sort by
             <select
               value={sortKey}
               onChange={(e) => setSortKey(e.target.value as SortKey)}
-              className="h-8 rounded-md border border-border bg-surface px-2 text-sm text-ink hover:border-border-strong"
+              className="h-8 rounded-md border border-border bg-surface px-2 text-sm text-ink transition-colors hover:border-border-strong"
             >
               {sortOptions.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -107,11 +107,11 @@ export function CreativeGrid({
       </div>
 
       {visible.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border-strong bg-surface-subtle p-6 text-center text-xs text-ink-muted">
+        <p className="rounded-lg bg-surface-subtle p-8 text-center text-sm text-ink-muted">
           No creatives of this type.
         </p>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {visible.map((row) => (
             <li key={row.creative.id} className="flex">
               <div className="flex w-full">

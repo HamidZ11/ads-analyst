@@ -211,3 +211,37 @@ export function getAccountStructure(
     creatives: repository.listCreatives(client.id).length,
   };
 }
+
+export interface CampaignMovers {
+  /** Delivering campaign whose spend grew most, relative to the previous period. */
+  spendIncrease: CampaignRow | null;
+  /** Delivering campaign whose conversions fell most, relative to the previous period. */
+  conversionDecline: CampaignRow | null;
+  /** Delivering campaign with the lowest CPA in the current period. */
+  mostEfficient: CampaignRow | null;
+}
+
+/** Plain ranking facts over campaign rows; no thresholds, no judgement. */
+export function rankCampaignMovers(rows: readonly CampaignRow[]): CampaignMovers {
+  const delivering = rows.filter((r) => r.current.totals.spend > 0);
+  const byChange = (pick: (r: CampaignRow) => number | null, direction: 1 | -1) =>
+    delivering
+      .filter((r) => pick(r) !== null)
+      .sort((a, b) => direction * ((pick(b) as number) - (pick(a) as number)))[0] ?? null;
+  const spendIncrease = byChange((r) => r.spendChange, 1);
+  const conversionDecline = byChange((r) => r.conversionsChange, -1);
+  const mostEfficient =
+    delivering
+      .filter((r) => r.current.derived.cpa !== null && r.current.totals.conversions >= 5)
+      .sort(
+        (a, b) => (a.current.derived.cpa as number) - (b.current.derived.cpa as number),
+      )[0] ?? null;
+  return {
+    spendIncrease: spendIncrease && (spendIncrease.spendChange ?? 0) > 0 ? spendIncrease : null,
+    conversionDecline:
+      conversionDecline && (conversionDecline.conversionsChange ?? 0) < 0
+        ? conversionDecline
+        : null,
+    mostEfficient,
+  };
+}

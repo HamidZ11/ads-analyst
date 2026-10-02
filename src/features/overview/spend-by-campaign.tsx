@@ -1,11 +1,10 @@
-import { Layers } from "lucide-react";
-import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { formatCurrency, formatPercent } from "@/domain/format";
 import type { CampaignRow } from "@/features/analytics/queries";
 import type { Workspace } from "@/features/workspace/server";
 
 const VISIBLE = 6;
 
+/** Open ranked list; neutral bars so blue keeps its meaning elsewhere. */
 export function SpendByCampaign({
   workspace,
   rows,
@@ -35,39 +34,40 @@ export function SpendByCampaign({
   ];
 
   return (
-    <Card>
-      <CardHeader
-        icon={Layers}
-        title="Spend by campaign"
-        description={`${formatCurrency(total, client.currency)} across ${sorted.length} delivering campaigns`}
-      />
-      <CardBody>
-        {bars.length === 0 ? (
-          <p className="text-xs text-ink-muted">No spend recorded in this period.</p>
-        ) : (
-          <ol className="flex flex-col gap-3">
-            {bars.map((bar) => (
-              <li key={bar.id} className="min-w-0">
-                <div className="flex items-baseline justify-between gap-3 text-xs">
-                  <span className="truncate font-medium text-ink">{bar.name}</span>
-                  <span className="shrink-0 text-ink-secondary tabular">
-                    {formatCurrency(bar.spend, client.currency)}
-                    <span className="ml-1.5 text-ink-faint">
-                      {formatPercent(total ? bar.spend / total : 0, 0)}
-                    </span>
+    <section aria-labelledby="spend-share-heading" className="min-w-0">
+      <div className="flex items-baseline justify-between gap-4">
+        <h2 id="spend-share-heading" className="text-sm font-semibold text-ink">
+          Spend by campaign
+        </h2>
+        <p className="text-xs text-ink-muted tabular">
+          {formatCurrency(total, client.currency)} total
+        </p>
+      </div>
+      {bars.length === 0 ? (
+        <p className="mt-4 text-sm text-ink-muted">No spend recorded in this period.</p>
+      ) : (
+        <ol className="mt-4 flex flex-col gap-3.5">
+          {bars.map((bar) => (
+            <li key={bar.id} className="min-w-0">
+              <div className="flex items-baseline justify-between gap-3 text-sm">
+                <span className="truncate text-ink">{bar.name}</span>
+                <span className="shrink-0 text-ink-secondary tabular">
+                  {formatCurrency(bar.spend, client.currency)}
+                  <span className="ml-2 text-xs text-ink-faint">
+                    {formatPercent(total ? bar.spend / total : 0, 0)}
                   </span>
-                </div>
-                <div aria-hidden className="mt-1.5 h-1.5 w-full rounded-full bg-accent-soft">
-                  <div
-                    className="h-1.5 rounded-full bg-accent"
-                    style={{ width: `${Math.max(2, (bar.spend / max) * 100)}%` }}
-                  />
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
-      </CardBody>
-    </Card>
+                </span>
+              </div>
+              <div aria-hidden className="mt-1.5 h-1 w-full rounded-full bg-surface-active">
+                <div
+                  className="h-1 rounded-full bg-chart-muted"
+                  style={{ width: `${Math.max(1.5, (bar.spend / max) * 100)}%` }}
+                />
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
   );
 }

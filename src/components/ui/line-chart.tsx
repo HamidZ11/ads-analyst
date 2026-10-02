@@ -35,7 +35,6 @@ function buildPath(points: readonly LinePoint[], max: number): { line: string; a
   const n = points.length;
   let line = "";
   let area = "";
-  // Contiguous runs of defined points become separate sub-paths so gaps stay gaps.
   let segment: Array<{ x: number; y: number }> = [];
 
   const flush = () => {
@@ -67,14 +66,15 @@ function buildPath(points: readonly LinePoint[], max: number): { line: string; a
 }
 
 /**
- * Static single-series line with recessive gridlines. The interactive layer
- * (crosshair, tooltip, period selection) is added in the charting phase.
+ * Open, single-series line: hairline gridlines, quiet ticks, blue selected
+ * period over a grey earlier period, an end marker on the latest value. The
+ * interactive layer arrives in the charting phase.
  */
 export function LineChart({
   points,
   formatValue,
   currentStart,
-  height = 168,
+  height = 220,
   className,
 }: LineChartProps) {
   const defined = points
@@ -91,28 +91,47 @@ export function LineChart({
   const prevWidth = splitIndex > 0 && n > 1 ? (splitIndex / (n - 1)) * VIEW_W : 0;
   const currWidth = VIEW_W - prevWidth;
   const labelIndexes = n > 2 ? [0, Math.floor((n - 1) / 2), n - 1] : n === 2 ? [0, 1] : [0];
+  const lastIndex = (() => {
+    for (let i = n - 1; i >= 0; i--) if (points[i].value !== null) return i;
+    return -1;
+  })();
+  const last = lastIndex >= 0 ? points[lastIndex] : null;
+  const lastY =
+    last && last.value !== null ? (1 - Math.min(last.value, max) / max) * 100 : null;
+  const lastX = lastIndex >= 0 && n > 1 ? (lastIndex / (n - 1)) * 100 : 100;
 
   return (
     <div className={cn("w-full", className)}>
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         <div
-          className="flex shrink-0 flex-col justify-between py-0.5 text-right text-2xs text-ink-faint tabular"
+          className="flex w-12 shrink-0 flex-col justify-between text-right text-2xs text-ink-faint tabular"
           style={{ height }}
         >
           {ticks.map((t) => (
-            <span key={t}>{formatValue(t)}</span>
+            <span
+              key={t}
+              className="-translate-y-1/2 first:translate-y-0 last:-translate-y-full"
+            >
+              {formatValue(t)}
+            </span>
           ))}
         </div>
         <div className="relative min-w-0 flex-1" style={{ height }}>
           <div aria-hidden className="absolute inset-0 flex flex-col justify-between">
-            {ticks.map((t) => (
-              <div key={t} className="h-px w-full bg-chart-grid" />
+            {ticks.map((t, i) => (
+              <div
+                key={t}
+                className={cn(
+                  "h-px w-full",
+                  i === ticks.length - 1 ? "bg-border" : "bg-chart-grid",
+                )}
+              />
             ))}
           </div>
           {splitIndex > 0 ? (
             <div
               aria-hidden
-              className="absolute inset-y-0 right-0 bg-accent-soft/40"
+              className="absolute inset-y-0 right-0 border-l border-accent-border/70 bg-accent-soft/35"
               style={{ width: `${(currWidth / VIEW_W) * 100}%` }}
             />
           ) : null}
@@ -124,19 +143,19 @@ export function LineChart({
           >
             {previous.length > 1 ? (
               <>
-                <path d={prevPath.area} fill="var(--color-chart-muted)" fillOpacity={0.12} />
+                <path d={prevPath.area} fill="var(--color-chart-muted)" fillOpacity={0.1} />
                 <path
                   d={prevPath.line}
                   fill="none"
                   stroke="var(--color-chart-muted)"
-                  strokeWidth={2}
+                  strokeWidth={1.75}
                   vectorEffect="non-scaling-stroke"
                   strokeLinejoin="round"
                   strokeLinecap="round"
                 />
               </>
             ) : null}
-            <path d={currPath.area} fill="var(--color-chart-primary)" fillOpacity={0.1} />
+            <path d={currPath.area} fill="var(--color-chart-primary)" fillOpacity={0.08} />
             <path
               d={currPath.line}
               fill="none"
@@ -147,9 +166,16 @@ export function LineChart({
               strokeLinecap="round"
             />
           </svg>
+          {lastY !== null ? (
+            <span
+              aria-hidden
+              className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-primary ring-2 ring-surface"
+              style={{ left: `${lastX}%`, top: `${lastY}%` }}
+            />
+          ) : null}
         </div>
       </div>
-      <div className="mt-1.5 flex justify-between pl-10 text-2xs text-ink-faint">
+      <div className="mt-2 flex justify-between pl-15 text-2xs text-ink-faint">
         {labelIndexes.map((i) => (
           <span key={points[i]?.date ?? i}>{points[i] ? formatDate(points[i].date) : ""}</span>
         ))}

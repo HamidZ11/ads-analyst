@@ -49,12 +49,13 @@ export interface ThProps extends ThHTMLAttributes<HTMLTableCellElement> {
   numeric?: boolean;
 }
 
+/** Sentence-case, quiet column headers; the data carries the weight. */
 export function Th({ numeric, className, scope = "col", ...props }: ThProps) {
   return (
     <th
       scope={scope}
       className={cn(
-        "h-9 border-b border-border bg-surface-subtle px-3 text-left align-middle text-2xs font-medium tracking-wide whitespace-nowrap text-ink-muted uppercase first:pl-4 last:pr-4",
+        "h-10 border-b border-border px-3 text-left align-middle text-xs font-medium whitespace-nowrap text-ink-muted first:pl-4 last:pr-4",
         numeric && "text-right",
         className,
       )}
@@ -71,7 +72,7 @@ export function Td({ numeric, className, ...props }: TdProps) {
   return (
     <td
       className={cn(
-        "h-10 px-3 align-middle whitespace-nowrap first:pl-4 last:pr-4",
+        "h-11 px-3 align-middle whitespace-nowrap first:pl-4 last:pr-4",
         numeric && "text-right tabular",
         className,
       )}
