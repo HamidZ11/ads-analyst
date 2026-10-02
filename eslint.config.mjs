@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Tool-managed files installed by Impeccable and TypeUI; not project code.
+    ".claude/**",
+    ".impeccable/**",
   ]),
 ]);
 
