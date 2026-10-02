@@ -1,26 +1,249 @@
-@import "tailwindcss";
+/* Scan only application source for class names so documentation never emits CSS. */
+@import "tailwindcss" source("../");
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * Ad Analyst design tokens.
+ * White surfaces on a very light cool-grey canvas, near-black navy ink, blue as
+ * the single accent, pale-blue selection states, hairline borders, minimal
+ * shadows, and a compact type scale tuned for dense analytical layouts.
+ */
+@theme {
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.375rem;
+  --text-lg: 1rem;
+  --text-lg--line-height: 1.5rem;
+  --text-xl: 1.125rem;
+  --text-xl--line-height: 1.625rem;
+  --text-2xl: 1.375rem;
+  --text-2xl--line-height: 1.75rem;
+  --text-3xl: 1.625rem;
+  --text-3xl--line-height: 2rem;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --color-canvas: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f8f9fb;
+  --color-surface-hover: #f2f4f7;
+  --color-surface-active: #eaedf2;
+  --color-border: #e4e7ec;
+  --color-border-strong: #cfd5de;
+
+  --color-ink: #0f172a;
+  --color-ink-secondary: #3d4a5c;
+  --color-ink-muted: #667085;
+  --color-ink-faint: #98a2b3;
+
+  --color-accent: #2563eb;
+  --color-accent-strong: #1d4ed8;
+  --color-accent-pressed: #1e40af;
+  --color-accent-soft: #e8f0fe;
+  --color-accent-border: #b9cff7;
+
+  --color-positive: #15803d;
+  --color-positive-soft: #e8f5ec;
+  --color-negative: #b42318;
+  --color-negative-soft: #fdecea;
+  --color-warning: #b54708;
+  --color-warning-soft: #fff3e0;
+
+  --color-chart-primary: #2563eb;
+  --color-chart-muted: #a7b4c6;
+  --color-chart-grid: #eceff3;
+
+  --color-tone-sand: #e9e2d5;
+  --color-tone-sand-ink: #8a7757;
+  --color-tone-stone: #e4e2de;
+  --color-tone-stone-ink: #7d7a73;
+  --color-tone-mist: #e1e8ef;
+  --color-tone-mist-ink: #64788e;
+  --color-tone-moss: #e0e8e0;
+  --color-tone-moss-ink: #637a63;
+  --color-tone-clay: #ebdcd5;
+  --color-tone-clay-ink: #94705f;
+  --color-tone-slate: #dde2ea;
+  --color-tone-slate-ink: #5f6c82;
+  --color-tone-dusk: #e3dfe9;
+  --color-tone-dusk-ink: #746a88;
+
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+
+  --shadow-xs: 0 1px 1px rgba(16, 24, 40, 0.04);
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-md: 0 6px 16px rgba(16, 24, 40, 0.08), 0 0 0 1px rgba(16, 24, 40, 0.04);
+
+  /* Motion. Four durations, three curves. Nothing else is allowed. */
+  --duration-micro: 120ms;
+  --duration-quick: 160ms;
+  --duration-standard: 220ms;
+  --duration-deliberate: 300ms;
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --default-transition-duration: 120ms;
+  --default-transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+
+  --animate-fade-in: fade-in var(--duration-standard) var(--ease-enter) both;
+  --animate-fade-out: fade-out var(--duration-quick) var(--ease-exit) both;
+  --animate-menu-in: menu-in var(--duration-quick) var(--ease-enter) both;
+  --animate-menu-out: menu-out var(--duration-quick) var(--ease-exit) both;
+  --animate-sheet-in: sheet-in var(--duration-deliberate) var(--ease-enter) both;
+  --animate-sheet-out: sheet-out var(--duration-standard) var(--ease-exit) both;
+  --animate-rise-in: rise-in var(--duration-standard) var(--ease-enter) both;
+  --animate-page-in: page-in var(--duration-standard) var(--ease-enter) both;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes fade-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes menu-out {
+    from {
+      opacity: 1;
+      transform: none;
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+  }
+  @keyframes sheet-in {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: none;
+    }
+  }
+  @keyframes sheet-out {
+    from {
+      transform: none;
+    }
+    to {
+      transform: translateX(-100%);
+    }
+  }
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes page-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  html {
+    color-scheme: light;
+    height: 100%;
+  }
+
+  body {
+    min-height: 100%;
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: var(--color-accent-soft);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.01em;
+  }
+
+  /* Mandatory: every transition and animation collapses when motion is reduced. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+
+@utility duration-micro {
+  transition-duration: var(--duration-micro);
+}
+
+@utility duration-quick {
+  transition-duration: var(--duration-quick);
+}
+
+@utility duration-standard {
+  transition-duration: var(--duration-standard);
+}
+
+@utility duration-deliberate {
+  transition-duration: var(--duration-deliberate);
 }
