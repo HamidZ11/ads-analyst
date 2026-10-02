@@ -23,10 +23,10 @@
   --text-lg--line-height: 1.5rem;
   --text-xl: 1.125rem;
   --text-xl--line-height: 1.625rem;
-  --text-2xl: 1.5rem;
-  --text-2xl--line-height: 2rem;
-  --text-3xl: 1.75rem;
-  --text-3xl--line-height: 2.125rem;
+  --text-2xl: 1.375rem;
+  --text-2xl--line-height: 1.75rem;
+  --text-3xl: 1.625rem;
+  --text-3xl--line-height: 2rem;
 
   --color-canvas: #f5f6f8;
   --color-surface: #ffffff;
@@ -185,7 +185,7 @@
 
   body {
     min-height: 100%;
-    background-color: var(--color-surface);
+    background-color: var(--color-canvas);
     color: var(--color-ink);
     font-size: var(--text-sm);
     line-height: var(--text-sm--line-height);

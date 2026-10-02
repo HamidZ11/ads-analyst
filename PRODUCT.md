@@ -36,10 +36,10 @@ Agency-shaped from the start: a multi-client workspace where one selected client
 
 ## Brand Commitments
 
-- Working name "Ad Analyst"; agency in demo data is Northstar Media.
-- Binding visual constraint volunteered by the product owner: white base, pale cool-grey surfaces, dark navy / near-black text, blue as the single primary accent; dense but controlled; modern, premium, analytical, professional rather than playful.
-- Explicitly rejected by the product owner: generic SaaS template, default shadcn look, cards inside cards, purple or "AI" gradients, large empty whitespace, excessive pills, oversized rounded corners, weak tiny typography, decorative gimmicks.
-- Motion rules already recorded in DESIGN.md §20 (tokenised, transform/opacity first, reduced motion mandatory) remain binding.
+- Working name "Ad Analyst"; the agency in demo data is Northstar Media.
+- Constraints the product owner set for the design phase (recorded as constraints, not as a visual system; the visual language itself is decided and documented in `DESIGN.md` during design work): white base with pale cool-grey surfaces, dark navy or near-black text, blue as the single primary accent, dense but controlled layouts suited to desktop-heavy analytical work.
+- Looks the owner has explicitly rejected: generic SaaS template, default shadcn look, cards inside cards, purple or "AI" gradients, large empty whitespace, excessive pills, oversized rounded corners, weak tiny typography, decorative gimmicks.
+- Motion rules are tokenised in `DESIGN.md` §20 (transform and opacity first, `prefers-reduced-motion` mandatory) and carry across redesigns.
 
 ## Evidence on Hand
 

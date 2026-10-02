@@ -21,7 +21,6 @@ export default async function AskAnalystPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader
-        eyebrow={client.name}
         title="Ask Analyst"
         description={`Plain-English questions about ${client.name}'s Meta Ads data, answered with the numbers behind them.`}
       />

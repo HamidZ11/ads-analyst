@@ -14,9 +14,8 @@ export default async function ClientsPage() {
   return (
     <>
       <PageHeader
-        eyebrow={agency.name}
         title="Clients"
-        description={`${clients.length} clients · selecting a client changes every page`}
+        description={`${agency.name} · ${clients.length} clients · selecting a client changes every page`}
       />
       <Card className="overflow-hidden">
         <ClientsTable rows={rows} selectedId={client.id} />

@@ -88,11 +88,6 @@ const STATUS_OPTIONS = [
   { value: "paused" as const, label: "Paused" },
 ];
 
-/**
- * Dense, sortable campaign table. Structure is settled; this pass only refines
- * hierarchy: quiet sentence-case headers whose sort affordance appears on
- * hover, a stronger name column, and the toolbar sitting above the surface.
- */
 export function CampaignsTable({
   rows,
   currency,
@@ -139,7 +134,7 @@ export function CampaignsTable({
           onClick={() => toggleSort(key)}
           title={title}
           className={cn(
-            "group flex h-10 w-full items-center gap-1 px-3 text-xs font-medium transition-colors hover:text-ink [th:first-child>&]:pl-4 [th:last-child>&]:pr-4",
+            "flex h-9 w-full items-center gap-1 px-3 text-2xs font-medium tracking-wide uppercase hover:text-ink [th:first-child>&]:pl-4 [th:last-child>&]:pr-4",
             numeric && "flex-row-reverse text-right",
             active ? "text-ink" : "text-ink-muted",
           )}
@@ -148,12 +143,7 @@ export function CampaignsTable({
           <Icon
             aria-hidden
             size={12}
-            className={cn(
-              "transition-opacity",
-              active
-                ? "text-accent opacity-100"
-                : "text-ink-faint opacity-0 group-hover:opacity-100",
-            )}
+            className={cn(active ? "text-accent" : "text-ink-faint")}
           />
         </button>
       </Th>
@@ -162,8 +152,8 @@ export function CampaignsTable({
 
   return (
     <div>
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+      <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
           <label className="sr-only" htmlFor="campaign-search">
             Search campaigns
           </label>
@@ -188,122 +178,105 @@ export function CampaignsTable({
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-border">
-        <Table
-          caption={`Campaign performance for the selected period compared with the ${comparison}`}
-        >
-          <THead>
-            <Tr>
-              {header("name", "Campaign")}
-              {header("status", "Status")}
-              {header("adSets", "Ad sets", true)}
-              {header("spend", "Spend", true)}
-              {header("spendChange", "Δ", true, `Spend change vs ${comparison}`)}
-              {header("conversions", vocabulary.plural, true)}
-              {header(
-                "conversionsChange",
-                "Δ",
-                true,
-                `${vocabulary.plural} change vs ${comparison}`,
-              )}
-              {header("cpa", "CPA", true, vocabulary.costLabel)}
-              {showRoas ? header("roas", "ROAS", true) : header("cpc", "CPC", true)}
-              {header("ctr", "CTR", true)}
-            </Tr>
-          </THead>
-          <TBody>
-            {visible.length === 0 ? (
-              <Tr>
-                <Td colSpan={10} className="h-20 text-center text-sm text-ink-muted">
-                  No campaigns match the current filters.
-                </Td>
-              </Tr>
-            ) : (
-              visible.map((row) => {
-                const { campaign, current } = row;
-                const delivering = current.totals.spend > 0;
-                return (
-                  <Tr
-                    key={campaign.id}
-                    className={cn("hover:bg-surface-subtle", !delivering && "text-ink-muted")}
-                  >
-                    <Td className="max-w-[380px]">
-                      <span
-                        className={cn(
-                          "block truncate font-medium",
-                          delivering ? "text-ink" : "text-ink-secondary",
-                        )}
-                      >
-                        {campaign.name}
-                      </span>
-                      <span className="block text-xs text-ink-muted">
-                        {OBJECTIVE_LABELS[campaign.objective]} · {row.adCount} ads
-                      </span>
-                    </Td>
-                    <Td>
-                      <StatusBadge status={campaign.status} />
-                    </Td>
-                    <Td numeric className="text-ink-secondary">
-                      {row.adSetCount}
-                    </Td>
-                    <Td numeric className="font-medium text-ink">
-                      {formatCurrency(current.totals.spend, currency)}
-                    </Td>
-                    <Td numeric>
-                      <Delta change={row.spendChange} higherIsBetter={null} />
-                    </Td>
-                    <Td numeric className="text-ink-secondary">
-                      {formatNumber(current.totals.conversions)}
-                    </Td>
-                    <Td numeric>
-                      <Delta change={row.conversionsChange} higherIsBetter={true} />
-                    </Td>
-                    <Td numeric className="text-ink-secondary">
-                      {formatMetric("cpa", current.derived.cpa, currency)}
-                    </Td>
-                    <Td numeric className="text-ink-secondary">
-                      {showRoas
-                        ? formatMetric("roas", current.derived.roas, currency)
-                        : formatMetric("cpc", current.derived.cpc, currency)}
-                    </Td>
-                    <Td numeric className="text-ink-secondary">
-                      {formatMetric("ctr", current.derived.ctr, currency)}
-                    </Td>
-                  </Tr>
-                );
-              })
+      <Table
+        caption={`Campaign performance for the selected period compared with the ${comparison}`}
+      >
+        <THead>
+          <Tr>
+            {header("name", "Campaign")}
+            {header("status", "Status")}
+            {header("adSets", "Ad sets", true)}
+            {header("spend", "Spend", true)}
+            {header("spendChange", "Δ", true, `Spend change vs ${comparison}`)}
+            {header("conversions", vocabulary.plural, true)}
+            {header(
+              "conversionsChange",
+              "Δ",
+              true,
+              `${vocabulary.plural} change vs ${comparison}`,
             )}
-          </TBody>
-          {visible.length > 1 ? (
-            <TFoot>
-              <Tr className="border-t border-border">
-                <Td className="text-xs text-ink-secondary" colSpan={3}>
-                  Total · {visible.length} campaigns
-                </Td>
-                <Td numeric className="text-ink">
-                  {formatCurrency(totals.totals.spend, currency)}
-                </Td>
-                <Td />
-                <Td numeric className="text-ink">
-                  {formatNumber(totals.totals.conversions)}
-                </Td>
-                <Td />
-                <Td numeric className="text-ink">
-                  {formatMetric("cpa", totals.derived.cpa, currency)}
-                </Td>
-                <Td numeric className="text-ink">
-                  {showRoas
-                    ? formatMetric("roas", totals.derived.roas, currency)
-                    : formatMetric("cpc", totals.derived.cpc, currency)}
-                </Td>
-                <Td numeric className="text-ink">
-                  {formatMetric("ctr", totals.derived.ctr, currency)}
-                </Td>
-              </Tr>
-            </TFoot>
-          ) : null}
-        </Table>
-      </div>
+            {header("cpa", "CPA", true, vocabulary.costLabel)}
+            {showRoas ? header("roas", "ROAS", true) : header("cpc", "CPC", true)}
+            {header("ctr", "CTR", true)}
+          </Tr>
+        </THead>
+        <TBody>
+          {visible.length === 0 ? (
+            <Tr>
+              <Td colSpan={10} className="h-16 text-center text-xs text-ink-muted">
+                No campaigns match the current filters.
+              </Td>
+            </Tr>
+          ) : (
+            visible.map((row) => {
+              const { campaign, current } = row;
+              const delivering = current.totals.spend > 0;
+              return (
+                <Tr
+                  key={campaign.id}
+                  className={cn("hover:bg-surface-subtle", !delivering && "text-ink-muted")}
+                >
+                  <Td className="max-w-[360px]">
+                    <span className="block truncate font-medium text-ink">{campaign.name}</span>
+                    <span className="block text-2xs text-ink-muted">
+                      {OBJECTIVE_LABELS[campaign.objective]} · {row.adCount} ads
+                    </span>
+                  </Td>
+                  <Td>
+                    <StatusBadge status={campaign.status} />
+                  </Td>
+                  <Td numeric>{row.adSetCount}</Td>
+                  <Td numeric className="font-medium text-ink">
+                    {formatCurrency(current.totals.spend, currency)}
+                  </Td>
+                  <Td numeric>
+                    <Delta change={row.spendChange} higherIsBetter={null} />
+                  </Td>
+                  <Td numeric>{formatNumber(current.totals.conversions)}</Td>
+                  <Td numeric>
+                    <Delta change={row.conversionsChange} higherIsBetter={true} />
+                  </Td>
+                  <Td numeric>{formatMetric("cpa", current.derived.cpa, currency)}</Td>
+                  <Td numeric>
+                    {showRoas
+                      ? formatMetric("roas", current.derived.roas, currency)
+                      : formatMetric("cpc", current.derived.cpc, currency)}
+                  </Td>
+                  <Td numeric>{formatMetric("ctr", current.derived.ctr, currency)}</Td>
+                </Tr>
+              );
+            })
+          )}
+        </TBody>
+        {visible.length > 1 ? (
+          <TFoot>
+            <Tr className="border-t border-border">
+              <Td className="text-xs text-ink-secondary" colSpan={3}>
+                Total · {visible.length} campaigns
+              </Td>
+              <Td numeric className="text-ink">
+                {formatCurrency(totals.totals.spend, currency)}
+              </Td>
+              <Td />
+              <Td numeric className="text-ink">
+                {formatNumber(totals.totals.conversions)}
+              </Td>
+              <Td />
+              <Td numeric className="text-ink">
+                {formatMetric("cpa", totals.derived.cpa, currency)}
+              </Td>
+              <Td numeric className="text-ink">
+                {showRoas
+                  ? formatMetric("roas", totals.derived.roas, currency)
+                  : formatMetric("cpc", totals.derived.cpc, currency)}
+              </Td>
+              <Td numeric className="text-ink">
+                {formatMetric("ctr", totals.derived.ctr, currency)}
+              </Td>
+            </Tr>
+          </TFoot>
+        ) : null}
+      </Table>
     </div>
   );
 }

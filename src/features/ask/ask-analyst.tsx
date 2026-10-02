@@ -91,7 +91,10 @@ export function AskAnalyst({
       </div>
 
       <section aria-labelledby="suggested-heading">
-        <h2 id="suggested-heading" className="mb-2 text-sm font-semibold text-ink">
+        <h2
+          id="suggested-heading"
+          className="mb-2 text-xs font-medium tracking-wide text-ink-muted uppercase"
+        >
           Suggested questions
         </h2>
         <ul className="flex flex-col gap-1.5">

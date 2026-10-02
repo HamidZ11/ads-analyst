@@ -2,25 +2,10 @@ import type { LucideIcon } from "lucide-react";
 import type { HTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-export type CardVariant = "outlined" | "subtle";
-
-export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  /** `outlined`: white with a hairline border (tables, lists). `subtle`: tinted, borderless (summaries, asides). */
-  variant?: CardVariant;
-}
-
-/**
- * Use a card only when grouping genuinely aids comprehension. Most page
- * content is composed openly with headings and dividers instead.
- */
-export function Card({ variant = "outlined", className, ...props }: CardProps) {
+export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn(
-        "rounded-lg",
-        variant === "outlined" ? "border border-border bg-surface" : "bg-surface-subtle",
-        className,
-      )}
+      className={cn("rounded-lg border border-border bg-surface shadow-xs", className)}
       {...props}
     />
   );
@@ -47,7 +32,7 @@ export function CardHeader({
   className,
 }: CardHeaderProps) {
   return (
-    <div className={cn("flex items-start justify-between gap-3 px-4 pt-4 pb-3", className)}>
+    <div className={cn("flex items-start justify-between gap-3 px-4 pt-3.5 pb-3", className)}>
       <div className="min-w-0">
         <Heading className="flex items-center gap-2 text-sm font-semibold text-ink">
           {Icon ? (
@@ -74,7 +59,10 @@ export function CardBody({ className, ...props }: HTMLAttributes<HTMLDivElement>
 export function CardFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("rounded-b-lg border-t border-border px-4 py-2.5", className)}
+      className={cn(
+        "rounded-b-lg border-t border-border bg-surface-subtle px-4 py-2.5",
+        className,
+      )}
       {...props}
     />
   );

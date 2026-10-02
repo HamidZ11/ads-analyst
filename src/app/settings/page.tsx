@@ -11,9 +11,8 @@ export default async function SettingsPage() {
   return (
     <>
       <PageHeader
-        eyebrow={workspace.client.name}
         title="Settings"
-        description="Client-level configuration"
+        description={`${workspace.client.name} · client-level configuration`}
       />
       <ClientSettings workspace={workspace} />
       <Note className="mt-4">

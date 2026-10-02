@@ -14,10 +14,6 @@ export interface AppShellProps {
   children: ReactNode;
 }
 
-/**
- * White page, pale-grey navigation rail. Content is composed openly on the
- * page; the rail is the only persistently tinted surface.
- */
 export function AppShell({ agency, clients, client, coverage, children }: AppShellProps) {
   const sidebar = (
     <Sidebar agency={agency} clients={clients} client={client} coverage={coverage} />
@@ -30,7 +26,7 @@ export function AppShell({ agency, clients, client, coverage, children }: AppShe
   }));
 
   return (
-    <div className="min-h-dvh bg-surface">
+    <div className="min-h-dvh">
       <a
         href="#main"
         className="sr-only z-50 rounded-md bg-surface px-3 py-2 text-sm font-medium text-accent-strong shadow-md focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
@@ -38,7 +34,7 @@ export function AppShell({ agency, clients, client, coverage, children }: AppShe
         Skip to content
       </a>
 
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-border bg-canvas lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-border bg-surface lg:block">
         {sidebar}
       </aside>
 
@@ -59,7 +55,7 @@ export function AppShell({ agency, clients, client, coverage, children }: AppShe
         <main
           id="main"
           tabIndex={-1}
-          className="mx-auto w-full max-w-[1440px] px-4 py-6 outline-none sm:px-6 lg:px-10 lg:py-8"
+          className="mx-auto w-full max-w-[1440px] px-4 py-5 outline-none sm:px-6 lg:px-8 lg:py-6"
         >
           {children}
         </main>

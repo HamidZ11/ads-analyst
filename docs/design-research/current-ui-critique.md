@@ -1,5 +1,7 @@
 # Current UI critique — Ad Analyst (APP 01.5 working tree)
 
+> **Status (2026-10-03):** this critique assessed the APP 01.5 implementation, which was rejected and removed; production UI is back at the APP 01 baseline (`40eea2c`). Findings specific to 01.5 (the KPI band, the period-summary panel, hairline-everything, the editorial creative cards) describe the discarded state. Findings 2, 4, 7, 8 and 10 (type scale, roadmap copy, chart framing, table noise, sidebar chrome) apply to the baseline unchanged and remain the working list for the next pass.
+
 ⚠️ DEGRADED: single-context (sub-agent delegation is disabled by this session's operating policy; Assessment A and Assessment B were run sequentially in one context, A before B, and are declared as such)
 
 **Method:** Impeccable `critique` playbook v4.5.0, run inline. Assessment A: design review of the source (`src/app/page.tsx`, `src/features/overview/*`, `src/features/campaigns/campaigns-table.tsx`, `src/features/creatives/*`, `src/components/shell/*`, `src/components/ui/*`) plus the rendered HTML of `/`, `/campaigns` and `/creatives` from the dev server. Assessment B: `impeccable detect --json src/` (deterministic, 61 rules). Browser overlay inspection was not available (no browser automation in this session; screenshots are deliberately not taken per project rules).

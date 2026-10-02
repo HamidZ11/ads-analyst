@@ -20,17 +20,17 @@ export default async function CreativesPage() {
   return (
     <>
       <PageHeader
-        eyebrow={client.name}
         title="Creatives"
-        description={
+        description={`${client.name} · ${rows.length} creatives across ${new Set(rows.flatMap((r) => r.campaigns.map((c) => c.id))).size} campaigns`}
+        actions={
           <>
-            {rows.length} creatives across{" "}
-            {new Set(rows.flatMap((r) => r.campaigns.map((c) => c.id))).size} campaigns ·{" "}
-            {formatDateRange(periods.current)}{" "}
-            <span className="text-ink-faint">compared with the {comparison}</span>
+            <span className="text-xs text-ink-muted">
+              {formatDateRange(periods.current)}{" "}
+              <span className="text-ink-faint">vs {comparison}</span>
+            </span>
+            <DatePresetControl value={workspace.preset} />
           </>
         }
-        actions={<DatePresetControl value={workspace.preset} />}
       />
       <CreativeGrid
         rows={rows}

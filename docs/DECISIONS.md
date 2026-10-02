@@ -98,6 +98,14 @@ Format: **Decision** · **Reason** · **Consequences**.
 
 ### D-016 — White page with open composition; containers only for tables, lists and single asides
 
+> **Status: rejected after implementation review (2026-10-03). Superseded by D-017.** Kept for history; it is not an approved direction and the production UI no longer reflects it.
+
 **Decision:** The page surface is white and content is composed as open sections with headings, whitespace and hairline dividers. The navigation rail is the only tinted region. Bordered containers are reserved for tables, ranked lists and the grouped KPI band; a borderless tinted panel is reserved for a single aside. Shadows are removed from static surfaces. The six KPI cards become one grouped band.
 **Reason:** The first pass read as a dashboard template: every block boxed, six identical widgets, uppercase labels everywhere. The user's direction (ultra-clean analytical plus modern premium) is achieved through typography and spacing, not containers, and the primary reference screens group metrics with the chart rather than beside it.
 **Consequences:** DESIGN.md §1, §3, §5, §7–§10 and §13 rewritten; `Card` has `outlined` and `subtle` variants and no shadow; `PageHeader` gains an eyebrow; table headers are sentence case; `KpiTile` is removed in favour of `KpiBand`. Later pages follow the same composition before reaching for a card.
+
+### D-017 — APP 01.5 visual direction rejected; production UI restored to the APP 01 baseline pending a researched redesign
+
+**Decision:** The APP 01.5 implementation of D-016 (commit `b6bc570`) failed manual visual review. Production UI (`src/`) and `DESIGN.md` are restored to the approved APP 01 commit `40eea2c`. D-016 is marked rejected rather than deleted. The design tooling, product context and research added afterwards (Impeccable, `PRODUCT.md`, `docs/design-research/`) are kept as the basis for the next direction.
+**Reason:** The review found the result still category-interchangeable: no focal hierarchy, a type scale with no middle, hairline containers replacing card containers without changing the composition, and template chrome in the rail. Iterating on top of a rejected direction would compound it; a clean, approved baseline plus explicit references and critique tooling is the better starting point.
+**Consequences:** The next visual pass starts from `40eea2c`'s UI and `DESIGN.md`, follows `docs/design-research/proposed-design-direction.md`, runs through Impeccable (`layout`, `typeset`, `distill`, `clarify`, `polish`, then `critique`), and rewrites `DESIGN.md` from the result. `docs/design-research/current-ui-critique.md` assessed the discarded 01.5 state; its typography, copy, chart, table and sidebar findings apply to the baseline as well and remain the working list.

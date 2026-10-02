@@ -328,7 +328,7 @@ export interface CreativeThumbnailProps {
   thumbnail: CreativeThumbnailRef;
   type: CreativeType;
   /** Force a frame aspect regardless of the creative's native aspect. */
-  frame?: "native" | "square" | "wide";
+  frame?: "native" | "square";
   size?: "sm" | "lg";
   className?: string;
 }
@@ -349,11 +349,7 @@ export function CreativeThumbnail({
       className={cn(
         "relative overflow-hidden rounded-md",
         TONE_CLASSES[thumbnail.tone],
-        frame === "square"
-          ? "aspect-square"
-          : frame === "wide"
-            ? "aspect-[4/3]"
-            : ASPECT_CLASSES[thumbnail.aspect],
+        frame === "square" ? "aspect-square" : ASPECT_CLASSES[thumbnail.aspect],
         className,
       )}
     >

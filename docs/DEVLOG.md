@@ -237,3 +237,21 @@ High-signal engineering record. One entry per meaningful implementation pass. De
 **Deferred:** merging the borrowed rules into DESIGN.md; the redesign itself (sequence in `proposed-design-direction.md`); answering the critique's four owner questions; `/impeccable live` setup.
 
 **Next checkpoint:** owner reviews the three research documents and answers the critique questions; then the rework pass starts with `/impeccable layout` on the Overview.
+
+---
+
+## 2026-10-03 — APP 01.5 rejected; production UI restored to the APP 01 baseline
+
+**Phase:** housekeeping between APP 01.5 and the next design pass. No redesign in this pass.
+
+**What happened:** The APP 01.5 visual implementation failed manual review. It had been committed as `b6bc570` at the owner's request (together with the tooling pass `1c2095e`) and pushed, so "discard before commit" was no longer possible; the equivalent is a restoring commit on top, which keeps the history intact and needs no force push.
+
+**Restored from `40eea2c`:** all of `src/` (33 files: the Overview page and its components, Campaigns table and page, Creatives card and grid, shell, sidebar, nav, product mark, page header, card, table, line chart, creative thumbnail, analytics queries, globals) and `DESIGN.md`. The five Overview components added in 01.5 (`kpi-band`, `performance-chart`, `period-summary`, `top-campaigns`, `account-strip`) are removed; `kpi-tile`, `overview-kpis`, `trend-frame` and `account-structure` return. `git diff 40eea2c -- src DESIGN.md` is empty.
+
+**Preserved:** `.claude/skills/impeccable/`, `.claude/agents/`, `.claude/skills/design-premium/`, `.claude/skills/design-clean/`, `PRODUCT.md`, `docs/design-research/*`, `.impeccable/critique/*`, and the tooling-related changes to `.gitignore`, `.prettierignore`, `eslint.config.mjs` and `.gitattributes`. `.claude/settings.local.json` remains gitignored.
+
+**History handling:** D-016 kept and marked rejected; D-017 records the rejection and restoration. The 01.5 and tooling entries above stand unchanged. A status line was added to the top of `current-ui-critique.md` noting that it assessed the discarded state and which findings carry over to the baseline. `PRODUCT.md` reviewed for visual-language leakage: the brand section now states the owner's palette and density constraints and the rejected looks as constraints only, with an explicit note that the visual system is decided in the design phase.
+
+**Checks:** `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (37), `pnpm build`, `git diff --check` all pass. One environmental fix: `tsconfig.json` now excludes `**/* [0-9].ts`, because duplicate copies of generated files (`.next/types/routes.d 2.ts`) kept appearing in the build cache, most likely conflict copies from iCloud or Finder while the dev server and a build both wrote that folder; they broke `tsc` twice in two days.
+
+**Next:** restart Claude Code so the project-local skills load, then the redesign pass from the APP 01 baseline using Impeccable and the explicit reference system in `docs/design-research/`.
