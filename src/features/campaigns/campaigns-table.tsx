@@ -2,19 +2,24 @@
 
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { StatusBadge } from "@/components/ui/badge";
 import { Delta } from "@/components/ui/delta";
 import { Input } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Table, TBody, Td, TFoot, Th, THead, Tr } from "@/components/ui/table";
 import { formatCurrency, formatMetric, formatNumber } from "@/domain/format";
-import { OBJECTIVE_LABELS, type ConversionVocabulary } from "@/domain/labels";
+import { OBJECTIVE_LABELS, STATUS_LABELS, type ConversionVocabulary } from "@/domain/labels";
 import { deriveMetrics, sumMetrics } from "@/domain/metrics";
-import type { CurrencyCode } from "@/domain/types";
+import type { CurrencyCode, EntityStatus } from "@/domain/types";
 import type { CampaignRow } from "@/features/analytics/queries";
 import { cn } from "@/lib/cn";
 
 type StatusFilter = "all" | "active" | "paused";
+
+const STATUS_DOT: Record<EntityStatus, string> = {
+  active: "bg-positive",
+  paused: "bg-ink-faint",
+  archived: "bg-border-strong",
+};
 
 type SortKey =
   | "name"
@@ -134,7 +139,7 @@ export function CampaignsTable({
           onClick={() => toggleSort(key)}
           title={title}
           className={cn(
-            "flex h-9 w-full items-center gap-1 px-3 text-2xs font-medium tracking-wide uppercase hover:text-ink [th:first-child>&]:pl-4 [th:last-child>&]:pr-4",
+            "flex h-9 w-full items-center gap-1 px-3 text-xs font-medium hover:text-ink [th:first-child>&]:pl-4 [th:last-child>&]:pr-4",
             numeric && "flex-row-reverse text-right",
             active ? "text-ink" : "text-ink-muted",
           )}
@@ -223,18 +228,31 @@ export function CampaignsTable({
                     </span>
                   </Td>
                   <Td>
-                    <StatusBadge status={campaign.status} />
+                    <span
+                      className="inline-flex items-center gap-1.5 text-xs text-ink-muted"
+                      aria-label={STATUS_LABELS[campaign.status]}
+                    >
+                      <span
+                        aria-hidden
+                        className={cn("size-1.5 rounded-full", STATUS_DOT[campaign.status])}
+                      />
+                      <span className="sr-only">{STATUS_LABELS[campaign.status]}</span>
+                    </span>
                   </Td>
                   <Td numeric>{row.adSetCount}</Td>
                   <Td numeric className="font-medium text-ink">
                     {formatCurrency(current.totals.spend, currency)}
                   </Td>
                   <Td numeric>
-                    <Delta change={row.spendChange} higherIsBetter={null} />
+                    <Delta change={row.spendChange} higherIsBetter={null} neutralBelow={0.03} />
                   </Td>
                   <Td numeric>{formatNumber(current.totals.conversions)}</Td>
                   <Td numeric>
-                    <Delta change={row.conversionsChange} higherIsBetter={true} />
+                    <Delta
+                      change={row.conversionsChange}
+                      higherIsBetter={true}
+                      neutralBelow={0.03}
+                    />
                   </Td>
                   <Td numeric>{formatMetric("cpa", current.derived.cpa, currency)}</Td>
                   <Td numeric>

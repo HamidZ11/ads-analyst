@@ -54,7 +54,7 @@ export function Th({ numeric, className, scope = "col", ...props }: ThProps) {
     <th
       scope={scope}
       className={cn(
-        "h-9 border-b border-border bg-surface-subtle px-3 text-left align-middle text-2xs font-medium tracking-wide whitespace-nowrap text-ink-muted uppercase first:pl-4 last:pr-4",
+        "h-9 border-b border-border bg-surface-subtle px-3 text-left align-middle text-xs font-medium whitespace-nowrap text-ink-muted first:pl-4 last:pr-4",
         numeric && "text-right",
         className,
       )}

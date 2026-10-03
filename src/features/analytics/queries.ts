@@ -92,6 +92,54 @@ export interface CampaignRow {
   cpaChange: number | null;
 }
 
+export interface CampaignMover {
+  campaign: Campaign;
+  label: string;
+  metric: "spend" | "conversions" | "cpa";
+  change: number;
+  higherIsBetter: boolean | null;
+}
+
+/** Rank material campaign-level movements for the overview's investigation queue. */
+export function rankCampaignMovers(
+  rows: readonly CampaignRow[],
+  conversionLabel: string,
+): CampaignMover[] {
+  const candidates: Array<CampaignMover | null> = [];
+  for (const row of rows) {
+    if (row.spendChange !== null) {
+      candidates.push({
+        campaign: row.campaign,
+        label: "Spend",
+        metric: "spend",
+        change: row.spendChange,
+        higherIsBetter: null,
+      });
+    }
+    if (row.conversionsChange !== null) {
+      candidates.push({
+        campaign: row.campaign,
+        label: conversionLabel,
+        metric: "conversions",
+        change: row.conversionsChange,
+        higherIsBetter: true,
+      });
+    }
+    if (row.cpaChange !== null) {
+      candidates.push({
+        campaign: row.campaign,
+        label: "CPA",
+        metric: "cpa",
+        change: row.cpaChange,
+        higherIsBetter: false,
+      });
+    }
+  }
+  return candidates
+    .filter((mover): mover is CampaignMover => mover !== null && Math.abs(mover.change) >= 0.03)
+    .sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
+}
+
 function splitRows(rows: DailyMetrics[], periods: PeriodPair) {
   const current: DailyMetrics[] = [];
   const previous: DailyMetrics[] = [];

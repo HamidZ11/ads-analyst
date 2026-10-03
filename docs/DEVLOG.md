@@ -255,3 +255,108 @@ High-signal engineering record. One entry per meaningful implementation pass. De
 **Checks:** `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (37), `pnpm build`, `git diff --check` all pass. One environmental fix: `tsconfig.json` now excludes `**/* [0-9].ts`, because duplicate copies of generated files (`.next/types/routes.d 2.ts`) kept appearing in the build cache, most likely conflict copies from iCloud or Finder while the dev server and a build both wrote that folder; they broke `tsc` twice in two days.
 
 **Next:** restart Claude Code so the project-local skills load, then the redesign pass from the APP 01 baseline using Impeccable and the explicit reference system in `docs/design-research/`.
+
+---
+
+## 2026-10-03 — Visual System V2 specification (design only, no implementation)
+
+**Phase:** between APP 01 (baseline restored in `3b56cdf`) and APP 01.6. Specification pass only: no change to `src/`, `DESIGN.md`, tokens or data. Nothing committed.
+
+**Objective:** Define the next visual direction, "the analyst's instrument", as measurable rules before any code, and produce the APP 01.6 implementation plan.
+
+**Output:** `docs/design-research/visual-system-v2.md` — visual thesis, principles, one 12-column page grid (8 + 4 at ≥ 1280), a nine-step type scale with named roles and tracking tokens, colour/surface rules with per-view budgets (≤ 2 outlined containers, ≤ 4 blue elements, ≤ 4 structural hairlines), the Overview composition (lead reading → metric strip as chart selector → one 280px chart, rail of spend concentration and largest changes, campaigns table below the fold, metadata footer), three-tier KPI hierarchy with a 5 % materiality threshold for colour, chart grammar (overlay of previous period by day index, dashed target line, end label, legend, tooltip and hover contract for APP 02), sidebar system (line-and-dot mark, quiet switcher, sentence-case groups, white active item with a 2px accent rule), Campaigns table rules, a creatives ledger replacing the card grid, motion applications, anti-patterns, structural component examples, what stays from APP 01, what must change, and the APP 01.6 plan with an Impeccable sequence and a critique gate (≥ 30/40).
+
+**Decisions requested from the owner (§0 of the document):** lead metric rule (ROAS when a ROAS target exists, else cost per conversion); overlay chart vs trailing window; white page with grey rail and no static shadows; status dot and materiality colouring in tables; creatives as a ranked ledger; rail as 4 grid columns from 1280 (would supersede D-013); no uppercase labels (would amend D-014's label style); one chart and the account counts moved to a footer line. No DECISIONS entry yet; D-018 is written when the owner approves.
+
+**Method:** Impeccable `shape`, `layout` and `typeset` playbooks against the APP 01 Overview with assessments run inline (declared in the document's Appendix B); `impeccable context --target src/app/page.tsx` loaded PRODUCT.md and DESIGN.md (no surface brief exists); `impeccable detect --scope layout` and `--scope type` on `src/` both returned zero findings. `design-premium` and `design-clean` used as precision and restraint checks; neither overrode PRODUCT.md or our tokens. The dataviz skill's mark, tooltip and one-axis rules informed the chart grammar; its palette was not adopted. `concept-seed` was not run: the direction is brief-pinned and the session is non-interactive. Example values are the live seeded Luxe Skin Co. figures from the dev server (27 Sep – 3 Oct 2026).
+
+**Checks run:** `pnpm format:check` on the two changed documents. No build, lint or test changes (no source touched). Dev server was already running on :3000 and was used read-only.
+
+**Deferred:** everything in the plan; DESIGN.md rewrite happens in APP 01.6 from the shipped result, not from this document.
+
+**Next checkpoint:** owner reviews `visual-system-v2.md`, confirms or flips the §0 decisions, then APP 01.6 starts at step 1 (tokens and type).
+
+---
+
+## 2026-10-03 — APP 01.6 implementation rejected; production restored; `/design-lab` composition round
+
+**Phase:** APP 01.6 attempt, its rejection, and the start of a composition-first round. Nothing committed.
+
+**What happened:** Visual System V2 (`docs/design-research/visual-system-v2.md`) was implemented in full on the APP 01 baseline in the order the brief set (tokens and type, 12-column grid, sidebar, lead reading, selectable metric strip, overlay chart with target line and tooltip, four-column rail, lower campaigns module and footer line, campaigns table with status dot and paired change columns, creatives ledger, responsive classes). Checks were green (format, lint, typecheck, 58 tests, build) and every client × page × preset combination rendered clean. An isolated Impeccable critique sub-agent scored it 25/40 ("acceptable") with three P1 findings: the chart could not plot the lead metric, campaign names truncated where their meaning is, and cost against target was missing from the campaign tables. Manual review then rejected the screen outright: one giant empty bordered panel, dead whitespace, weak hierarchy, no true focal point, arbitrary KPI placement, an under-designed chart with a tiny line, colliding labels, lower content reading as raw rows, a rail concept that did not work, administrative typography. The score was not approval, and the written system was not enough.
+
+**Restored:** `src/` and `DESIGN.md` to `40eea2c` (`git diff 40eea2c -- src DESIGN.md` is empty). Kept: Impeccable, `design-premium`, `design-clean`, `PRODUCT.md`, `docs/design-research/*` including `visual-system-v2.md`, this log and DECISIONS (D-018 to D-028 marked with their status; D-029 added).
+
+**Built: `/design-lab`** (`src/app/design-lab/`, isolated from production navigation and components; `robots: noindex`; a fixed overlay above the production shell). Three self-contained 1440px Overview screens on the seeded Luxe Skin Co. data over the 14-day window (chosen so the chart has 14 points instead of 7):
+
+- `data.ts` — one read model from the repository: six metrics with daily series split by period, best/worst day, targets as written ("3.5x", "£28"), campaigns with tier parsed from the Meta name, top movers in absolute units, spend by funnel stage, top creatives by ROAS, account structure. `tone()` colours only material (5%), directional change.
+- `chart-geo.ts` — nice axis (≤ 4 intervals), smooth cubic paths, area and sparkline geometry. Static SVG; no interaction.
+- `lab-sidebar.tsx` — a static sidebar in three tones (grey, white, pale blue) so each concept carries its own shell.
+- **Concept A, Analytical command surface:** compact toolbar; four KPI cards with the ROAS card visually primary (tinted, 40px numeral) and target bars on the two target-bearing metrics, sparklines in every card; an 8/4 second row with a 340px ROAS chart (metric tabs, legend, dashed target, crosshair + tooltip, end-value pill, a four-cell summary strip beneath: average, best day, lowest day, days at target) and a rail of three panels (target status, spend concentration as a stacked bar plus legend, largest movers); a bottom row of a top-campaigns table and spend by funnel stage; a six-cell account strip. Structured panels used deliberately.
+- **Concept B, Modern product analytics:** white page, white sidebar, 32px title; an editorial lead area with an 88px ROAS reading, its change and a target bar, four supporting KPIs with sparklines in a two-column ruled list; metric tabs with values as the chart's selector above a 1040×320 chart; two balanced lower modules (top campaigns with spend bars; "What changed" with 18px signed deltas); one metadata line. Spacing and rules instead of boxes, no large blank areas.
+- **Concept C, Premium data workstation:** pale-blue workspace ground and sidebar, breadcrumb header; a hero panel with a 56px ROAS reading, target and previous-period tiles, a six-cell integrated KPI strip (selected cell tinted with a top rule) and a 380px chart with a 13% wash, best-day dark tooltip, low-day marker and end-value pill; a 300px rail (target gap panel on `accent-soft`, ranked changes, spend concentration); three dense mini-panels (cost per purchase vs target by campaign, top creatives by ROAS with placeholder artwork, spend by funnel stage); a compact campaigns table with over-target costs in red.
+
+**Skills used:** Impeccable `shape` (brief-driven; three structures named by the owner), `layout` and `typeset` applied as checklists while composing (reading order, grouping, rhythm; role scale 11/12/13/14/16/18/20/28/32/40/56/88 across the three concepts), `bolder` read and applied to the lead readings (one decisive move per concept, neighbours quieted), `polish` as a single bounded inspection round (fixed: ISO dates on axes and tooltips, "3.50x" targets, unicode arrows replaced by lucide icons). `design-premium` as the precision bar (explicit states, tabular numerals, tracking that tightens with size); `design-clean` as the restraint check (one accent, no gradients, no glass, colour on material change only). Detector: zero findings on `src/app/design-lab`.
+
+**Checks run:** `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (37 tests, 4 files; the V2 tests left with the discarded implementation), `pnpm build` (nine routes, all dynamic), `git diff --check`. `/design-lab` returns 200 with no leaked `undefined`/`NaN`. Duplicate `.next/types/* 2.ts` cache copies were deleted again before `tsc` (the known iCloud/Finder artefact).
+
+**Trade-offs:** the concepts duplicate markup on purpose (no shared components until one is chosen); charts are static SVG with a mocked tooltip; the lab uses the 14-day preset regardless of the production cookie; mobile is ignored by instruction.
+
+**Deferred:** selection of a concept; making the winner responsive; abstraction into `src/components/ui/`; `DESIGN.md` rewrite from the winner; reconciliation of D-018 to D-028; chart interaction (APP 02).
+
+**Next checkpoint:** owner reviews http://localhost:3000/design-lab at 1440px and picks a direction. Nothing committed.
+
+---
+
+## 2026-10-03 — APP 01.7 production visual direction translated
+
+**Phase:** APP 01.7 — production visual direction. Concept B is the production base; selected analytical depth from Concept C is integrated without creating a 50/50 hybrid. The design lab remains in place and is not exposed in navigation.
+
+**Design translation:** B contributes the open white composition, restrained header, dominant lead metric, supporting KPI hierarchy, wide primary chart, quiet borders, and lower analytical sections. C contributes target status, contextual rail, spend concentration, and ranked campaign changes. A is deliberately excluded, along with equal prominent KPI cards, generic card grids, pale-blue full-canvas treatment, excessive panelisation, and AI-style decorative UI.
+
+**Production changes:**
+
+- Overview now uses the target-bearing lead metric policy (ROAS, then CPA, then spend), a strong current/previous/target relationship, five quieter supporting metrics, and a single selectable primary chart with current/previous day-index comparison, target line, end value, pointer tooltip, and keyboard left/right inspection.
+- The chart is a focused client boundary using the existing SVG/data architecture; no chart dependency or motion library was added. Contextual analysis is beside the chart at wide desktop widths and stacks below when space is constrained.
+- Lower Overview analysis is split into top campaigns and what changed, driven by a new material campaign mover read model. The existing repository and workspace cookie/action flow are unchanged.
+- Campaigns keeps its dense table but moves labels toward sentence case and applies a 3% materiality threshold to low-signal delta colour.
+- Creatives is now a ranked, filterable, sortable ledger with rank, artwork, identity/meta, spend, conversions, cost, ROAS/CPC, CTR, and change. The old ecommerce-like card grid is no longer used by the page.
+- The shell now gives the page a white surface and reserves the cool-grey tint for the navigation rail/mobile sheet. Static Card shadows are removed; the page header and table hierarchy are stronger and sentence case is used in navigation/table labels.
+- The known route-wrapper transform hazard is fixed by changing page entrance fill mode from `both` to `backwards`.
+
+**Checks:** `pnpm lint`, `pnpm typecheck`, `pnpm test` (37 tests), `pnpm build --webpack`, and `git diff --check` pass. The default Turbopack build was attempted but hit an environment-only `Operation not permitted` process/port-binding panic while parsing CSS; Webpack compiled and generated all routes successfully. Read-only local route checks returned 200 for `/`, `/campaigns`, and `/creatives` and confirmed the new headings/content in server-rendered markup.
+
+**Manual review status:** No browser surface was available in this session and no screenshots were taken, per the brief. Visual review at 1440, 1280, 390, and 360 remains the next required checkpoint. The motion/tooltip behaviour also needs direct browser inspection, including reduced-motion mode.
+
+**Next checkpoint:** owner manually reviews production Overview, Campaigns, and Creatives; do not commit or push before that review.
+
+---
+
+## 2026-10-03 — APP 01.8 Overview visual correction
+
+**Scope:** Correct the unapproved APP 01.7 execution within the chosen B/C direction. B retains the open composition, large lead reading and wide chart; C supplies target context, spend concentration and ranked movers. No sidebar, Campaigns or Creatives redesign, dependency addition, seed change or architecture rewrite.
+
+**Chart root cause:** Reproduced Today in headless Chrome: the current and prior paths were only `M500.0 66.0` / `M500.0 72.4`. With one daily point and no point marker, neither path could draw a stroke. The SVG/container dimensions were valid; this was not a hidden CSS colour or clipping defect. Separately, the nice-axis search began at the peak's order of magnitude rather than one order below, allowing an unnecessarily large axis (e.g. 14 scaled to 40). The selector displayed the last day instead of the period aggregate. Pointer positions included the y-axis gutter; hover changed the end label; tooltips could escape the plot; missing-value areas bridged gaps.
+
+**Chart corrections:** One-day ranges now query the existing trailing-series read model for 14 days of explicitly labelled context, with earlier dates grey and the final segment/selected day blue. No fabricated intraday observations or seed exceptions. Multi-day ranges keep current/previous overlays by day index. Extracted and tested the small geometry functions: tighter nice axes with headroom, count-safe ticks, gap-preserving fills and isolated-point markers. The plot has an explicit 320px desktop / 280px phone height, matching-date x labels, reserved gutters, stable final-day value, plot-relative bounded tooltips and keyboard inspection (arrows, Home/End, Escape). Metric buttons show period aggregates and use the client's vocabulary; client/preset changes reset chart state.
+
+**Sparklines and KPI region:** The former two-day, independently normalised full-height strokes explained the arbitrary diagonals. Trends now use only the selected period, at 64×20px beside the numeric baseline; omitted for one-day presets, phones and the compact CTR row. Supporting KPIs use two open columns with horizontal separators, quieter small deltas and useful prior-value/target context. Removed redundant daily averages, repeated ROAS and “of impressions”. Preserved the 88px desktop lead metric; refined its tracking, baseline, previous-day grammar and target spacing. Missing values no longer imply a fabricated zero target gap or a comparison against a zero denominator.
+
+**Rail and page balance:** Removed the chart's duplicate top margin and duplicated responsive rail markup. The 248px rail sits beside the chart from 1400px; at 1280px its sections sit below the full-width plot, stacking on phones. Target status leads, concentration is quieter, campaign identities get two lines plus full-name titles, and mover deltas align right. Non-revenue clients' lower campaign summaries show CPA rather than meaningless ROAS.
+
+**Design guidance:** Used project-local Impeccable layout/typeset/polish and premium/clean execution guidance. Source and rendered assessments found excess cell dividers, detached sparkline baselines, a cramped selector/legend and unnecessary chart spacing. Layout/type detector scans returned no findings; human B/C composition took precedence over generic style defaults. No new theme, boxes or font system. DESIGN.md §21 records only the durable chart/context/spacing rules.
+
+**Browser verification:** Isolated headless Chrome against the running local app, with screenshots visually inspected (not source-only). All 60 client × preset × viewport combinations passed: Luxe Skin Co., Peak Fitness and Arc Cloud; Today, Yesterday, 7D, 14D and 30D; 1440, 1280, 390 and 360px. Actual plot sizes: 736×320, 856×320, 262×280 and 232×280 respectively. Checked every metric selector, finite visible current/grey paths, target bounds, tooltip bounds at left/middle/right, stable end value, keyboard inspection/dismissal, sparse sparkline omission and consistent dimensions. Zero page overflow and zero browser runtime errors in that matrix. Full-page captures and tooltip captures are temporary verification artifacts, not project assets. Manual visual approval remains the owner's decision.
+
+**Checks:** `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (50 tests, including 13 chart regression cases) and `git diff --check` pass. Final smoke checks also exercised the real date server actions at all four widths. `pnpm build` was run but Turbopack again failed on an environment port-binding `Operation not permitted` while processing CSS, including with escalation. `pnpm build --webpack` compiled and generated all routes successfully. This is a qualified build result, not a claimed default-build pass.
+
+**Working tree / next checkpoint:** Existing dirty work preserved. No commit or push. Stop for manual Overview review at the four requested widths.
+
+---
+
+## 2026-10-03 — APP 01.8 manually approved and locked
+
+**Approval:** The owner confirmed that the current Overview passed manual visual review and authorised committing and pushing the complete state. The Overview, including Top campaigns / What changed, is locked. No application or visual changes were made during this checkpoint; only approval status was recorded in DESIGN.md, DECISIONS.md (D-032) and this log. The design lab remains as an unlinked reference. No sidebar redesign is in scope.
+
+**Final verification:** `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (50 tests), `pnpm build --webpack` and `git diff --check` passed. Webpack is explicitly accepted for this checkpoint; the previously documented Turbopack environment limitation is unchanged. The commit includes the APP 01.8 Overview implementation, chart geometry regression tests, retained design lab and page-animation `backwards` fill fix.
+
+**Checkpoint:** Commit the verified approved state on `feat/foundation`, push normally to the existing `origin`, then stop. Further visual changes require a new explicit brief.

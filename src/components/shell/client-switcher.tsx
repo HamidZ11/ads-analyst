@@ -67,7 +67,7 @@ export function ClientSwitcher({
           sideOffset={6}
           className="z-50 w-[var(--radix-dropdown-menu-trigger-width)] min-w-[240px] origin-[var(--radix-dropdown-menu-content-transform-origin)] rounded-lg border border-border bg-surface p-1 shadow-md data-[state=closed]:animate-menu-out data-[state=open]:animate-menu-in motion-reduce:animate-none"
         >
-          <DropdownMenu.Label className="px-2 pt-1.5 pb-1 text-2xs font-medium tracking-wide text-ink-muted uppercase">
+          <DropdownMenu.Label className="px-2 pt-1.5 pb-1 text-2xs font-medium text-ink-muted">
             {agencyName}
           </DropdownMenu.Label>
           <DropdownMenu.RadioGroup value={optimisticId} onValueChange={onSelect}>

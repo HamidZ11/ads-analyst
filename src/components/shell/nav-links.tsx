@@ -13,7 +13,7 @@ export function NavLinks() {
         <div key={group.id}>
           <p
             id={`nav-group-${group.id}`}
-            className="px-2.5 pb-1.5 text-2xs font-medium tracking-wide text-ink-faint uppercase"
+            className="px-2.5 pb-1.5 text-2xs font-medium text-ink-faint"
           >
             {group.label}
           </p>

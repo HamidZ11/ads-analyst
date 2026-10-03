@@ -1,11 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { SegmentedControl } from "@/components/ui/segmented-control";
-import type { ConversionVocabulary } from "@/domain/labels";
+import { CreativeThumbnail } from "@/components/ui/creative-thumbnail";
+import { Delta } from "@/components/ui/delta";
+import { Input } from "@/components/ui/input";
+import { Table, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
+import { formatCurrency, formatMetric, formatNumber } from "@/domain/format";
+import { CREATIVE_TYPE_LABELS, type ConversionVocabulary } from "@/domain/labels";
 import type { CreativeType, CurrencyCode } from "@/domain/types";
 import type { CreativeRow } from "@/features/analytics/queries";
-import { CreativeCard } from "./creative-card";
+import { cn } from "@/lib/cn";
 
 type TypeFilter = "all" | CreativeType;
 type SortKey = "spend" | "conversions" | "cpa" | "ctr" | "roas";
@@ -23,8 +27,6 @@ export interface CreativeGridProps {
   vocabulary: ConversionVocabulary;
   comparison: string;
   showRoas: boolean;
-  splitIndex: number;
-  periodDays: number;
 }
 
 function sortValue(row: CreativeRow, key: SortKey): number | null {
@@ -48,16 +50,16 @@ export function CreativeGrid({
   vocabulary,
   comparison,
   showRoas,
-  splitIndex,
-  periodDays,
 }: CreativeGridProps) {
   const [type, setType] = useState<TypeFilter>("all");
+  const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("spend");
 
   const visible = useMemo(() => {
     const ascending = sortKey === "cpa";
     return rows
       .filter((row) => type === "all" || row.creative.type === type)
+      .filter((row) => row.creative.name.toLowerCase().includes(query.trim().toLowerCase()))
       .sort((a, b) => {
         const av = sortValue(a, sortKey);
         const bv = sortValue(b, sortKey);
@@ -66,7 +68,7 @@ export function CreativeGrid({
         if (bv === null) return -1;
         return ascending ? av - bv : bv - av;
       });
-  }, [rows, type, sortKey]);
+  }, [rows, type, query, sortKey]);
 
   const sortOptions: Array<{ value: SortKey; label: string }> = [
     { value: "spend", label: "Spend" },
@@ -79,12 +81,36 @@ export function CreativeGrid({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <SegmentedControl
-          label="Filter by creative type"
-          options={TYPE_OPTIONS}
-          value={type}
-          onChange={setType}
-        />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label className="sr-only" htmlFor="creative-search">
+            Search creatives
+          </label>
+          <Input
+            id="creative-search"
+            type="search"
+            placeholder="Search creatives"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            className="sm:w-64"
+          />
+          <div className="flex items-center gap-1 text-xs text-ink-muted">
+            {TYPE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setType(option.value)}
+                className={cn(
+                  "rounded-sm px-2 py-1.5 transition-colors",
+                  type === option.value
+                    ? "bg-accent-soft font-medium text-accent-strong"
+                    : "hover:bg-surface-hover hover:text-ink",
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 text-xs text-ink-muted">
             Sort by
@@ -111,23 +137,73 @@ export function CreativeGrid({
           No creatives of this type.
         </p>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {visible.map((row) => (
-            <li key={row.creative.id} className="flex">
-              <div className="flex w-full">
-                <CreativeCard
-                  row={row}
-                  currency={currency}
-                  vocabulary={vocabulary}
-                  comparison={comparison}
-                  showRoas={showRoas}
-                  splitIndex={splitIndex}
-                  periodDays={periodDays}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
+        <Table
+          caption={`Creative performance compared with ${comparison}`}
+          wrapperClassName="rounded-md border border-border bg-surface"
+        >
+          <THead>
+            <Tr>
+              <Th>Rank</Th>
+              <Th>Creative</Th>
+              <Th numeric>Spend</Th>
+              <Th numeric>{vocabulary.plural}</Th>
+              <Th numeric>{vocabulary.costLabel}</Th>
+              <Th numeric>{showRoas ? "ROAS" : "CPC"}</Th>
+              <Th numeric>CTR</Th>
+              <Th numeric>Change</Th>
+            </Tr>
+          </THead>
+          <TBody>
+            {visible.map((row, index) => {
+              const current = row.current;
+              const delivering = current.totals.spend > 0;
+              return (
+                <Tr key={row.creative.id} className="hover:bg-surface-subtle">
+                  <Td className="w-14 text-xs text-ink-faint tabular">
+                    {String(index + 1).padStart(2, "0")}
+                  </Td>
+                  <Td className="max-w-[420px] min-w-[260px]">
+                    <div className="flex items-center gap-3">
+                      <CreativeThumbnail
+                        thumbnail={row.creative.thumbnail}
+                        type={row.creative.type}
+                        frame="square"
+                        size="sm"
+                        className="w-12 shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-ink">{row.creative.name}</p>
+                        <p className="mt-0.5 truncate text-xs text-ink-muted">
+                          {CREATIVE_TYPE_LABELS[row.creative.type]} · {row.ads.length}{" "}
+                          {row.ads.length === 1 ? "ad" : "ads"} · {row.campaigns.length}{" "}
+                          {row.campaigns.length === 1 ? "campaign" : "campaigns"}
+                        </p>
+                      </div>
+                    </div>
+                  </Td>
+                  <Td numeric className="font-medium text-ink">
+                    {formatCurrency(current.totals.spend, currency)}
+                  </Td>
+                  <Td numeric>{formatNumber(current.totals.conversions)}</Td>
+                  <Td numeric>{formatMetric("cpa", current.derived.cpa, currency)}</Td>
+                  <Td numeric>
+                    {showRoas
+                      ? formatMetric("roas", current.derived.roas, currency)
+                      : formatMetric("cpc", current.derived.cpc, currency)}
+                  </Td>
+                  <Td numeric>{formatMetric("ctr", current.derived.ctr, currency)}</Td>
+                  <Td numeric>
+                    {delivering ? (
+                      <Delta change={row.ctrChange} higherIsBetter={true} neutralBelow={0.03} />
+                    ) : (
+                      <span className="text-ink-faint">—</span>
+                    )}
+                  </Td>
+                </Tr>
+              );
+            })}
+          </TBody>
+        </Table>
       )}
     </div>
   );

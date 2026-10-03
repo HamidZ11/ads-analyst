@@ -4,7 +4,6 @@ import { Note } from "@/components/ui/note";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatDateRange } from "@/domain/format";
 import { conversionVocabulary, tracksRevenue } from "@/domain/labels";
-import { rangeLength } from "@/domain/periods";
 import { getCreativeRows } from "@/features/analytics/queries";
 import { CreativeGrid } from "@/features/creatives/creative-grid";
 import { getWorkspace } from "@/features/workspace/server";
@@ -15,7 +14,6 @@ export default async function CreativesPage() {
   const workspace = await getWorkspace();
   const { repository, client, periods, comparison } = workspace;
   const rows = getCreativeRows(repository, client, periods);
-  const periodDays = rangeLength(periods.current);
 
   return (
     <>
@@ -38,8 +36,6 @@ export default async function CreativesPage() {
         vocabulary={conversionVocabulary(client.type)}
         comparison={comparison}
         showRoas={tracksRevenue(client)}
-        splitIndex={rangeLength(periods.previous)}
-        periodDays={periodDays}
       />
       <Note className="mt-4">
         Fatigue and winner signals, creative-level trends and imported imagery arrive with the

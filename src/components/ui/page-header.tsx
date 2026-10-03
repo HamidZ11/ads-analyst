@@ -12,13 +12,15 @@ export function PageHeader({ title, description, actions, className }: PageHeade
   return (
     <header
       className={cn(
-        "mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between",
+        "mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between",
         className,
       )}
     >
       <div className="min-w-0">
-        <h1 className="text-xl font-semibold text-ink">{title}</h1>
-        {description ? <p className="mt-0.5 text-xs text-ink-muted">{description}</p> : null}
+        <h1 className="text-2xl font-semibold tracking-[-0.035em] text-ink sm:text-3xl">
+          {title}
+        </h1>
+        {description ? <p className="mt-1 text-[13px] text-ink-muted">{description}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </header>

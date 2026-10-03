@@ -101,7 +101,8 @@
   --animate-sheet-in: sheet-in var(--duration-deliberate) var(--ease-enter) both;
   --animate-sheet-out: sheet-out var(--duration-standard) var(--ease-exit) both;
   --animate-rise-in: rise-in var(--duration-standard) var(--ease-enter) both;
-  --animate-page-in: page-in var(--duration-standard) var(--ease-enter) both;
+  /* Page enter must not leave a transformed route wrapper behind. */
+  --animate-page-in: page-in var(--duration-standard) var(--ease-enter) backwards;
 
   @keyframes fade-in {
     from {
@@ -185,7 +186,7 @@
 
   body {
     min-height: 100%;
-    background-color: var(--color-canvas);
+    background-color: var(--color-surface);
     color: var(--color-ink);
     font-size: var(--text-sm);
     line-height: var(--text-sm--line-height);

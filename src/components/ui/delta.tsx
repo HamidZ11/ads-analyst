@@ -8,6 +8,8 @@ export interface DeltaProps {
   higherIsBetter: boolean | null;
   /** `text` for table cells and inline use; `pill` for stat tiles. */
   variant?: "text" | "pill";
+  /** Keep small movements legible without giving every row a semantic colour. */
+  neutralBelow?: number;
   className?: string;
 }
 
@@ -26,7 +28,13 @@ const PILL_CLASSES: Record<Sentiment, string> = {
 };
 
 /** Signed relative change coloured by whether the direction is desirable. */
-export function Delta({ change, higherIsBetter, variant = "text", className }: DeltaProps) {
+export function Delta({
+  change,
+  higherIsBetter,
+  variant = "text",
+  neutralBelow = 0.0005,
+  className,
+}: DeltaProps) {
   if (change === null) {
     return (
       <span
@@ -41,9 +49,14 @@ export function Delta({ change, higherIsBetter, variant = "text", className }: D
     );
   }
   const flat = Math.abs(change) < 0.0005;
+  const quiet = Math.abs(change) < neutralBelow;
   const up = change > 0;
   const sentiment: Sentiment =
-    flat || higherIsBetter === null ? "neutral" : up === higherIsBetter ? "good" : "bad";
+    flat || quiet || higherIsBetter === null
+      ? "neutral"
+      : up === higherIsBetter
+        ? "good"
+        : "bad";
   const Icon = flat ? Minus : up ? ArrowUpRight : ArrowDownRight;
   return (
     <span

@@ -34,12 +34,12 @@ export function AppShell({ agency, clients, client, coverage, children }: AppShe
         Skip to content
       </a>
 
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-border bg-surface lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-border bg-canvas lg:block">
         {sidebar}
       </aside>
 
       <div className="lg:pl-60">
-        <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-surface px-3 lg:hidden">
+        <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-canvas px-3 lg:hidden">
           <MobileNav>{sidebar}</MobileNav>
           <ProductMark />
           <div className="ml-auto">
@@ -55,7 +55,7 @@ export function AppShell({ agency, clients, client, coverage, children }: AppShe
         <main
           id="main"
           tabIndex={-1}
-          className="mx-auto w-full max-w-[1440px] px-4 py-5 outline-none sm:px-6 lg:px-8 lg:py-6"
+          className="mx-auto min-h-dvh w-full max-w-[1440px] bg-surface px-4 py-5 outline-none sm:px-6 lg:px-10 lg:py-8"
         >
           {children}
         </main>
