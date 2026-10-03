@@ -16,9 +16,12 @@ import { cn } from "@/lib/cn";
  */
 export function LabFrame({
   workspace,
+  activeHref = "/campaigns",
   children,
 }: {
   workspace: Workspace;
+  /** Which production route the replica navigation shows as current. */
+  activeHref?: string;
   children: ReactNode;
 }) {
   const { agency, clients, client, coverage } = workspace;
@@ -56,7 +59,7 @@ export function LabFrame({
                   </p>
                   <ul className="flex flex-col gap-0.5">
                     {PRIMARY_NAV.filter((item) => item.group === group.id).map((item) => {
-                      const active = isActivePath("/campaigns", item.href);
+                      const active = isActivePath(activeHref, item.href);
                       const Icon = item.icon;
                       return (
                         <li key={item.href}>

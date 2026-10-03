@@ -1,46 +1,36 @@
 import type { Metadata } from "next";
 import { DatePresetControl } from "@/components/shell/date-preset-control";
-import { Note } from "@/components/ui/note";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatDateRange } from "@/domain/format";
-import { conversionVocabulary, tracksRevenue } from "@/domain/labels";
-import { getCreativeRows } from "@/features/analytics/queries";
-import { CreativeGrid } from "@/features/creatives/creative-grid";
+import { buildCreativeBoard } from "@/features/creatives/board-data";
+import { CreativeBoard } from "@/features/creatives/creative-board";
 import { getWorkspace } from "@/features/workspace/server";
 
 export const metadata: Metadata = { title: "Creatives" };
 
 export default async function CreativesPage() {
   const workspace = await getWorkspace();
-  const { repository, client, periods, comparison } = workspace;
-  const rows = getCreativeRows(repository, client, periods);
+  const { client, periods, comparison } = workspace;
+  const model = buildCreativeBoard(workspace);
 
   return (
     <>
       <PageHeader
         title="Creatives"
-        description={`${client.name} · ${rows.length} creatives across ${new Set(rows.flatMap((r) => r.campaigns.map((c) => c.id))).size} campaigns`}
+        description={`${client.name} · ${model.items.length} creatives across ${model.campaignCount} campaigns`}
         actions={
           <>
-            <span className="text-xs text-ink-muted">
-              {formatDateRange(periods.current)}{" "}
-              <span className="text-ink-faint">vs {comparison}</span>
+            <span className="text-xs text-ink-muted md:text-right">
+              <span className="block font-medium text-ink-secondary">
+                {formatDateRange(periods.current)}
+              </span>
+              <span className="mt-0.5 block">vs {comparison}</span>
             </span>
             <DatePresetControl value={workspace.preset} />
           </>
         }
       />
-      <CreativeGrid
-        rows={rows}
-        currency={client.currency}
-        vocabulary={conversionVocabulary(client.type)}
-        comparison={comparison}
-        showRoas={tracksRevenue(client)}
-      />
-      <Note className="mt-4">
-        Fatigue and winner signals, creative-level trends and imported imagery arrive with the
-        creative analysis release.
-      </Note>
+      <CreativeBoard key={`${client.id}-${workspace.preset}`} model={model} />
     </>
   );
 }

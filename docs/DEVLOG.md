@@ -457,3 +457,57 @@ High-signal engineering record. One entry per meaningful implementation pass. De
 **Checks:** `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (50), `pnpm build --webpack`, `git diff --check`.
 
 **Next checkpoint:** owner's manual visual review of `/campaigns` at 1440, 1280, 390 and 360 for the three clients; `/campaigns-lab` stays unlinked until then. No commit or push.
+
+---
+
+## 2026-10-03 — Campaigns locked and pushed; Creatives exploration started in `/creatives-lab`
+
+**Campaigns checkpoint:** the production Campaigns ledger passed manual visual review (the one Safari rendering report was browser cache and cleared with a hard refresh; no code changed for it) and was committed as `c8951ec` "Polish and lock Ad Analyst campaigns" and pushed to `origin/feat/foundation` (`139666c..c8951ec`, no force). The commit includes the ledger, the account summary, the page, DESIGN.md §22, D-034 and the unlinked `/campaigns-lab` reference. All checks were green before the commit; the Overview and sidebar diffs against HEAD were empty.
+
+**Creatives exploration (uncommitted):** `src/app/creatives-lab/` renders three concepts at 1440px inside the approved shell (the shared lab frame now takes an `activeHref` so its replica navigation shows Creatives as current; the production mark and client switcher are real). Data is the production `getCreativeRows` for the fixed Luxe Skin Co. workspace (7 days) plus facts from the same metrics: per-creative daily spend and conversions across both periods, ad-level spend with each ad's campaign, cost against the client's target, and a spend / outcome / ROAS breakdown by type. The existing synthetic artwork is used in fixed boxes so rows keep one rhythm whatever the asset's aspect.
+
+- **Concept A — Creative Performance Ledger:** the Campaigns ledger applied to creatives: rank, 56×70 artwork inside the identity cell with a two-line title and "Video · 2 ads · 1 campaign", Delivery / Outcome / Efficiency groups, 72px entries, spend and purchases at 14px semibold with change and the previous value beneath, cost with the target relationship, ROAS, and CTR with its change and one 64×20 trend across both periods (grey then blue). Undelivering creatives collapse to one muted cell; totals row for all 26.
+- **Concept B — Creative Analysis Split View:** a 400px ranked list (40×50 artwork, name, type and ad count, spend and ROAS right-aligned, selected row on `surface-subtle` with a 2px rule) beside a detail pane: 168×210 artwork, rank line, 18px title, the headline, five open metrics with change and target context, a daily spend chart with the previous period overlaid day by day, "Used in" with ad-level spend per campaign, and a now / before / change table. Type filter, sort and selection are real (client component).
+- **Concept C — Analytical Creative Board:** open composition: a three-cell type breakdown (share of spend, spend, purchases, ROAS per type), the two leaders by spend as full-width entries with 120×150 artwork and five metrics including a CTR trend, then the remaining delivering creatives as horizontal entries with 72×90 artwork and four metrics in two ruled columns, and a quiet strip for creatives with no delivery.
+
+**Skills:** Impeccable `shape` (three briefed directions), `layout` and `typeset` as checklists (hierarchy identity → spend / ROAS / cost → conversions → CTR → change → metadata; 18/16/15/14/13/12px roles), `polish` as one inspection round through a Chrome DevTools probe (three frames, Creatives active in the sidebar, A rows 72px with 56×70 artwork, B list rows 64px, no overflow, no leaked values; the round fixed A's 87px rows, duplicate keys in B's "Used in" list and the lowercase "ROAS" in B's rank line). `design-premium` as the precision bar; `design-clean` as the restraint check. Detector: zero findings on `src/app/creatives-lab`.
+
+**Production untouched:** `/creatives` and every other page are unchanged; the working tree holds the untracked lab and the one-prop change to the campaigns lab frame. No DESIGN.md or decision change until a concept is selected.
+
+**Checks:** `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (50), `pnpm build --webpack` (twelve routes), `git diff --check`.
+
+**Next checkpoint:** owner reviews http://localhost:3000/creatives-lab at 1440px and selects a concept. The lab is not committed or pushed.
+
+---
+
+## 2026-10-03 — Creatives production implementation (Concept C board with Concept B inspector)
+
+**Phase:** APP 01.10, production Creatives, from the manually selected `/creatives-lab` concepts. The Overview, sidebar and Campaigns are locked and untouched. Nothing committed.
+
+**Lab comparison and selection:** three concepts were rendered inside the approved shell. The owner chose Concept C — Analytical Creative Board as the page (type breakdown, ranking, leaders with prominence, open composition, its own identity beside the Overview), Concept B — Creative Analysis Split View for the inspection interaction only, and rejected Concept A as a Campaigns ledger with thumbnails. Recorded as D-035.
+
+**Production translation (`src/features/creatives/board-data.ts`, `creative-board.tsx`, `creative-inspector.tsx`, `creative-artwork.tsx`, `src/app/creatives/page.tsx`; `creative-grid.tsx` and `creative-card.tsx` removed):**
+
+- Header in the product language: "Luxe Skin Co. · 26 creatives across 9 campaigns", the two-line period block and the real preset control.
+- Type tabs with counts (All 26 · Image 11 · Video 9 · Carousel 6) as underline buttons with `aria-pressed`; real filtering. "Ranked by" is a real select (spend, outcomes, cost per conversion lowest first, CTR, ROAS when tracked) with a "n delivering · m idle" count.
+- Type breakdown (C): three hairline-divided cells with count, share of spend at 18px, spend, outcomes and ROAS, computed from the real metrics over all creatives; the filtered type's cell takes a `surface-subtle` tint.
+- Leaders (C): the first two by the active ranking as full-width entries with 120×150 artwork, rank and metadata line, 16px title, and five 18px metrics (spend, outcomes, cost with target relationship, ROAS with change, CTR with change and one 64×20 two-period trend when at least six readings exist).
+- Remaining creatives (C): 72×90 artwork, a two-line 14px title, four 15px metrics (spend, outcomes, cost with target relationship, ROAS), in two ruled columns from 1400px and one column below. Idle creatives: a quiet "No delivery this period" strip with 20×24 artwork and muted names.
+- Selection: every delivering entry is a stretched button with `aria-pressed`; selected entries sit on `surface-subtle` with a 2px accent rule and an accent rank numeral.
+- Inspector (B): a non-modal Radix dialog on the right, 440px from 640px and full width below, with the context line ("#3 by spend · Video · 2 ads · 1 campaign"), title, 120×150 artwork beside the seeded headline and spend / outcomes, cost with target relationship, ROAS and CTR with change, a 120px daily spend chart built on the Overview's chart geometry with the previous period aligned by day (a one-day period shows a sentence instead), "Used in" with ad-level spend per campaign from the real lineage, and a now / before / change table. Opens on selection, updates when another entry is selected, closes on Escape or its button, and returns focus to the entry explicitly (a mouse click does not focus a button on macOS, so Radix alone restored focus to the body).
+
+**Deviations, all deliberate:** no permanent split (B's layout) and no overlay dimming, so the board stays legible behind the inspector; no sparklines beyond the leaders' CTR trend; the inspector reuses the existing `rise-in` and `fade-out` keyframes rather than adding a right-sheet keyframe to the global motion tokens; the roadmap note on the old page was replaced by the comparison note; the 5% materiality threshold matches Campaigns (the Overview's supporting metrics still use 3%, reconciliation deferred to global polish).
+
+**Render verification (Chrome DevTools, real route):** 1440: no page overflow, tabs and counts, breakdown "Image · 11 · 26% of spend · £1,897 · 86 purchases · 3.35x ROAS" (and Video 49%, Carousel 26%), leaders with 120×150 artwork and five metrics, 22 remaining entries in two columns with 72×90 artwork and four metrics, two idle creatives, 22 target lines. 1280: identical with the remaining entries in one column. 390 and 360: layout viewport equals the device width (an earlier 426px zoom from the unwrapped toolbar was fixed), breakdown stacked, entries single-column, inspector full width with a close button, no overflow. Interactions: the Video tab filters to 8 entries and tints its breakdown cell; ranking by ROAS retitles "Leading by ROAS" and renumbers; selecting an entry opens the 440px inspector with focus on its close button, the correct title, context line, chart, two usage rows and five comparison rows; selecting another entry while open switches the inspector; Escape and the close button both close it and return focus to the entry; Enter and Space open it from the keyboard; the focus ring is the accent outline. No console errors or exceptions.
+
+**Functional matrix (curl):** three clients × four presets (7d, 14d, 30d, today): all 200; Purchases / Cost per purchase, Leads / Cost per lead, Trials / Cost per trial; three type cells and target lines in each client's currency; no leaked values and no cross-client data (creative counts 26 / 11 / 9).
+
+**Observation on a locked surface (not changed):** in Chrome's phone emulation the Campaigns page lays out at a 588px viewport at 390 and 360, i.e. the phone zooms out slightly, although no element outside the ledger's scroll container exceeds the screen; the 880px minimum-width table inside its scroll wrapper appears to influence the initial scale. Creatives and the Overview lay out at the device width. Flagged for the later global polish pass.
+
+**Skills:** Impeccable `layout` and `typeset` as checklists (hierarchy identity → spend and efficiency → outcomes → CTR and changes → metadata), `polish` as two bounded inspection rounds through the probe (the second fixed the phone toolbar overflow and the focus return). `design-premium` as the precision bar; `design-clean` as the restraint check. Detector: zero findings on the Creatives files.
+
+**Docs:** DESIGN.md §23 (Creatives board and inspector rules), D-035, this entry.
+
+**Checks:** `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (50), `pnpm build --webpack`, `git diff --check`.
+
+**Next checkpoint:** owner's manual visual review of `/creatives` at 1440, 1280, 390 and 360 for the three clients, including the inspector; `/creatives-lab` stays unlinked until then. No commit or push.
