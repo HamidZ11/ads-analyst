@@ -36,6 +36,7 @@ import {
   requiredGaps,
   type ImportSetup,
 } from "./setup";
+import { openImportedClient } from "./completion";
 
 export interface ImportableClient {
   id: string;
@@ -1175,10 +1176,11 @@ export function ImportFlow({
             <div className="mt-6 flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={async () => {
-                  await selectClient(completion.clientId);
-                  router.push("/");
-                }}
+                onClick={() =>
+                  openImportedClient(completion.clientId, selectClient, (href) =>
+                    router.push(href),
+                  )
+                }
                 className={buttonClasses("primary")}
               >
                 View Overview

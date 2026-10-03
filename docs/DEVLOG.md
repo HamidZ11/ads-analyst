@@ -849,3 +849,85 @@ DESIGN.md and DECISIONS.md are unchanged; there is no permanent pricing decision
 The production build was also served without configuration and with an unreachable Supabase URL to confirm signed-out access to `/`, `/pricing` and `/overview`. Signed-in redirects are covered by unit tests; there is no live Supabase project.
 
 DESIGN.md has no marketing section yet, so it is unchanged; the marketing pages are not marked locked. No commit or push. **Manual review of the production renders is required.**
+
+---
+
+## 2026-10-03 — Final product polish before parking (manual approval pending)
+
+**Scope:** a final pass on Clients, Settings and pricing, the `/overview` import routing fix, lab cleanup and docs. No new features. The approved landing page and the locked analytical surfaces are untouched apart from the import completion's destination.
+
+**Clients.** Eight dense columns became five read left to right: Client (a 28px mark with the name first and business type · currency · account ID beneath), Source, Targets as one group, Data, and a quiet action. Concretely:
+
+- Source reads "Meta Ads · CSV import" or "Demo dataset", with the last import or "Seeded · read-only" beneath.
+- Targets show "CPA £28 / ROAS 3.5x" with "Not set" or "Not tracked" when missing.
+- Data shows a status dot with the day count over the date range.
+- The action is a "Select ›" text button instead of a filled button repeated down the table, with a check for the selected client.
+- Rows are 69px instead of 40–56px.
+- Below 768px the same rows become a labelled list. Identity and action share a line, the meta line wraps instead of truncating, and targets and data sit on single lines. Items are about 190–217px with 44px actions and no horizontal scroll.
+
+**Settings.** The two-column grid of five icon cards became one 880px column of four hairline-separated sections, each with a heading and one line of context:
+
+- **Account:** who is signed in, the workspace and sign-out; the agency and demo mode otherwise.
+- **Client:** name, business type, currency, timezone and default comparison.
+- **Performance targets:** the editable form for imported clients; read-only values with no inputs for demo clients.
+- **Data:** source, coverage, ad account, the latest import, the import count and the conversion and value columns, with "Import a newer export" linking to the importer's existing `?client=` preselection.
+
+The empty-workspace state uses the same sections. Nothing new is offered.
+
+**Pricing.** The £29 Agency plan is unchanged. Below the cobalt field there is a secondary Enterprise row the same width as the plan panel: hairline-bordered, unfilled, with no price figure and no feature list. It reads "For agencies managing more than 10 client accounts. The same product, with room for every client." and "Pricing on request · Email us for pricing". The FAQ answer on larger agencies now names Enterprise. **Launch TODO:** there is no contact address in the repository, so "Email us for pricing" is plain text with no link (D-055).
+
+**Routing.** "View Overview" after an import now selects the client and opens `/overview` directly through `openImportedClient` (`src/features/import/completion.ts`); it previously relied on the `/` redirect. The importer is otherwise unchanged.
+
+**Lab cleanup.**
+
+- Removed the six committed design labs (`ask-lab`, `campaigns-lab`, `creatives-lab`, `design-lab`, `insights-lab`, `sidebar-lab`). Their surfaces are approved, no production code imported them, and git history keeps them. This drops their 12 lab-only tests; the production Ask tests cover the same engine behaviour. Three of those lab files had small type adaptations from the uncommitted persistence pass; they went with the labs.
+- Removed the rejected landing concepts and their art, fonts and leader, the unused round-1 screenshots in `public/landing-lab/` and the unused create-next-app SVGs in `public/`.
+- Kept `/landing-lab` and `/pricing-lab` (the approved studies) because they were never committed, so git history does not preserve them. Their portal moved into `landing-lab`. Delete them after the marketing work is committed.
+
+**Positioning:** unchanged and agency-first, recorded as a launch hypothesis (D-056).
+
+**Tests (276 total):** completion routing to `/overview`; the Clients table with demo and imported clients (sources, grouped targets, "Not set" and "Not tracked", "No data yet", selected and select actions in both layouts); Settings (demo read-only with no inputs or sign-out; imported with labelled target inputs, a status region, the import link and sign-out; sections labelled by their headings); and the pricing page (the £29 Agency plan and annual line, the Enterprise copy, no `mailto:` or contact link, one H1).
+
+**Verification (headless Chrome DOM checks, no screenshots):**
+
+- Clients: no overflow at 1440, 1280, 390 or 360; the table shows from 768px and the list below; nothing truncated.
+- Settings: four headed sections at 1440 and 390; demo mode shows no inputs.
+- Pricing: the Enterprise row aligns with the Agency panel at 1440 and 1280 and spans the column on phones; the price stays above the fold; the heading order is H1, H2 Agency, H3, H2 Enterprise.
+- Landing and Overview: unchanged.
+- No console errors.
+
+DESIGN.md (Clients, Settings, Account and §28 Marketing site), DECISIONS.md (D-054 to D-056) and PRODUCT.md (public site, billing not built) are updated. No commit or push. **Manual visual approval is required.**
+
+---
+
+## 2026-10-04 — Pricing: Enterprise made a first-class path (manual approval pending)
+
+**Feedback:** the Agency composition is one of the strongest pieces of UI in the product, but the Enterprise row beneath the field read as an afterthought. A larger agency could fairly conclude Ad Analyst is a £29 small-agency tool.
+
+**Change (pricing only):**
+
+- The cobalt field now stages two equal white panels side by side. Agency (left) keeps its DNA: the 120px £29 with "/ month", "£290/year · 2 months free", Try the demo and Sign in, and the seeded-demo note.
+- Enterprise (right) answers it with its own typographic moment: "Custom" at about 100px with "pricing" beside it. It reads "For agencies managing more than 10 client accounts.", "The same product, with room for every client.", a capacity row "More than 10 client accounts", "Email us for pricing" and "Quoted for the number of client accounts you manage. Prices in GBP."
+- The two panels share a subgrid, so every row aligns across them, and each has a matching capacity row ("Up to 10" / "More than 10").
+- The eight shared capabilities moved from Agency's list into one "Included in both plans" band beneath both panels, so the product is visibly the same and only capacity differs.
+- The FAQ answer now says "custom pricing". No enterprise features were invented.
+- "Email us for pricing" is still plain text: there is no contact address (launch TODO, D-055).
+
+**Responsive:** below 1024px the panels stack, Agency first, then the shared band, inside the edge-to-edge field on phones. "Custom pricing" scales at the narrowest widths, keeping at least 20px spare from 360 to 1440. There is no overflow at 1440, 1280, 390 or 360, and tap targets are 44–46px. The motion (plans rise, prices lift) is unchanged.
+
+**Tests:** the pricing test now checks two plan panels, the Enterprise copy, the shared list appearing once, and no contact link or `mailto:`. DESIGN.md §28 and the D-055 consequences describe the new composition. No other surface changed. No commit or push.
+
+---
+
+## 2026-10-04 — Wrap-up: final cleanup, commits and merge
+
+**Cleanup:** removed the "Evidence before explanation." section from the landing page and the pricing page, along with its now-unused styles. Each page now flows straight from its last section into the closing call to action, with the existing section spacing. Removed `/landing-lab` and `/pricing-lab`: the approved designs now live in the production marketing pages, and nothing imports from them.
+
+**State at parking:**
+
+- The public site is at `/` and `/pricing`; the app starts at `/overview`.
+- Pricing: Agency at £29 a month or £290 a year for up to 10 client accounts; Enterprise at custom pricing for more than 10.
+- Agency-first positioning is a launch hypothesis.
+- **Launch checkpoints, not started:** live Supabase and RLS validation, billing, a sales contact address, a public demo strategy for production, and deployment.
+
+The work is committed in three commits (persistence and auth, the marketing site, final polish) and merged into `main` without squashing.
