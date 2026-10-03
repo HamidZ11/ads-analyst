@@ -1,0 +1,4 @@
+# Vendored tool files are tracked as-installed; do not apply project whitespace checks to them.
+.claude/skills/impeccable/** whitespace=-trailing-space,-space-before-tab,-blank-at-eof
+.claude/agents/impeccable-*.md whitespace=-trailing-space,-space-before-tab,-blank-at-eof
+.impeccable/** whitespace=-trailing-space,-space-before-tab,-blank-at-eof

@@ -1,0 +1,8 @@
+.next
+node_modules
+pnpm-lock.yaml
+public
+next-env.d.ts
+# Third-party and tool-managed files: do not reformat
+.claude/
+.impeccable/
