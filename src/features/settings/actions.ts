@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getImportStore } from "@/data/store";
-import { updateTargets } from "@/features/import/service";
+import { tracksRevenue } from "@/domain/labels";
+import { readTargets } from "@/features/import/service";
+import { loadSession } from "@/features/workspace/server";
 
 export interface TargetFormState {
   message: string | null;
@@ -14,17 +15,35 @@ const toNumber = (value: FormDataEntryValue | null) => {
   return text === "" ? null : Number(text);
 };
 
-/** Saves optional targets for an imported client. Demo clients stay read-only. */
+/** Saves optional targets for a client in the caller's workspace; demo data is read-only. */
 export async function saveClientTargets(
   clientId: string,
   _previous: TargetFormState,
   form: FormData,
 ): Promise<TargetFormState> {
-  const result = updateTargets(getImportStore(), clientId, {
-    targetCpa: toNumber(form.get("targetCpa")),
-    targetRoas: toNumber(form.get("targetRoas")),
-  });
-  if (!result.ok) return { ok: false, message: result.message };
+  const session = await loadSession();
+  if (session.kind !== "app" || !session.gateway)
+    return { ok: false, message: "Targets can't be saved here." };
+  const client = session.context.clients.find((c) => c.id === clientId);
+  if (!client) return { ok: false, message: "That client isn't available." };
+  const targets = readTargets(
+    {
+      targetCpa: toNumber(form.get("targetCpa")),
+      targetRoas: toNumber(form.get("targetRoas")),
+    },
+    tracksRevenue(client),
+  );
+  if (!targets.ok) return { ok: false, message: targets.message };
+  try {
+    const saved = await session.gateway.updateTargets(
+      clientId,
+      targets.targetCpa,
+      targets.targetRoas,
+    );
+    if (!saved) return { ok: false, message: "That client isn't available." };
+  } catch {
+    return { ok: false, message: "Targets couldn't be saved. Try again." };
+  }
   revalidatePath("/", "layout");
   return { ok: true, message: "Targets saved." };
 }

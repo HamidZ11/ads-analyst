@@ -9,7 +9,8 @@ import { Sidebar } from "./sidebar";
 export interface AppShellProps {
   agency: Agency;
   clients: Client[];
-  client: Client;
+  /** Null only while the workspace has no clients yet. */
+  client: Client | null;
   coverage: DataCoverage | null;
   sourceKind: DataSourceKind;
   children: ReactNode;
@@ -56,14 +57,16 @@ export function AppShell({
         <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-canvas px-3 lg:hidden">
           <MobileNav>{sidebar}</MobileNav>
           <ProductMark />
-          <div className="ml-auto">
-            <ClientSwitcher
-              agencyName={agency.name}
-              clients={switcherClients}
-              selectedId={client.id}
-              variant="compact"
-            />
-          </div>
+          {client ? (
+            <div className="ml-auto">
+              <ClientSwitcher
+                agencyName={agency.name}
+                clients={switcherClients}
+                selectedId={client.id}
+                variant="compact"
+              />
+            </div>
+          ) : null}
         </header>
 
         <main

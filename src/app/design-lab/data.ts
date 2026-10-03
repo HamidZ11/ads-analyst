@@ -1,4 +1,4 @@
-import { getRepository } from "@/data";
+import { getDemoRepository } from "@/data";
 import {
   formatChange,
   formatCurrency,
@@ -72,7 +72,7 @@ export interface LabMover {
 }
 
 export function buildLabModel() {
-  const repository = getRepository();
+  const repository = getDemoRepository();
   const client = repository.getClient("cli_luxe") ?? repository.listClients()[0];
   const currency: CurrencyCode = client.currency;
   const today = todayInTimezone(client.timezone);

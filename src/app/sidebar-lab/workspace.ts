@@ -1,4 +1,4 @@
-import { getRepository } from "@/data";
+import { getDemoRepository } from "@/data";
 import { comparisonLabel, periodPairForPreset, todayInTimezone } from "@/domain/periods";
 import type { Workspace } from "@/features/workspace/server";
 
@@ -7,7 +7,7 @@ import type { Workspace } from "@/features/workspace/server";
  * cookies, so every concept sits beside the same approved Overview canvas.
  */
 export function luxeWorkspace(): Workspace {
-  const repository = getRepository();
+  const repository = getDemoRepository();
   const clients = repository.listClients();
   const client = repository.getClient("cli_luxe") ?? clients[0];
   const today = todayInTimezone(client.timezone);
@@ -19,6 +19,10 @@ export function luxeWorkspace(): Workspace {
     adAccount: repository.listAdAccounts(client.id)[0] ?? null,
     coverage: repository.getCoverage(client.id),
     dataSource: repository.getDataSource(client.id),
+    mode: "demo",
+    user: null,
+    workspace: { id: repository.getAgency().id, name: repository.getAgency().name },
+    canImport: false,
     preset: "7d",
     periods,
     comparison: comparisonLabel(periods),

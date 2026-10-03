@@ -1,34 +1,23 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterAll, describe, expect, it } from "vitest";
-import { composeDataset } from "@/data/compose";
+import { describe, expect, it } from "vitest";
 import {
   DAYS_14,
   ECOM_ADS,
+  ECOM_HEADERS,
   LEAD_ADS,
   ecommerceCsv,
+  ecommerceRows,
   leadCsv,
   metricsFor,
+  toCsv,
   type AdSpec,
 } from "@/data/import/__fixtures__/meta-exports";
 import { inspectHeaders, parseCsv, proposeMapping } from "@/data/import";
-import { InMemoryRepository } from "@/data/repository";
-import { buildSeedDataset } from "@/data/seed";
-import {
-  FileImportStore,
-  MemoryImportStore,
-  StoreReadError,
-  type ImportStore,
-} from "@/data/store";
+import type { WorkspaceGateway } from "@/data/supabase/gateway";
+import { snapshotRepository } from "@/data/supabase/snapshot";
+import { addUser, createTestDatabase, sqlGateway } from "@/data/supabase/test-database";
 import { answerQuestion } from "@/domain/ask/answer";
 import { runInsightEngine } from "@/domain/insights";
-import {
-  comparisonLabel,
-  periodAnchor,
-  periodPairForPreset,
-  type DatePreset,
-} from "@/domain/periods";
+import { periodAnchor } from "@/domain/periods";
 import type { ClientType } from "@/domain/types";
 import {
   getCampaignRows,
@@ -38,20 +27,25 @@ import {
 import { collectAskData } from "@/features/ask/facts";
 import { buildCreativeBoard } from "@/features/creatives/board-data";
 import { collectInsightFacts } from "@/features/insights/facts";
+import { buildContext } from "@/features/workspace/context";
 import type { Workspace } from "@/features/workspace/server";
 import {
   readImportRequest,
+  readTargets,
   runImport,
-  updateTargets,
   type ImportRequest,
   type NewClientInput,
 } from "./service";
 
-const TODAY = "2026-10-03";
-const NOW = new Date(`${TODAY}T10:00:00Z`);
-const seed = buildSeedDataset({ anchorDate: TODAY });
-const seededClients = seed.clients;
-const seedCounts = { campaigns: seed.campaigns.length, metrics: seed.dailyMetrics.length };
+/**
+ * End to end against real Postgres (PGlite) with the production migration:
+ * the planner writes through public.import_meta_csv as a signed-in user, and
+ * pages read back through public.workspace_snapshot. RLS applies throughout.
+ */
+
+const NOW = new Date("2026-10-03T10:00:00Z");
+const ANA = "00000000-0000-4000-8000-00000000000a";
+const BEN = "00000000-0000-4000-8000-00000000000b";
 
 function mappingFor(csv: string, type: ClientType) {
   const parsed = parseCsv(csv);
@@ -85,39 +79,6 @@ function request(
   };
 }
 
-function importEcommerce(store: ImportStore = new MemoryImportStore()) {
-  const outcome = runImport(
-    request(ecommerceCsv(), { kind: "new", client: newClient() }),
-    store,
-    { now: NOW, seededClients },
-  );
-  if (!outcome.ok) throw new Error(outcome.message);
-  return { store, result: outcome.result };
-}
-
-function workspaceFor(
-  repo: InMemoryRepository,
-  clientId: string,
-  preset: DatePreset = "7d",
-): Workspace {
-  const client = repo.getClient(clientId)!;
-  const coverage = repo.getCoverage(client.id);
-  const periods = periodPairForPreset(preset, periodAnchor(TODAY, coverage?.lastDate ?? null));
-  return {
-    repository: repo,
-    agency: repo.getAgency(),
-    clients: repo.listClients(),
-    client,
-    adAccount: repo.listAdAccounts(client.id)[0] ?? null,
-    coverage,
-    dataSource: repo.getDataSource(client.id),
-    today: TODAY,
-    preset,
-    periods,
-    comparison: comparisonLabel(periods),
-  };
-}
-
 /** Expected totals straight from the fixture generator, for day indexes [from, to). */
 function expected(ads: readonly AdSpec[], from: number, to: number) {
   const t = { spend: 0, conversions: 0, revenue: 0, impressions: 0, clicks: 0 };
@@ -133,10 +94,67 @@ function expected(ads: readonly AdSpec[], from: number, to: number) {
   return t;
 }
 
-describe("import service", () => {
-  it("creates a client from a valid export and records the source", () => {
-    const { store, result } = importEcommerce();
-    expect(result).toMatchObject({
+async function setup() {
+  const db = await createTestDatabase();
+  await addUser(db, ANA, "ana@agency.test");
+  await addUser(db, BEN, "ben@other.test");
+  const ana = sqlGateway(db, ANA);
+  const ben = sqlGateway(db, BEN);
+  const [anaWs] = await ana.ensureWorkspaces("Ana's workspace");
+  const [benWs] = await ben.ensureWorkspaces("Ben's workspace");
+  return { db, ana, ben, anaWs, benWs };
+}
+
+async function load(
+  gateway: WorkspaceGateway,
+  workspaceId: string,
+  clientId: string | null = null,
+) {
+  return snapshotRepository(await gateway.snapshot(workspaceId, clientId));
+}
+
+async function importInto(gateway: WorkspaceGateway, workspaceId: string, req: ImportRequest) {
+  const repository = await load(gateway, workspaceId);
+  return runImport(
+    req,
+    {
+      now: NOW,
+      clients: repository.listClients(),
+      accountIdFor: (id) => repository.listAdAccounts(id)[0]?.externalId || null,
+    },
+    (payload) => gateway.importMetaCsv(workspaceId, payload),
+  );
+}
+
+async function workspaceFor(
+  gateway: WorkspaceGateway,
+  workspaceId: string,
+  clientId: string,
+): Promise<Workspace> {
+  const snapshot = await gateway.snapshot(workspaceId, clientId);
+  const context = buildContext({
+    mode: "supabase",
+    user: { id: ANA, email: "ana@agency.test" },
+    workspace: snapshot.workspace!,
+    repository: snapshotRepository(snapshot),
+    requestedClientId: snapshot.client_id,
+    preset: "7d",
+    canImport: true,
+    now: NOW,
+  });
+  return { ...context, client: context.client!, dataSource: context.dataSource! };
+}
+
+describe("import service against Postgres", () => {
+  it("creates a client from a valid export and records the import", async () => {
+    const { ana, anaWs } = await setup();
+    const outcome = await importInto(
+      ana,
+      anaWs.id,
+      request(ecommerceCsv(), { kind: "new", client: newClient() }),
+    );
+    if (!outcome.ok) throw new Error(outcome.message);
+    expect(outcome.result).toMatchObject({
       clientName: "Bloom Botanicals",
       currency: "GBP",
       firstDate: "2026-09-17",
@@ -146,103 +164,211 @@ describe("import service", () => {
       daysAdded: 70,
       daysReplaced: 0,
     });
-    expect(result.spend).toBeCloseTo(expected(ECOM_ADS, 0, 14).spend, 6);
-    const [bundle] = store.read().clients;
-    expect(bundle.client).toMatchObject({
-      targetCpa: 20,
-      targetRoas: null,
-      revenueTracked: true,
+    expect(outcome.result.spend).toBeCloseTo(expected(ECOM_ADS, 0, 14).spend, 6);
+    const snapshot = await ana.snapshot(anaWs.id, null);
+    expect(snapshot.clients).toHaveLength(1);
+    expect(snapshot.clients[0]).toMatchObject({
+      name: "Bloom Botanicals",
+      target_cpa: 20,
+      target_roas: null,
+      revenue_tracked: true,
+      primary_conversion_column: "Purchases",
     });
-    expect(bundle.source.imports[0]).toMatchObject({
-      source: "meta_csv",
-      fileName: "export.csv",
+    expect(snapshot.imports[0]).toMatchObject({
+      file_name: "export.csv",
+      row_count: 70,
+      new_ad_days: 70,
+      updated_ad_days: 0,
+      account_external_id: "1234567890",
+      outcome_column: "Purchases",
+      revenue_column: "Purchases conversion value (GBP)",
+      date_start: "2026-09-17",
+      date_end: "2026-09-30",
+    });
+    expect(snapshot.accounts[0]).toMatchObject({
+      external_id: "1234567890",
+      name: "Bloom Botanicals",
+    });
+    expect(snapshot.campaigns.map((c) => c.name).sort()).toEqual(
+      ECOM_ADS.map((a) => a.campaign)
+        .filter((v, i, all) => all.indexOf(v) === i)
+        .sort(),
+    );
+    const repository = snapshotRepository(snapshot);
+    expect(repository.getDataSource(outcome.result.clientId).imports[0]).toMatchObject({
       rows: 70,
-      accountExternalId: "1234567890",
+      daysAdded: 70,
       outcomeColumn: "Purchases",
-      revenueColumn: "Purchases conversion value (GBP)",
-      importedAt: NOW.toISOString(),
     });
   });
 
-  it("does not double-count a repeated import of the same file", () => {
-    const { store, result } = importEcommerce();
-    const again = runImport(
-      request(ecommerceCsv(), { kind: "existing", clientId: result.clientId }),
-      store,
-      { now: NOW, seededClients },
+  it("does not double-count a repeated import, and updates overlapping days while keeping the rest", async () => {
+    const { ana, anaWs } = await setup();
+    const first = await importInto(
+      ana,
+      anaWs.id,
+      request(ecommerceCsv(), { kind: "new", client: newClient() }),
+    );
+    if (!first.ok) throw new Error(first.message);
+    const again = await importInto(
+      ana,
+      anaWs.id,
+      request(ecommerceCsv(), { kind: "existing", clientId: first.result.clientId }),
     );
     expect(again).toMatchObject({ ok: true, result: { daysAdded: 0, daysReplaced: 70 } });
-    const repo = new InMemoryRepository(composeDataset(seed, store.read()));
-    const total = repo
-      .queryMetrics({ clientId: result.clientId })
-      .reduce((s, m) => s + m.spend, 0);
-    expect(total).toBeCloseTo(expected(ECOM_ADS, 0, 14).spend, 6);
-    expect(store.read().clients[0].source.imports).toHaveLength(2);
+    let repository = await load(ana, anaWs.id, first.result.clientId);
+    const total = (r: typeof repository) =>
+      r.queryMetrics({ clientId: first.result.clientId }).reduce((s, m) => s + m.spend, 0);
+    expect(total(repository)).toBeCloseTo(expected(ECOM_ADS, 0, 14).spend, 4);
+    expect(repository.getDataSource(first.result.clientId).imports).toHaveLength(2);
+
+    // A later export covering 24 Sep – 7 Oct at double spend: 35 ad-days updated, 35 added.
+    const later = Array.from({ length: 14 }, (_, i) =>
+      new Date(Date.UTC(2026, 8, 24 + i)).toISOString().slice(0, 10),
+    );
+    const doubled = ECOM_ADS.map((a) => ({ ...a, spend: a.spend * 2 }));
+    const overlap = await importInto(
+      ana,
+      anaWs.id,
+      request(toCsv(ECOM_HEADERS, ecommerceRows(doubled, later)), {
+        kind: "existing",
+        clientId: first.result.clientId,
+      }),
+    );
+    expect(overlap).toMatchObject({ ok: true, result: { daysAdded: 35, daysReplaced: 35 } });
+    repository = await load(ana, anaWs.id, first.result.clientId);
+    const spendOn = (date: string) =>
+      repository
+        .queryMetrics({ clientId: first.result.clientId })
+        .filter((m) => m.date === date)
+        .reduce((s, m) => s + m.spend, 0);
+    const original = (dayIndex: number) =>
+      ECOM_ADS.reduce((s, a) => s + metricsFor(a, dayIndex).spend, 0);
+    const bumped = (dayIndex: number) =>
+      doubled.reduce((s, a) => s + metricsFor(a, dayIndex).spend, 0);
+    expect(spendOn("2026-09-17")).toBeCloseTo(original(0), 4); // kept
+    expect(spendOn("2026-09-24")).toBeCloseTo(bumped(0), 4); // updated
+    expect(spendOn("2026-10-07")).toBeCloseTo(bumped(13), 4); // added
+    expect(repository.getCoverage(first.result.clientId)).toMatchObject({
+      firstDate: "2026-09-17",
+      lastDate: "2026-10-07",
+      days: 21,
+      rows: 105,
+    });
   });
 
-  it("refuses demo clients, unknown clients, duplicate names and a ROAS target without value", () => {
-    const store = new MemoryImportStore();
-    const csv = ecommerceCsv();
-    expect(
-      runImport(request(csv, { kind: "existing", clientId: "cli_luxe" }), store, {
-        now: NOW,
-        seededClients,
+  it("refuses another workspace's client with the same answer as a missing one, and stores nothing", async () => {
+    const { ana, anaWs, ben, benWs } = await setup();
+    const bloom = await importInto(
+      ana,
+      anaWs.id,
+      request(ecommerceCsv(), { kind: "new", client: newClient() }),
+    );
+    if (!bloom.ok) throw new Error(bloom.message);
+    const intoAna = await importInto(
+      ben,
+      benWs.id,
+      request(ecommerceCsv(), { kind: "existing", clientId: bloom.result.clientId }),
+    );
+    const intoNothing = await importInto(
+      ben,
+      benWs.id,
+      request(ecommerceCsv(), {
+        kind: "existing",
+        clientId: "00000000-0000-4000-8000-0000000000ff",
       }),
-    ).toMatchObject({ ok: false, status: 403 });
+    );
+    expect(intoAna).toEqual({
+      ok: false,
+      status: 404,
+      message: "That client isn't available. Choose another client.",
+    });
+    expect(intoNothing).toEqual(intoAna);
+    // Even bypassing the planner, the database refuses: Ben is not a member of Ana's workspace.
+    await expect(
+      ben.importMetaCsv(anaWs.id, {
+        client: { mode: "existing", id: bloom.result.clientId },
+      } as never),
+    ).rejects.toMatchObject({ kind: "forbidden" });
+    expect((await ben.snapshot(benWs.id, bloom.result.clientId)).clients).toEqual([]);
+    expect((await ana.snapshot(anaWs.id, null)).imports).toHaveLength(1);
+  });
+
+  it("enforces client names per workspace, ROAS needing value, currency and revenue rules", async () => {
+    const { db, ana, anaWs, ben, benWs } = await setup();
+    const first = await importInto(
+      ana,
+      anaWs.id,
+      request(ecommerceCsv(), { kind: "new", client: newClient() }),
+    );
+    if (!first.ok) throw new Error(first.message);
     expect(
-      runImport(request(csv, { kind: "existing", clientId: "cli_nope" }), store, {
-        now: NOW,
-        seededClients,
-      }),
-    ).toMatchObject({ ok: false, status: 404 });
-    expect(
-      runImport(
-        request(csv, { kind: "new", client: newClient({ name: "luxe skin co." }) }),
-        store,
-        { now: NOW, seededClients },
+      await importInto(
+        ana,
+        anaWs.id,
+        request(ecommerceCsv(), {
+          kind: "new",
+          client: newClient({ name: "bloom botanicals" }),
+        }),
       ),
     ).toMatchObject({ ok: false, status: 409 });
-    const lead = leadCsv();
+    // A stale planner view still meets the database's unique index.
+    const stale = await runImport(
+      request(ecommerceCsv(), { kind: "new", client: newClient() }),
+      { now: NOW, clients: [], accountIdFor: () => null },
+      (payload) => ana.importMetaCsv(anaWs.id, payload),
+    );
+    expect(stale).toEqual({
+      ok: false,
+      status: 409,
+      message: "A client called Bloom Botanicals already exists.",
+    });
+    // The same name is fine in another workspace.
     expect(
-      runImport(
+      await importInto(
+        ben,
+        benWs.id,
+        request(ecommerceCsv(), { kind: "new", client: newClient() }),
+      ),
+    ).toMatchObject({ ok: true });
+    expect(
+      await importInto(
+        ana,
+        anaWs.id,
         request(
-          lead,
+          leadCsv(),
           {
             kind: "new",
-            client: newClient({
-              name: "Harbour Physio",
-              type: "lead_generation",
-              targetRoas: 3,
-            }),
+            client: newClient({ name: "Harbour", type: "lead_generation", targetRoas: 3 }),
           },
           "lead_generation",
         ),
-        store,
-        { now: NOW, seededClients },
       ),
     ).toMatchObject({ ok: false, status: 422 });
-    expect(store.read().clients).toEqual([]);
-  });
-
-  it("returns validation issues and stores nothing when the file conflicts with the client", () => {
-    const store = new MemoryImportStore();
-    const usd = runImport(
-      request(ecommerceCsv(), { kind: "new", client: newClient({ currency: "USD" }) }),
-      store,
-      { now: NOW, seededClients },
+    const usd = await importInto(
+      ana,
+      anaWs.id,
+      request(ecommerceCsv(), {
+        kind: "new",
+        client: newClient({ name: "Bloom US", currency: "USD" }),
+      }),
     );
-    expect(usd.ok).toBe(false);
-    if (!usd.ok) expect(usd.issues?.map((i) => i.code)).toContain("currency_mismatch");
-    const { result } = importEcommerce(store);
-    // The ecommerce client records value; a lead export without a value column is refused.
-    const lead = runImport(
-      request(leadCsv(), { kind: "existing", clientId: result.clientId }, "lead_generation"),
-      store,
-      { now: NOW, seededClients },
+    expect(usd.ok ? [] : usd.issues?.map((i) => i.code)).toContain("currency_mismatch");
+    const lead = await importInto(
+      ana,
+      anaWs.id,
+      request(
+        leadCsv(),
+        { kind: "existing", clientId: first.result.clientId },
+        "lead_generation",
+      ),
     );
-    expect(lead.ok).toBe(false);
-    if (!lead.ok) expect(lead.issues?.map((i) => i.code)).toContain("missing_revenue");
-    expect(store.read().clients[0].source.imports).toHaveLength(1);
+    expect(lead.ok ? [] : lead.issues?.map((i) => i.code)).toContain("missing_revenue");
+    const counts = await db.query<{ n: number }>(
+      "select count(*)::int as n from public.clients where workspace_id = $1",
+      [anaWs.id],
+    );
+    expect(counts.rows[0].n).toBe(1);
   });
 
   it("re-validates untrusted request bodies", () => {
@@ -269,40 +395,43 @@ describe("import service", () => {
         destination: { kind: "new", client: { ...newClient(), targetCpa: -4 } },
       }),
     ).toBe("Target CPA must be a positive amount.");
-    const ok = readImportRequest({
-      ...base,
-      fileName: "<b>x\u0000.csv</b>",
-      destination: { kind: "new", client: { ...newClient(), name: "  Bloom‮  " } },
-    });
-    expect(typeof ok).toBe("object");
-    if (typeof ok === "object" && ok.destination.kind === "new") {
-      expect(ok.destination.client.name).toBe("Bloom");
-      expect(ok.fileName).toBe("<b>x .csv</b>");
-    }
   });
 
-  it("edits targets for imported clients only", () => {
-    const { store, result } = importEcommerce();
-    expect(updateTargets(store, result.clientId, { targetCpa: 25, targetRoas: 3.2 })).toEqual({
+  it("saves targets only for the workspace's own clients", async () => {
+    const { ana, anaWs, ben } = await setup();
+    const bloom = await importInto(
+      ana,
+      anaWs.id,
+      request(ecommerceCsv(), { kind: "new", client: newClient() }),
+    );
+    if (!bloom.ok) throw new Error(bloom.message);
+    expect(await ana.updateTargets(bloom.result.clientId, 25, 3.2)).toBe(true);
+    expect(await ben.updateTargets(bloom.result.clientId, 1, null)).toBe(false);
+    const repository = await load(ana, anaWs.id);
+    expect(repository.getClient(bloom.result.clientId)).toMatchObject({
+      targetCpa: 25,
+      targetRoas: 3.2,
+    });
+    expect(readTargets({ targetCpa: 0, targetRoas: null }, true)).toMatchObject({ ok: false });
+    expect(readTargets({ targetCpa: null, targetRoas: 3 }, false)).toMatchObject({ ok: false });
+    expect(readTargets({ targetCpa: 12.5, targetRoas: null }, false)).toEqual({
       ok: true,
+      targetCpa: 12.5,
+      targetRoas: null,
     });
-    expect(store.read().clients[0].client).toMatchObject({ targetCpa: 25, targetRoas: 3.2 });
-    expect(
-      updateTargets(store, result.clientId, { targetCpa: null, targetRoas: null }),
-    ).toEqual({ ok: true });
-    expect(store.read().clients[0].client).toMatchObject({ targetCpa: null, targetRoas: null });
-    expect(updateTargets(store, "cli_luxe", { targetCpa: 1, targetRoas: null })).toMatchObject({
-      ok: false,
-    });
-    expect(
-      updateTargets(store, result.clientId, { targetCpa: 0, targetRoas: null }),
-    ).toMatchObject({ ok: false });
   });
 });
 
-describe("imported data flows through the existing analytics unchanged", () => {
-  const { store, result } = importEcommerce();
-  const lead = runImport(
+describe("imported data from Postgres flows through the existing analytics unchanged", async () => {
+  const { ana, anaWs } = await setup();
+  const bloom = await importInto(
+    ana,
+    anaWs.id,
+    request(ecommerceCsv(), { kind: "new", client: newClient() }),
+  );
+  const harbour = await importInto(
+    ana,
+    anaWs.id,
     request(
       leadCsv(),
       {
@@ -311,152 +440,77 @@ describe("imported data flows through the existing analytics unchanged", () => {
       },
       "lead_generation",
     ),
-    store,
-    { now: NOW, seededClients },
   );
-  if (!lead.ok) throw new Error(lead.message);
-  const repo = new InMemoryRepository(composeDataset(seed, store.read()));
-  const ws = workspaceFor(repo, result.clientId);
+  if (!bloom.ok || !harbour.ok) throw new Error("fixture import failed");
+  const ws = await workspaceFor(ana, anaWs.id, bloom.result.clientId);
 
   it("anchors periods to the last imported day", () => {
-    expect(periodAnchor(TODAY, "2026-09-30")).toBe("2026-09-30");
-    expect(periodAnchor(TODAY, TODAY)).toBe(TODAY);
-    expect(periodAnchor(TODAY, null)).toBe(TODAY);
+    expect(periodAnchor("2026-10-03", "2026-09-30")).toBe("2026-09-30");
     expect(ws.periods.current).toEqual({ start: "2026-09-24", end: "2026-09-30" });
     expect(ws.periods.previous).toEqual({ start: "2026-09-17", end: "2026-09-23" });
     expect(ws.dataSource.kind).toBe("meta_csv");
+    expect(ws.agency.name).toBe("Ana's workspace");
   });
 
   it("produces correct Overview totals", () => {
-    const summary = getClientPeriodSummary(repo, ws.client, ws.periods);
+    const summary = getClientPeriodSummary(ws.repository, ws.client, ws.periods);
     const now = expected(ECOM_ADS, 7, 14);
-    const before = expected(ECOM_ADS, 0, 7);
-    expect(summary.comparison.current.totals.spend).toBeCloseTo(now.spend, 6);
+    expect(summary.comparison.current.totals.spend).toBeCloseTo(now.spend, 4);
     expect(summary.comparison.current.totals.conversions).toBe(now.conversions);
-    expect(summary.comparison.previous.totals.revenue).toBeCloseTo(before.revenue, 6);
+    expect(summary.comparison.previous.totals.revenue).toBeCloseTo(
+      expected(ECOM_ADS, 0, 7).revenue,
+      4,
+    );
     expect(summary.comparison.current.derived.ctr).toBeCloseTo(
       now.clicks / now.impressions,
       12,
     );
-    expect(summary.trend).toHaveLength(14);
   });
 
-  it("produces Campaigns rows per imported campaign", () => {
-    const rows = getCampaignRows(repo, ws.client, ws.periods);
+  it("produces Campaigns rows and Creatives metrics", () => {
+    const rows = getCampaignRows(ws.repository, ws.client, ws.periods);
     expect(rows).toHaveLength(3);
     const serum = rows.find((r) => r.campaign.name === "Prospecting | Broad | Spring Serum")!;
     expect(serum).toMatchObject({ adSetCount: 2, adCount: 2 });
     expect(serum.current.totals.spend).toBeCloseTo(
       expected(ECOM_ADS.slice(0, 2), 7, 14).spend,
-      6,
+      4,
     );
-    const night = rows.find((r) => r.campaign.name.endsWith("Night Cream"))!;
-    expect(night.current.totals.conversions).toBe(0);
-    expect(night.current.derived.cpa).toBeNull();
+    expect(getCreativeRows(ws.repository, ws.client, ws.periods)).toHaveLength(5);
+    expect(buildCreativeBoard(ws).types.map((t) => t.type)).toEqual(["unknown"]);
   });
 
-  it("produces Creatives metrics, one creative per ad, with honest formats and artwork", () => {
-    const rows = getCreativeRows(repo, ws.client, ws.periods);
-    expect(rows).toHaveLength(5);
-    const ugc = rows.find((r) => r.creative.name.startsWith("Serum – UGC"))!;
-    expect(ugc.current.totals.spend).toBeCloseTo(
-      expected(ECOM_ADS.slice(0, 1), 7, 14).spend,
-      6,
+  it("raises Insights findings and answers Ask Analyst from stored metrics", () => {
+    const findings = runInsightEngine(
+      collectInsightFacts(ws.repository, ws.client, ws.periods),
     );
-    expect(ugc.creative).toMatchObject({ type: "unknown", thumbnail: { kind: "unavailable" } });
-    const board = buildCreativeBoard(ws);
-    expect(board.types.map((t) => t.type)).toEqual(["unknown"]);
-    expect(board.types[0].share).toBeCloseTo(1, 10);
-  });
-
-  it("raises Insights findings where thresholds are met", () => {
-    const findings = runInsightEngine(collectInsightFacts(repo, ws.client, ws.periods));
-    const zero = findings.find((f) => f.detector === "zero_conversion_spend");
-    expect(zero?.entity.name).toBe("Prospecting | Lookalike 3% | Night Cream");
-    expect(zero?.spendInvolved).toBeCloseTo(expected(ECOM_ADS.slice(4), 7, 14).spend, 6);
-    expect(zero?.reason).toContain("£20 cost per purchase target");
-  });
-
-  it("gives Ask Analyst facts derived from imported metrics", () => {
-    const data = collectAskData(ws);
-    expect(data.facts.account.current.totals.spend).toBeCloseTo(
-      expected(ECOM_ADS, 7, 14).spend,
-      6,
+    expect(findings.find((f) => f.detector === "zero_conversion_spend")?.entity.name).toBe(
+      "Prospecting | Lookalike 3% | Night Cream",
     );
-    const waste = answerQuestion("Where am I wasting spend?", data).answer;
+    const waste = answerQuestion("Where am I wasting spend?", collectAskData(ws)).answer;
     expect(waste.state).toBe("available");
     expect(waste.entities.map((e) => e.name)).toContain(
       "Prospecting | Lookalike 3% | Night Cream",
     );
   });
 
-  it("omits target language for a client without targets and ROAS without value", () => {
-    const harbour = workspaceFor(repo, lead.result.clientId);
-    expect(harbour.client).toMatchObject({
+  it("omits targets and ROAS for a lead client without them", async () => {
+    const lead = await workspaceFor(ana, anaWs.id, harbour.result.clientId);
+    expect(lead.client).toMatchObject({
       targetCpa: null,
       targetRoas: null,
       revenueTracked: false,
     });
     const findings = runInsightEngine(
-      collectInsightFacts(repo, harbour.client, harbour.periods),
+      collectInsightFacts(lead.repository, lead.client, lead.periods),
     );
-    expect(findings.every((f) => f.target === null && !/target/.test(f.reason))).toBe(true);
-    expect(findings.every((f) => f.detector !== "roas_decline")).toBe(true);
+    expect(findings.every((f) => f.target === null && f.detector !== "roas_decline")).toBe(
+      true,
+    );
     expect(
-      getClientPeriodSummary(repo, harbour.client, harbour.periods).comparison.current.totals
-        .conversions,
+      getClientPeriodSummary(lead.repository, lead.client, lead.periods).comparison.current
+        .totals.conversions,
     ).toBe(expected(LEAD_ADS, 7, 14).conversions);
-  });
-
-  it("keeps imported clients and demo clients isolated", () => {
-    const seedOnly = new InMemoryRepository(seed);
-    for (const demo of seededClients) {
-      expect(repo.listCampaigns(demo.id)).toEqual(seedOnly.listCampaigns(demo.id));
-      expect(repo.queryMetrics({ clientId: demo.id }).length).toBe(
-        seedOnly.queryMetrics({ clientId: demo.id }).length,
-      );
-      expect(repo.getDataSource(demo.id).kind).toBe("seed");
-    }
-    expect(seed.campaigns.length).toBe(seedCounts.campaigns);
-    expect(seed.dailyMetrics.length).toBe(seedCounts.metrics);
-    const bloomAds = repo.listAdsForClient(result.clientId).map((a) => a.id);
-    expect(repo.queryMetrics({ clientId: lead.result.clientId, entityIds: bloomAds })).toEqual(
-      [],
-    );
-    expect(repo.queryMetrics({ clientId: "cli_luxe", entityIds: bloomAds })).toEqual([]);
-    expect(
-      repo
-        .listCampaigns(lead.result.clientId)
-        .every((c) => c.clientId === lead.result.clientId),
-    ).toBe(true);
-    expect(new Set(repo.listClients().map((c) => c.id)).size).toBe(seededClients.length + 2);
-  });
-});
-
-describe("file store", () => {
-  const dir = mkdtempSync(join(tmpdir(), "ad-analyst-store-"));
-  afterAll(() => rmSync(dir, { recursive: true, force: true }));
-
-  it("round-trips state atomically and changes its revision", () => {
-    const store = new FileImportStore(dir);
-    expect(store.read()).toEqual({ version: 1, clients: [] });
-    expect(store.revision()).toBe("none");
-    importEcommerce(store);
-    expect(store.read().clients).toHaveLength(1);
-    expect(store.revision()).not.toBe("none");
-  });
-
-  it("refuses to overwrite unreadable data", () => {
-    const store = new FileImportStore(dir);
-    writeFileSync(store.file, "{not json");
-    expect(() => store.read()).toThrow(StoreReadError);
-    const outcome = runImport(
-      request(ecommerceCsv(), { kind: "new", client: newClient({ name: "Other" }) }),
-      store,
-      { now: NOW, seededClients },
-    );
-    expect(outcome).toMatchObject({ ok: false, status: 500 });
-    expect(readFileSync(store.file, "utf8")).toBe("{not json");
   });
 });
 

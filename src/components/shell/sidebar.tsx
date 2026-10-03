@@ -8,7 +8,8 @@ import { ProductMark } from "./product-mark";
 export interface SidebarProps {
   agency: Agency;
   clients: Client[];
-  client: Client;
+  /** Null only while the workspace has no clients yet. */
+  client: Client | null;
   coverage: DataCoverage | null;
   /** Labels the data-state tile; defaults to the seeded demo dataset. */
   sourceKind?: DataSourceKind;
@@ -39,12 +40,18 @@ export function Sidebar({
       </div>
       <div className="px-3 pt-4">
         <p className="px-1 pb-1.5 text-xs text-ink-faint">Client</p>
-        <ClientSwitcher
-          agencyName={agency.name}
-          clients={switcherClients}
-          selectedId={client.id}
-          connected={coverage !== null}
-        />
+        {client ? (
+          <ClientSwitcher
+            agencyName={agency.name}
+            clients={switcherClients}
+            selectedId={client.id}
+            connected={coverage !== null}
+          />
+        ) : (
+          <p className="flex h-11 items-center rounded-md border border-dashed border-border-strong px-2.5 text-sm text-ink-muted">
+            No clients yet
+          </p>
+        )}
       </div>
       <nav aria-label="Primary" className="mt-5 flex-1 px-3">
         <NavLinks />

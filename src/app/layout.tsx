@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { AppShell } from "@/components/shell/app-shell";
-import { getWorkspace } from "@/features/workspace/server";
+import { loadSession } from "@/features/workspace/server";
 import "./globals.css";
 
 const inter = Inter({
@@ -15,20 +15,25 @@ export const metadata: Metadata = {
   description: "Meta Ads analytics for small marketing agencies.",
 };
 
+/** The app shell appears only for a signed-in (or demo) session; sign-in renders bare. */
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { agency, clients, client, coverage, dataSource } = await getWorkspace();
+  const session = await loadSession();
   return (
     <html lang="en" className={`${inter.variable} h-full`}>
       <body className="min-h-full font-sans">
-        <AppShell
-          agency={agency}
-          clients={clients}
-          client={client}
-          coverage={coverage}
-          sourceKind={dataSource.kind}
-        >
-          {children}
-        </AppShell>
+        {session.kind === "app" ? (
+          <AppShell
+            agency={session.context.agency}
+            clients={session.context.clients}
+            client={session.context.client}
+            coverage={session.context.coverage}
+            sourceKind={session.context.dataSource?.kind ?? "meta_csv"}
+          >
+            {children}
+          </AppShell>
+        ) : (
+          children
+        )}
       </body>
     </html>
   );

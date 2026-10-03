@@ -1,7 +1,6 @@
 import { revalidatePath } from "next/cache";
-import { getRepository } from "@/data";
-import { getImportStore } from "@/data/store";
 import { readImportRequest, runImport } from "@/features/import/service";
+import { loadSession } from "@/features/workspace/server";
 
 const json = (body: unknown, status = 200) =>
   Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
@@ -10,13 +9,36 @@ const json = (body: unknown, status = 200) =>
 const MAX_REQUEST_BYTES = 16 * 1024 * 1024;
 
 /**
- * Same-origin CSV import. The browser previews; this handler re-parses,
- * re-validates and is the only code that writes imported data.
+ * Same-origin CSV import for the signed-in user's active workspace. The
+ * browser previews; this handler re-parses, re-validates and writes once,
+ * atomically, through the user's own database session (RLS applies).
  */
 export async function POST(request: Request) {
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin)
     return json({ ok: false, message: "Request origin does not match this application." }, 403);
+
+  const session = await loadSession();
+  if (session.kind === "unconfigured" || session.kind === "signed_out")
+    return json({ ok: false, message: "Sign in to import data." }, 401);
+  if (session.kind === "unavailable")
+    return json(
+      {
+        ok: false,
+        message: "Your workspace couldn't be loaded. Nothing was imported; try again.",
+      },
+      503,
+    );
+  const { context, gateway } = session;
+  if (!gateway || !context.canImport)
+    return json(
+      {
+        ok: false,
+        message: "Imports need a connected database; this deployment runs read-only demo data.",
+      },
+      503,
+    );
+
   let body: unknown;
   try {
     const reader = request.body?.getReader();
@@ -45,18 +67,18 @@ export async function POST(request: Request) {
   }
   const parsed = readImportRequest(body);
   if (typeof parsed === "string") return json({ ok: false, message: parsed }, 400);
-  try {
-    const seededClients = getRepository()
-      .listClients()
-      .filter((c) => getRepository().getDataSource(c.id).kind === "seed");
-    const outcome = runImport(parsed, getImportStore(), { now: new Date(), seededClients });
-    if (!outcome.ok) return json(outcome, outcome.status);
-    revalidatePath("/", "layout");
-    return json(outcome);
-  } catch {
-    return json(
-      { ok: false, message: "The import could not be saved. Nothing was changed." },
-      500,
-    );
-  }
+
+  const outcome = await runImport(
+    parsed,
+    {
+      now: new Date(),
+      clients: context.clients,
+      accountIdFor: (clientId) =>
+        context.repository.listAdAccounts(clientId)[0]?.externalId || null,
+    },
+    (payload) => gateway.importMetaCsv(context.workspace.id, payload),
+  );
+  if (!outcome.ok) return json(outcome, outcome.status);
+  revalidatePath("/", "layout");
+  return json(outcome);
 }

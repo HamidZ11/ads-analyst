@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -72,5 +73,5 @@ next-env.d.ts
 # Belt and braces: any screenshot the tool writes under .impeccable, at any depth.
 **/.impeccable/**/*.png
 
-# Imported client data written by the local import store (never committed)
+# Legacy local import store from before hosted persistence (never committed)
 /.data/

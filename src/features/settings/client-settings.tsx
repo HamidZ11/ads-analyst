@@ -1,4 +1,6 @@
-import { Briefcase, Database, SlidersHorizontal } from "lucide-react";
+import { Briefcase, Database, SlidersHorizontal, UserRound } from "lucide-react";
+import { buttonClasses } from "@/components/ui/button";
+import { signOut } from "@/features/auth/actions";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { DefinitionList } from "@/components/ui/definition-list";
 import { formatCurrency, formatDate, formatMultiple } from "@/domain/format";
@@ -73,7 +75,10 @@ export function ClientSettings({ workspace }: { workspace: Workspace }) {
         <CardBody>
           <DefinitionList
             items={[
-              { label: "Agency", value: agency.name },
+              {
+                label: workspace.mode === "supabase" ? "Workspace" : "Agency",
+                value: agency.name,
+              },
               {
                 label: "Ad account",
                 value: adAccount ? adAccount.name : "None",
@@ -91,6 +96,10 @@ export function ClientSettings({ workspace }: { workspace: Workspace }) {
           />
         </CardBody>
       </Card>
+      {workspace.mode === "supabase" && workspace.user ? (
+        <AccountCard email={workspace.user.email} />
+      ) : null}
+
       {imported ? (
         <Card>
           <CardHeader
@@ -152,5 +161,31 @@ export function ClientSettings({ workspace }: { workspace: Workspace }) {
         </Card>
       ) : null}
     </div>
+  );
+}
+
+/** Who is signed in, and the way out. Shown in Supabase mode, with or without clients. */
+export function AccountCard({ email }: { email: string | null }) {
+  return (
+    <Card>
+      <CardHeader
+        icon={UserRound}
+        title="Account"
+        description="You only see this workspace's clients and data."
+      />
+      <CardBody>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0 text-sm">
+            <p className="text-xs font-medium text-ink-muted">Signed in as</p>
+            <p className="mt-0.5 truncate text-ink">{email ?? "Signed in"}</p>
+          </div>
+          <form action={signOut}>
+            <button type="submit" className={buttonClasses("secondary")}>
+              Sign out
+            </button>
+          </form>
+        </div>
+      </CardBody>
+    </Card>
   );
 }
