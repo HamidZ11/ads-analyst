@@ -360,3 +360,51 @@ High-signal engineering record. One entry per meaningful implementation pass. De
 **Final verification:** `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (50 tests), `pnpm build --webpack` and `git diff --check` passed. Webpack is explicitly accepted for this checkpoint; the previously documented Turbopack environment limitation is unchanged. The commit includes the APP 01.8 Overview implementation, chart geometry regression tests, retained design lab and page-animation `backwards` fill fix.
 
 **Checkpoint:** Commit the verified approved state on `feat/foundation`, push normally to the existing `origin`, then stop. Further visual changes require a new explicit brief.
+
+---
+
+## 2026-10-03 — Sidebar visual exploration: `/sidebar-lab`
+
+**Phase:** sidebar-only exploration beside the locked APP 01.8 Overview (`8ba6437`). No production file changed; the only addition is the unlinked `src/app/sidebar-lab/` route. Nothing committed.
+
+**Built:** three static sidebar concepts, each rendered beside the real approved Overview (the production `PageHeader` and `OverviewAnalytics` on a fixed Luxe Skin Co. workspace built without cookies, clipped to a 1440×760 first viewport; the preset control is a static replica so the lab cannot change the production cookie). Frames stack vertically inside the lab portal; the navigation config and lucide icons are the production ones.
+
+- **Concept A — Quiet analytical rail:** pale `canvas` rail, 18px mark with the wordmark and the agency in a muted line beneath, a borderless client row (pale initials, name, "Ecommerce · GBP", chevrons on hover), 32px items with 1.5-stroke faint icons, groups separated by spacing only, active item as `accent-strong` text, `accent` icon and a 2px rule at the rail's edge, a low-contrast footer with no divider.
+- **Concept B — Premium workspace nav:** 28px ink mark with a 14px wordmark and agency line, a labelled client control on a white bordered surface (pale-blue initials with a connection dot), groups divided by a hairline, 34px items whose active state is a white bordered surface with ink text and a blue icon, a white footer tile with the data state and a chevron.
+- **Concept C — Compact professional tool:** 224px white rail, a 44px header row with the mark, wordmark and agency on one line, a 36px one-line client row with "Ecom · GBP", 28px items at 15px icons with no gaps, active item as a `surface-active` fill with ink text and a 2px rule, a single 36px footer line.
+
+**Skills used:** Impeccable `shape` (three directions set by the brief), `layout` and `typeset` as checklists (rail rhythm 32/34/28px; hierarchy product → agency → client → navigation; 13px items, 12px group labels, 11px in C), `polish` as one bounded inspection round through a Chrome DevTools probe (overlay on body at 1440×900, three frames at 1440×760, sidebars 240/240/224px, active items 32/34/28px with the intended colours, footers pinned, no horizontal overflow, no console exceptions). `design-premium` as the precision bar; `design-clean` as the restraint check. Detector: zero findings on `src/app/sidebar-lab`.
+
+**Known lab-only compromise:** rendering the real Overview three times duplicates its three element ids (`lead-performance-title`, `performance-chart-title`, `chart-context`) on one page. Accepted for a temporary comparison page; not a production concern.
+
+**Checks:** `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (50 tests), `pnpm build --webpack` (routes include `/sidebar-lab`), `git diff --check`.
+
+**Next checkpoint:** owner reviews http://localhost:3000/sidebar-lab at 1440px and selects a concept; production sidebar work follows a separate brief.
+
+---
+
+## 2026-10-03 — Sidebar production implementation (Concept B)
+
+**Phase:** production sidebar, translated from the manually selected `/sidebar-lab` Concept B. Beside the locked APP 01.8 Overview (`8ba6437`); no Overview, Campaigns, Creatives or other page file changed. Nothing committed.
+
+**Exploration and selection:** `/sidebar-lab` rendered three concepts beside the real Overview (see the previous entry). The owner chose Concept B — Premium Workspace Nav; Concept A — Quiet Analytical Rail was second; Concept C — Compact Professional Tool was rejected. Recorded as D-033.
+
+**Implementation (shell files only):**
+
+- `product-mark.tsx`: 28px ink mark, 14px 600 wordmark, agency in a 12px muted line beneath.
+- `sidebar.tsx`: product header (16px padding), a 12px "Client" label over the switcher, navigation 20px below, and a white footer tile (hairline border, 6px radius) with a status dot, "Meta Ads · demo dataset" and the live coverage line. No chevron: the footer has no action.
+- `client-switcher.tsx`: 44px white control with a 1px border and 6px radius; 28px pale-blue initials with an 8px connection dot when metrics are loaded; name 13px, type · currency 12px; chevrons that darken on hover and open; hover strengthens the border. Radix radio menu, check indicator, `useOptimistic` selection, pending opacity and the compact mobile variant are unchanged.
+- `client-mark.tsx`: new `lg` size (28px), `tone="soft"` (pale blue) and `connected` dot. The default solid tone is untouched, so the Clients table's selected mark is unchanged.
+- `nav-links.tsx`: 34px rows with 2px gaps, 12px sentence-case group labels in `ink-muted`, one hairline before Workspace (20px above, 16px below). Active row: white surface, hairline border, ink text, blue icon at 2 stroke. Inactive: transparent border, `ink-secondary` text, `ink-muted` icon at 1.5 stroke. Hover: `surface-active` and ink text. Motion stays on `transition-colors` with the micro token.
+
+**Deviations from the lab:** none visual. The lab's footer chevron was dropped (no action behind it); the connection dot is driven by real coverage rather than hard-coded; the "Client" label is plain text (the trigger keeps its `aria-label`).
+
+**Render verification (Chrome DevTools, headless, real routes):** at 1440 and 1280 the rail is 240px on `canvas`; mark 28px at (16, 21); wordmark 14px/600; agency 12px muted; switcher 215×44 white with the `border` colour and 6px radius, initials 28px pale blue with the dot; "Overview" active row 215×34 white with hairline, ink text, blue icon; inactive rows `ink-secondary` with muted icons; all rows 34px with 2px gaps; icons share x = 23 and labels x = 49; group labels 12px muted, no text transform; Workspace hairline 20px below the last Analyse row; hover on Campaigns gives `surface-active`; footer tile 215×48 white, hairline, green dot, no chevron, 12px above the bottom; main starts at x = 240; no horizontal overflow; the Overview lead reads "Return on ad spend". A simulated long client name truncates with an ellipsis inside the 215px control. At 390 and 360 the desktop rail is hidden, the 48px bar shows the mark and a 153px compact switcher, the sheet opens at 280px on `canvas`, focus lands inside (close button), the same active row and 34px rhythm render, the footer tile sits 12px above the bottom, nothing overflows, Escape closes the sheet and focus returns to the "Open navigation" trigger.
+
+**Functional verification:** curl matrix of 3 clients × 7 routes: all 200, `aria-current` on the correct link, the switcher naming the right client, the footer present. Through the real menu at 1440: opening shows the agency label and three radio items with Luxe checked and focus inside the menu; choosing Peak Fitness closes the menu, updates the trigger to "Peak Fitness · Local lead generation · GBP", re-renders Campaigns as "Peak Fitness · 5 campaigns" with the active item intact; switching back to Luxe works. No console errors or exceptions in any run.
+
+**Docs:** DESIGN.md §6, §7 and §10 rewritten with the durable sidebar rules; D-033 added; this entry.
+
+**Checks:** `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (50 tests), `pnpm build --webpack` (ten routes), `git diff --check`.
+
+**Next checkpoint:** owner's manual visual review of the production sidebar beside the Overview at 1440, 1280, 390 and 360; `/sidebar-lab` stays unlinked until then. No commit or push.

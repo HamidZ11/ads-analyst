@@ -87,14 +87,14 @@ Rules
 - Gap between cards: 16px. Gap between KPI tiles: 12px.
 - Card padding: 16px horizontal, 14px top, 12–16px bottom. Card header to body: 12px.
 - Table cell padding: 12px horizontal, first/last cell 16px. Header row 36px, body row 40px.
-- Nav item height 32px, gap 2px, group gap 16px. Sidebar padding 12px.
+- Nav item height 34px, gap 2px; the Workspace group starts 20px below Analyse with one hairline and 16px of padding beneath it. Sidebar inner padding 12px (16px for the product header).
 - Inputs and secondary buttons 32px high; small buttons 28px; segmented controls 28px in a 32px track.
 
 ## 7. Layout regions
 
 Taken from the wireframe reference: sidebar → page header → main → optional right rail.
 
-- Sidebar: fixed 240px from 1024px. Top: product mark + agency, then client switcher. Middle: grouped primary nav. Bottom: data-status line. Nothing else.
+- Sidebar: fixed 240px from 1024px on `canvas` with a 1px `border` edge. Top: product mark with the agency beneath, then a "Client" label and the client switcher. Middle: grouped primary nav. Bottom: the data-state tile. Nothing else (§10).
 - Page header: title (18px) left, one-line description below it, compact controls right (period label + preset control). It is per page, not a global bar.
 - Main: max width 1440px, centred.
 - Right rail: a 340px column on ≥1024px for contextual panels (spend breakdown, structure, later: insights). Below 1024px it stacks under the main column.
@@ -128,10 +128,15 @@ Until imported creatives carry imagery, a creative's thumbnail is `{ tone, aspec
 
 ## 10. Navigation
 
-- Grouped lists with 11px uppercase group labels (`ink-faint`).
-- Items: 16px icon at 1.75 stroke, 13px 500 label. Active: `accent-soft` fill, `accent-strong` text, 2.25 stroke. Hover: `surface-hover`. `aria-current="page"` on the active link.
-- Client switcher: 40px button, initials mark (accent fill when selected), name + type/currency line, chevrons icon. Menu uses radio semantics with a check indicator.
-- Breadcrumbs are not used in APP 01; the page header carries context.
+Production sidebar adopts Concept B — Premium Workspace Nav from `/sidebar-lab` (D-033). It supports the locked Overview and never competes with it.
+
+- Hierarchy, top to bottom: product (28px ink mark, 14px 600 wordmark), agency (12px `ink-muted` beneath the wordmark), client (a 12px `ink-faint` "Client" label over the switcher), navigation, data state. Three levels of loudness, never three equal labels.
+- Client switcher: a 44px white control with a 1px `border` and 6px radius; 28px pale-blue initials (`accent-soft` fill, `accent-strong` text) carrying an 8px `positive` dot when daily metrics are loaded; name 13px 500 `ink`; type · currency 12px `ink-muted`; `ChevronsUpDown` in `ink-faint`. Hover strengthens the border to `border-strong` and tints the surface; open state uses `accent-border`. Radix radio menu, check indicator, optimistic selection and the 70% pending opacity are unchanged. Never a large client card.
+- Group labels: "Analyse" and "Workspace", 12px 500 `ink-muted`, sentence case, 6px above their list. One hairline separates Workspace from Analyse; no boxed sections.
+- Items: 34px rows, 2px apart, 10px horizontal padding, 16px lucide icon with a 10px gap, 13px 500 label. Active: `surface` fill, 1px `border`, `ink` text, `accent` icon at 2 stroke, `aria-current="page"`. Inactive: transparent border, `ink-secondary` text, `ink-muted` icon at 1.5 stroke. Hover: `surface-active` fill and `ink` text. Never a solid blue row, a thick blue bar, a glow or a pill.
+- Footer: a white tile (`border`, 6px radius, 10px/8px padding) with a 6px `positive` dot (`ink-faint` when no metrics are loaded), "Meta Ads · demo dataset" 12px 500 `ink-secondary`, and the coverage line 12px `ink-muted` tabular. No chevron until an action exists.
+- Mobile: the same sidebar body renders inside the 280px `canvas` sheet, with the 48px top bar carrying the mark and the compact switcher. Radix traps and returns focus; navigating closes the sheet.
+- Breadcrumbs are not used; the page header carries context.
 
 ## 11. Inputs and controls
 

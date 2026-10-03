@@ -12,7 +12,11 @@ export interface SidebarProps {
   coverage: DataCoverage | null;
 }
 
-/** Shared sidebar body, rendered both in the desktop rail and the mobile sheet. */
+/**
+ * Shared sidebar body, rendered both in the desktop rail and the mobile sheet.
+ * Hierarchy: product and agency, then the client (the operating context),
+ * then grouped navigation, then the data state as a quiet tile.
+ */
 export function Sidebar({ agency, clients, client, coverage }: SidebarProps) {
   const switcherClients = clients.map(({ id, name, type, currency }) => ({
     id,
@@ -22,27 +26,36 @@ export function Sidebar({ agency, clients, client, coverage }: SidebarProps) {
   }));
   return (
     <div className="flex h-full flex-col">
-      <div className="flex flex-col gap-3 px-3 pt-3.5 pb-3">
-        <ProductMark agencyName={agency.name} className="px-1" />
+      <div className="px-4 pt-4">
+        <ProductMark agencyName={agency.name} />
+      </div>
+      <div className="px-3 pt-4">
+        <p className="px-1 pb-1.5 text-xs text-ink-faint">Client</p>
         <ClientSwitcher
           agencyName={agency.name}
           clients={switcherClients}
           selectedId={client.id}
+          connected={coverage !== null}
         />
       </div>
-      <nav aria-label="Primary" className="flex-1 px-3">
+      <nav aria-label="Primary" className="mt-5 flex-1 px-3">
         <NavLinks />
       </nav>
-      <div className="border-t border-border px-4 py-3 text-2xs text-ink-muted">
-        <p className="flex items-center gap-1.5">
-          <span aria-hidden className="size-1.5 rounded-full bg-positive" />
-          <span className="font-medium text-ink-secondary">Meta Ads · demo dataset</span>
-        </p>
-        <p className="mt-0.5">
-          {coverage
-            ? `${coverage.days} days to ${formatDate(coverage.lastDate)}`
-            : "No metrics loaded"}
-        </p>
+      <div className="mx-3 mb-3 flex items-center gap-2.5 rounded-md border border-border bg-surface px-2.5 py-2 text-xs">
+        <span
+          aria-hidden
+          className={`size-1.5 shrink-0 rounded-full ${coverage ? "bg-positive" : "bg-ink-faint"}`}
+        />
+        <span className="min-w-0 flex-1 leading-tight">
+          <span className="block truncate font-medium text-ink-secondary">
+            Meta Ads · demo dataset
+          </span>
+          <span className="block truncate text-ink-muted tabular">
+            {coverage
+              ? `${coverage.days} days to ${formatDate(coverage.lastDate)}`
+              : "No metrics loaded"}
+          </span>
+        </span>
       </div>
     </div>
   );
