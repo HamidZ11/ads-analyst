@@ -33,16 +33,23 @@ function meta(item: CreativeBoardItem): string {
   return `${CREATIVE_TYPE_LABELS[item.type]} · ${item.adCount} ${item.adCount === 1 ? "ad" : "ads"} · ${item.campaignCount} ${item.campaignCount === 1 ? "campaign" : "campaigns"}`;
 }
 
+const BREAKDOWN_COLUMNS: Record<number, string> = {
+  1: "sm:grid-cols-1",
+  2: "sm:grid-cols-2",
+  3: "sm:grid-cols-3",
+  4: "sm:grid-cols-4",
+};
+
 function TargetLine({
   cpa,
   target,
   currency,
 }: {
   cpa: number | null;
-  target: number;
+  target: number | null;
   currency: CreativeBoardModel["currency"];
 }) {
-  if (target <= 0 || cpa === null) return null;
+  if (target === null || target <= 0 || cpa === null) return null;
   const diff = cpa - target;
   if (Math.abs(diff) < 0.005)
     return <p className="text-xs font-medium text-ink-muted">On target</p>;
@@ -337,7 +344,12 @@ export function CreativeBoard({ model }: { model: CreativeBoardModel }) {
         </div>
       </div>
 
-      <dl className="grid grid-cols-1 divide-y divide-border border-b border-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+      <dl
+        className={cn(
+          "grid grid-cols-1 divide-y divide-border border-b border-border sm:divide-x sm:divide-y-0",
+          BREAKDOWN_COLUMNS[types.length] ?? "sm:grid-cols-3",
+        )}
+      >
         {types.map((t, index) => (
           <div
             key={t.type}

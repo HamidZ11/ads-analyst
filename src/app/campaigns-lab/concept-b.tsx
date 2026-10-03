@@ -137,8 +137,10 @@ export function ConceptB({ lab }: { lab: CampaignsLab }) {
                     <p className="mt-0.5 flex items-center gap-1.5 text-xs text-ink-muted">
                       <StatusDot status={campaign.status} withLabel />
                       <span aria-hidden>·</span>
-                      {OBJECTIVE_LABELS[campaign.objective]} · {adSetCount} ad sets · {adCount}{" "}
-                      ads
+                      {campaign.objective
+                        ? OBJECTIVE_LABELS[campaign.objective]
+                        : "No objective"}{" "}
+                      · {adSetCount} ad sets · {adCount} ads
                     </p>
                   </td>
                   <td className="pl-8 text-right align-middle text-[14px] font-semibold text-ink tabular">

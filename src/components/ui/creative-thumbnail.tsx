@@ -1,8 +1,9 @@
-import { GalleryHorizontal, ImageIcon, Play } from "lucide-react";
+import { GalleryHorizontal, ImageIcon, ImageOff, Play } from "lucide-react";
 import type { ReactNode } from "react";
 import type {
   CreativeThumbnail as CreativeThumbnailRef,
   CreativeType,
+  ThumbnailAspect,
   ThumbnailMotif,
   ThumbnailTone,
 } from "@/domain/types";
@@ -18,13 +19,18 @@ const TONE_CLASSES: Record<ThumbnailTone, string> = {
   dusk: "bg-tone-dusk text-tone-dusk-ink",
 };
 
-const ASPECT_CLASSES: Record<CreativeThumbnailRef["aspect"], string> = {
+const ASPECT_CLASSES: Record<ThumbnailAspect, string> = {
   "1:1": "aspect-square",
   "4:5": "aspect-[4/5]",
   "9:16": "aspect-[9/16]",
 };
 
-const TYPE_ICON = { image: ImageIcon, video: Play, carousel: GalleryHorizontal } as const;
+const TYPE_ICON = {
+  image: ImageIcon,
+  video: Play,
+  carousel: GalleryHorizontal,
+  unknown: ImageOff,
+} as const;
 
 const INK = "currentColor";
 const PAPER = "var(--color-surface)";
@@ -342,6 +348,21 @@ export function CreativeThumbnail({
   className,
 }: CreativeThumbnailProps) {
   const Icon = TYPE_ICON[type];
+  if (thumbnail.kind === "unavailable") {
+    // The data source carries no artwork: a neutral square, never an invented look.
+    return (
+      <div
+        role="img"
+        aria-label={`${type === "unknown" ? "Creative" : `${type} creative`}: artwork not available from the data source`}
+        className={cn(
+          "relative flex aspect-square items-center justify-center overflow-hidden rounded-md bg-surface-subtle text-ink-faint",
+          className,
+        )}
+      >
+        <Icon aria-hidden size={size === "lg" ? 16 : 12} strokeWidth={1.75} />
+      </div>
+    );
+  }
   return (
     <div
       role="img"

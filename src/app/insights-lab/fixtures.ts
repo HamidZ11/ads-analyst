@@ -32,13 +32,8 @@ import { luxeWorkspace } from "../sidebar-lab/workspace";
  * fixed. Nothing here ships outside the lab.
  */
 
-export type Priority = "high" | "opportunity" | "watch";
-
-export const PRIORITY_LABEL: Record<Priority, string> = {
-  high: "High impact",
-  opportunity: "Opportunity",
-  watch: "Watch",
-};
+import type { Priority } from "./priority";
+export { PRIORITY_LABEL, type Priority } from "./priority";
 
 export interface Evidence {
   label: string;
@@ -96,7 +91,8 @@ export function buildInsightFixtures() {
   const { repository, client, periods, comparison } = workspace;
   const currency = client.currency;
   const vocab = conversionVocabulary(client.type);
-  const target = client.targetCpa;
+  // Seeded clients always carry a cost target.
+  const target = client.targetCpa ?? 0;
   const span: DateRange = { start: periods.previous.start, end: periods.current.end };
   const split = rangeLength(periods.previous);
   const campaigns = getCampaignRows(repository, client, periods);

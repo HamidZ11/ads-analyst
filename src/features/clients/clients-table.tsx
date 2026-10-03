@@ -4,13 +4,15 @@ import { ClientMark } from "@/components/ui/client-mark";
 import { Table, TBody, Td, Th, THead, Tr } from "@/components/ui/table";
 import type { DataCoverage } from "@/data";
 import { formatCurrency, formatDate, formatMultiple } from "@/domain/format";
-import { CLIENT_TYPE_LABELS } from "@/domain/labels";
-import type { Client } from "@/domain/types";
+import { CLIENT_TYPE_LABELS, tracksRevenue } from "@/domain/labels";
+import type { Client, ClientDataSource } from "@/domain/types";
 import { selectClient } from "@/features/workspace/actions";
 
 export interface ClientListRow {
   client: Client;
   coverage: DataCoverage | null;
+  source: ClientDataSource;
+  accountId: string | null;
 }
 
 export function ClientsTable({
@@ -21,13 +23,18 @@ export function ClientsTable({
   selectedId: string;
 }) {
   return (
-    <Table caption="Agency clients with targets and data status">
+    // Paint containment keeps the wide table's overflow inside its scroller, so
+    // phones lay the page out at device width instead of zooming out.
+    <Table
+      caption="Agency clients with targets and data status"
+      wrapperClassName="[contain:paint]"
+    >
       <THead>
         <Tr>
           <Th>Client</Th>
           <Th>Industry</Th>
           <Th>Currency</Th>
-          <Th>Timezone</Th>
+          <Th>Source</Th>
           <Th numeric>Target CPA</Th>
           <Th numeric>Target ROAS</Th>
           <Th>Data status</Th>
@@ -37,7 +44,8 @@ export function ClientsTable({
         </Tr>
       </THead>
       <TBody>
-        {rows.map(({ client, coverage }) => {
+        {rows.map(({ client, coverage, source, accountId }) => {
+          const latest = source.imports[0];
           const selected = client.id === selectedId;
           return (
             <Tr
@@ -52,13 +60,38 @@ export function ClientsTable({
               </Td>
               <Td className="text-ink-secondary">{CLIENT_TYPE_LABELS[client.type]}</Td>
               <Td className="text-ink-secondary">{client.currency}</Td>
-              <Td className="text-ink-secondary">{client.timezone}</Td>
-              <Td numeric>{formatCurrency(client.targetCpa, client.currency)}</Td>
-              <Td numeric>
-                {client.targetRoas === null ? (
-                  <span className="text-ink-faint">Not tracked</span>
+              <Td>
+                {source.kind === "meta_csv" ? (
+                  <span className="block leading-tight">
+                    <span className="block text-ink-secondary">Meta CSV import</span>
+                    <span className="block text-xs text-ink-muted tabular">
+                      {latest
+                        ? `Last import ${formatDate(latest.importedAt.slice(0, 10))}`
+                        : "No imports"}
+                      {accountId ? ` · ${accountId}` : ""}
+                    </span>
+                  </span>
                 ) : (
+                  <span className="block leading-tight">
+                    <span className="block text-ink-secondary">Demo dataset</span>
+                    <span className="block text-xs text-ink-muted">Seeded · read-only</span>
+                  </span>
+                )}
+              </Td>
+              <Td numeric>
+                {client.targetCpa === null ? (
+                  <span className="text-ink-faint">Not set</span>
+                ) : (
+                  formatCurrency(client.targetCpa, client.currency)
+                )}
+              </Td>
+              <Td numeric>
+                {client.targetRoas !== null ? (
                   formatMultiple(client.targetRoas, 1)
+                ) : tracksRevenue(client) && source.kind === "meta_csv" ? (
+                  <span className="text-ink-faint">Not set</span>
+                ) : (
+                  <span className="text-ink-faint">Not tracked</span>
                 )}
               </Td>
               <Td>

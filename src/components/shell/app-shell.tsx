@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { DataCoverage } from "@/data";
-import type { Agency, Client } from "@/domain/types";
+import type { Agency, Client, DataSourceKind } from "@/domain/types";
 import { ClientSwitcher } from "./client-switcher";
 import { MobileNav } from "./mobile-nav";
 import { ProductMark } from "./product-mark";
@@ -11,12 +11,26 @@ export interface AppShellProps {
   clients: Client[];
   client: Client;
   coverage: DataCoverage | null;
+  sourceKind: DataSourceKind;
   children: ReactNode;
 }
 
-export function AppShell({ agency, clients, client, coverage, children }: AppShellProps) {
+export function AppShell({
+  agency,
+  clients,
+  client,
+  coverage,
+  sourceKind,
+  children,
+}: AppShellProps) {
   const sidebar = (
-    <Sidebar agency={agency} clients={clients} client={client} coverage={coverage} />
+    <Sidebar
+      agency={agency}
+      clients={clients}
+      client={client}
+      coverage={coverage}
+      sourceKind={sourceKind}
+    />
   );
   const switcherClients = clients.map(({ id, name, type, currency }) => ({
     id,

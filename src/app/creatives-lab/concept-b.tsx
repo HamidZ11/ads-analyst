@@ -20,7 +20,7 @@ export function ConceptB({ lab }: { lab: CreativesLab }) {
         creatives={lab.creatives.map(toSplitCreative)}
         currency={client.currency}
         vocabulary={vocabulary}
-        targetCpa={client.targetCpa}
+        targetCpa={client.targetCpa ?? 0}
         showRoas={showRoas}
         comparison={comparison}
         currentLabel={`${formatDate(p.current.start)} – ${formatDate(p.current.end)}`}

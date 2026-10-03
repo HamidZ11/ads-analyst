@@ -39,8 +39,8 @@ export interface CampaignsTableProps {
   vocabulary: ConversionVocabulary;
   comparison: string;
   showRoas: boolean;
-  /** The client's cost-per-conversion target; 0 or less means none. */
-  targetCpa: number;
+  /** The client's cost-per-conversion target; null (or 0 or less) means none. */
+  targetCpa: number | null;
 }
 
 const STATUS_DOT: Record<EntityStatus, string> = {
@@ -96,10 +96,10 @@ function TargetContext({
   currency,
 }: {
   cpa: number | null;
-  target: number;
+  target: number | null;
   currency: CurrencyCode;
 }) {
-  if (target <= 0 || cpa === null) return null;
+  if (target === null || target <= 0 || cpa === null) return null;
   const diff = cpa - target;
   if (Math.abs(diff) < 0.005) {
     return <p className="text-xs font-medium text-ink-muted">On target</p>;
@@ -350,7 +350,7 @@ export function CampaignsTable({
                       <span>{STATUS_LABELS[campaign.status]}</span>
                       <span aria-hidden>·</span>
                       <span>
-                        {OBJECTIVE_LABELS[campaign.objective]} ·{" "}
+                        {campaign.objective ? `${OBJECTIVE_LABELS[campaign.objective]} · ` : ""}
                         {plural(row.adSetCount, "ad set", "ad sets")} ·{" "}
                         {plural(row.adCount, "ad", "ads")}
                       </span>

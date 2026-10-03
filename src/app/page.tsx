@@ -26,7 +26,7 @@ export default async function OverviewPage() {
     <>
       <PageHeader
         title="Overview"
-        description={`${client.name} · Meta Ads${adAccount ? ` · ${adAccount.externalId}` : ""}`}
+        description={`${client.name} · Meta Ads${adAccount?.externalId ? ` · ${adAccount.externalId}` : ""}`}
         actions={
           <>
             <span className="text-xs text-ink-muted md:text-right">

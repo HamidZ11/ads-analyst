@@ -23,10 +23,10 @@ function TargetLine({
   currency,
 }: {
   cpa: number | null;
-  target: number;
+  target: number | null;
   currency: CreativeBoardModel["currency"];
 }) {
-  if (target <= 0 || cpa === null) return null;
+  if (target === null || target <= 0 || cpa === null) return null;
   const diff = cpa - target;
   if (Math.abs(diff) < 0.005)
     return <p className="text-xs font-medium text-ink-muted">On target</p>;

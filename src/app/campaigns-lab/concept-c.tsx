@@ -35,7 +35,9 @@ export function ConceptC({ lab }: { lab: CampaignsLab }) {
     counts,
     movers,
   } = lab;
-  const { currency, targetCpa } = client;
+  const { currency } = client;
+  // The lab renders seeded clients, which always carry a cost target.
+  const targetCpa = client.targetCpa ?? 0;
   const secondary = showRoas ? "roas" : "cpc";
   const lead = movers[0];
   const facts = [
@@ -172,8 +174,10 @@ export function ConceptC({ lab }: { lab: CampaignsLab }) {
                       </span>
                     </p>
                     <p className="pl-3.5 text-xs text-ink-muted">
-                      {OBJECTIVE_LABELS[campaign.objective]} · {adSetCount} ad sets · {adCount}{" "}
-                      ads
+                      {campaign.objective
+                        ? OBJECTIVE_LABELS[campaign.objective]
+                        : "No objective"}{" "}
+                      · {adSetCount} ad sets · {adCount} ads
                     </p>
                   </td>
                   <td className="px-3 text-right align-middle tabular">

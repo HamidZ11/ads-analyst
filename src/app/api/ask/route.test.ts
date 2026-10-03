@@ -17,6 +17,7 @@ const workspace: Workspace = {
   client,
   adAccount: repo.listAdAccounts(client.id)[0],
   coverage: repo.getCoverage(client.id),
+  dataSource: repo.getDataSource(client.id),
   today: "2026-10-03",
   preset: "7d",
   periods,

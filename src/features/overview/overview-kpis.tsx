@@ -64,7 +64,8 @@ function kpiIcon(key: MetricKey, client: Client): LucideIcon {
 }
 
 function kpiHint(key: MetricKey, client: Client): string | undefined {
-  if (key === "cpa") return `Target ${formatCurrency(client.targetCpa, client.currency)}`;
+  if (key === "cpa" && client.targetCpa !== null)
+    return `Target ${formatCurrency(client.targetCpa, client.currency)}`;
   if (key === "roas" && client.targetRoas !== null)
     return `Target ${formatMultiple(client.targetRoas, 1)}`;
   return undefined;

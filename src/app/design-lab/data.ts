@@ -163,13 +163,13 @@ export function buildLabModel() {
       target:
         k === "roas"
           ? client.targetRoas
-          : k === "cpa" && client.targetCpa > 0
+          : k === "cpa" && client.targetCpa !== null && client.targetCpa > 0
             ? client.targetCpa
             : null,
       targetText:
         k === "roas" && client.targetRoas !== null
           ? formatMultiple(client.targetRoas, Number.isInteger(client.targetRoas * 10) ? 1 : 2)
-          : k === "cpa" && client.targetCpa > 0
+          : k === "cpa" && client.targetCpa !== null && client.targetCpa > 0
             ? formatCurrency(client.targetCpa, currency, {
                 decimals: Number.isInteger(client.targetCpa) ? 0 : 2,
               })

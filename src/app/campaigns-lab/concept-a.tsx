@@ -92,8 +92,10 @@ export function ConceptA({ lab }: { lab: CampaignsLab }) {
                         {campaign.name}
                       </p>
                       <p className="text-xs text-ink-muted">
-                        {OBJECTIVE_LABELS[campaign.objective]} · {adSetCount} ad sets ·{" "}
-                        {adCount} ads
+                        {campaign.objective
+                          ? OBJECTIVE_LABELS[campaign.objective]
+                          : "No objective"}{" "}
+                        · {adSetCount} ad sets · {adCount} ads
                       </p>
                     </td>
                     <td className="px-3 align-middle">

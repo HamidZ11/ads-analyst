@@ -1,13 +1,16 @@
-import { Briefcase, SlidersHorizontal } from "lucide-react";
+import { Briefcase, Database, SlidersHorizontal } from "lucide-react";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { DefinitionList } from "@/components/ui/definition-list";
 import { formatCurrency, formatDate, formatMultiple } from "@/domain/format";
-import { CLIENT_TYPE_LABELS, conversionVocabulary } from "@/domain/labels";
+import { CLIENT_TYPE_LABELS, conversionVocabulary, tracksRevenue } from "@/domain/labels";
+import { TargetForm } from "./target-form";
 import type { Workspace } from "@/features/workspace/server";
 
 export function ClientSettings({ workspace }: { workspace: Workspace }) {
-  const { client, adAccount, agency, coverage } = workspace;
+  const { client, adAccount, agency, coverage, dataSource } = workspace;
   const vocab = conversionVocabulary(client.type);
+  const imported = dataSource.kind === "meta_csv";
+  const latest = dataSource.imports[0];
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
@@ -34,8 +37,14 @@ export function ClientSettings({ workspace }: { workspace: Workspace }) {
               },
               {
                 label: "Target CPA",
-                value: formatCurrency(client.targetCpa, client.currency, { decimals: 2 }),
-                detail: vocab.costLabel,
+                value:
+                  client.targetCpa === null
+                    ? "Not set"
+                    : formatCurrency(client.targetCpa, client.currency, { decimals: 2 }),
+                detail:
+                  client.targetCpa === null
+                    ? "Cost comparisons omit target language."
+                    : vocab.costLabel,
               },
               {
                 label: "Target ROAS",
@@ -45,7 +54,9 @@ export function ClientSettings({ workspace }: { workspace: Workspace }) {
                     : formatMultiple(client.targetRoas, 1),
                 detail:
                   client.targetRoas === null
-                    ? "Revenue metrics are shown but not compared against a goal."
+                    ? tracksRevenue(client)
+                      ? "Revenue metrics are shown but not compared against a goal."
+                      : "Conversion value is not recorded, so ROAS is not shown."
                     : undefined,
               },
             ]}
@@ -70,7 +81,7 @@ export function ClientSettings({ workspace }: { workspace: Workspace }) {
               },
               {
                 label: "Data source",
-                value: "Seeded demo dataset",
+                value: imported ? "Meta Ads CSV import" : "Seeded demo dataset",
                 detail: coverage
                   ? `${coverage.days} days · ${formatDate(coverage.firstDate)} – ${formatDate(coverage.lastDate, { year: true })}`
                   : "No metrics loaded",
@@ -80,6 +91,66 @@ export function ClientSettings({ workspace }: { workspace: Workspace }) {
           />
         </CardBody>
       </Card>
+      {imported ? (
+        <Card>
+          <CardHeader
+            icon={Database}
+            title="Imports"
+            description="Each import replaces the ad-days it contains and keeps the rest."
+          />
+          <CardBody>
+            <DefinitionList
+              items={[
+                {
+                  label: "Last import",
+                  value: latest
+                    ? new Date(latest.importedAt).toLocaleString("en-GB", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })
+                    : "None",
+                  detail: latest
+                    ? `${latest.fileName} · ${latest.rows.toLocaleString("en-GB")} rows · ${formatDate(latest.firstDate)} – ${formatDate(latest.lastDate, { year: true })} · ${latest.daysAdded.toLocaleString("en-GB")} new, ${latest.daysReplaced.toLocaleString("en-GB")} replaced`
+                    : undefined,
+                },
+                { label: "Imports", value: String(dataSource.imports.length) },
+                {
+                  label: "Primary conversion",
+                  value: latest?.outcomeColumn || "—",
+                  detail: `Counted as ${vocab.plural.toLowerCase()}.`,
+                },
+                {
+                  label: "Conversion value",
+                  value: latest?.revenueColumn ?? "Not imported",
+                },
+                {
+                  label: "Account ID",
+                  value: adAccount?.externalId || "Not in the export",
+                },
+              ]}
+            />
+          </CardBody>
+        </Card>
+      ) : null}
+
+      {imported ? (
+        <Card>
+          <CardHeader
+            icon={SlidersHorizontal}
+            title="Targets"
+            description="Optional. Pages compare against a target only when one is set."
+          />
+          <CardBody>
+            <TargetForm
+              clientId={client.id}
+              currency={client.currency}
+              targetCpa={client.targetCpa}
+              targetRoas={client.targetRoas}
+              revenueTracked={tracksRevenue(client)}
+            />
+          </CardBody>
+        </Card>
+      ) : null}
     </div>
   );
 }

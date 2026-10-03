@@ -45,7 +45,10 @@ export function buildCampaignsLab() {
       row,
       spendSeries: daily.map((p) => p.spend),
       conversionSeries: daily.map((p) => p.conversions),
-      overTarget: cpa === null || client.targetCpa <= 0 ? null : cpa > client.targetCpa,
+      overTarget:
+        cpa === null || client.targetCpa === null || client.targetCpa <= 0
+          ? null
+          : cpa > client.targetCpa,
     };
   });
   const totals = sumMetrics(rows.map((r) => r.current.totals));

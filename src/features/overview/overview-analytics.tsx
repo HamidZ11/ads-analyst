@@ -62,7 +62,7 @@ function chartSeries(
 
 function leadKey(workspace: Workspace): MetricKey {
   if (workspace.client.targetRoas !== null) return "roas";
-  if (workspace.client.targetCpa > 0) return "cpa";
+  if (workspace.client.targetCpa !== null && workspace.client.targetCpa > 0) return "cpa";
   return "spend";
 }
 
@@ -480,7 +480,7 @@ export function OverviewAnalytics({
               workspace={workspace}
               compact={reading.key === "ctr"}
               note={
-                reading.key === "cpa"
+                reading.key === "cpa" && workspace.client.targetCpa !== null
                   ? `Target ${valueFor("cpa", workspace.client.targetCpa, workspace)}`
                   : reading.key === "ctr"
                     ? "vs prior"

@@ -26,6 +26,7 @@ function workspace(
     client,
     adAccount: repo.listAdAccounts(client.id)[0],
     coverage: repo.getCoverage(client.id),
+    dataSource: repo.getDataSource(client.id),
     today: anchor,
     preset,
     periods,

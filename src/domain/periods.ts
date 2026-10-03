@@ -126,6 +126,14 @@ export function sliceByRange<T extends Pick<DailyMetrics, "date">>(
   return rows.filter((row) => isWithinRange(row.date, range));
 }
 
+/**
+ * The day periods end on: today, or the last day with data when that is
+ * earlier (an export taken days ago). Data that reaches today is unaffected.
+ */
+export function periodAnchor(today: IsoDate, lastDataDate: IsoDate | null): IsoDate {
+  return lastDataDate !== null && lastDataDate < today ? lastDataDate : today;
+}
+
 export interface PeriodPair {
   preset: DatePreset;
   current: DateRange;

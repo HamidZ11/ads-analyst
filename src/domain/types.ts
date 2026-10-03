@@ -17,7 +17,8 @@ export type EntityStatus = "active" | "paused" | "archived";
 
 export type CampaignObjective = "sales" | "leads" | "traffic" | "awareness" | "engagement";
 
-export type CreativeType = "image" | "video" | "carousel";
+/** `unknown` when the data source does not say (e.g. a CSV export without a format column). */
+export type CreativeType = "image" | "video" | "carousel" | "unknown";
 
 export type AdPlatform = "meta";
 
@@ -36,10 +37,15 @@ export interface Client {
   type: ClientType;
   currency: CurrencyCode;
   timezone: string;
-  /** Target cost per conversion in the client's currency. */
-  targetCpa: number;
+  /** Target cost per conversion in the client's currency. Null when no target is set. */
+  targetCpa: number | null;
   /** Target return on ad spend as a multiple (3.5 = 3.5x). Null when not a primary goal. */
   targetRoas: number | null;
+  /**
+   * Whether conversion value (revenue) is recorded for this client. When absent,
+   * the business type decides (ecommerce, or any client with a ROAS target).
+   */
+  revenueTracked?: boolean;
 }
 
 export interface AdAccount {
@@ -57,7 +63,8 @@ export interface Campaign {
   adAccountId: string;
   clientId: string;
   name: string;
-  objective: CampaignObjective;
+  /** Null when the data source does not state an objective. */
+  objective: CampaignObjective | null;
   status: EntityStatus;
 }
 
@@ -103,12 +110,19 @@ export type ThumbnailMotif =
  * Creative imagery reference. Phase 01 ships generated placeholders; a future
  * `kind: "image"` variant will carry a URL to an imported asset.
  */
-export interface CreativeThumbnail {
+export interface PlaceholderThumbnail {
   kind: "placeholder";
   tone: ThumbnailTone;
   aspect: ThumbnailAspect;
   motif: ThumbnailMotif;
 }
+
+/** The data source carries no artwork; nothing about the creative's look is invented. */
+export interface UnavailableThumbnail {
+  kind: "unavailable";
+}
+
+export type CreativeThumbnail = PlaceholderThumbnail | UnavailableThumbnail;
 
 export interface Creative {
   id: string;
@@ -160,6 +174,40 @@ export interface DateRange {
   end: IsoDate;
 }
 
+/** Where a client's data came from. Pages never branch on it; it exists for audit and labels. */
+export type DataSourceKind = "seed" | "meta_csv";
+
+/** One completed import, kept for auditability. */
+export interface ImportRecord {
+  id: string;
+  source: "meta_csv";
+  /** ISO timestamp. */
+  importedAt: string;
+  fileName: string;
+  fileBytes: number;
+  /** Data rows read from the file (after header). */
+  rows: number;
+  firstDate: IsoDate;
+  lastDate: IsoDate;
+  accountExternalId: string | null;
+  currency: CurrencyCode;
+  /** The column mapped to the client's primary conversion. */
+  outcomeColumn: string;
+  /** The column mapped to conversion value, when one was imported. */
+  revenueColumn: string | null;
+  /** Ad-day records that did not exist before this import. */
+  daysAdded: number;
+  /** Ad-day records this import replaced. */
+  daysReplaced: number;
+}
+
+export interface ClientDataSource {
+  clientId: string;
+  kind: DataSourceKind;
+  /** Newest first. Empty for seeded clients. */
+  imports: ImportRecord[];
+}
+
 /** A complete, self-consistent dataset for one agency. */
 export interface Dataset {
   agency: Agency;
@@ -170,4 +218,6 @@ export interface Dataset {
   ads: Ad[];
   creatives: Creative[];
   dailyMetrics: DailyMetrics[];
+  /** Source records per client; clients without one are seeded. */
+  dataSources?: ClientDataSource[];
 }

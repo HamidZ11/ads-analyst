@@ -31,10 +31,11 @@ export function CampaignsSummary({
   const current = sumMetrics(rows.map((r) => r.current.totals));
   const previous = sumMetrics(rows.map((r) => r.previous.totals));
   const delivering = rows.filter((r) => r.current.totals.spend > 0);
+  const targetCpa = client.targetCpa !== null && client.targetCpa > 0 ? client.targetCpa : null;
   const overTarget =
-    client.targetCpa > 0
+    targetCpa !== null
       ? delivering.filter(
-          (r) => r.current.derived.cpa !== null && r.current.derived.cpa > client.targetCpa,
+          (r) => r.current.derived.cpa !== null && r.current.derived.cpa > targetCpa,
         ).length
       : null;
   const lead = rankCampaignMovers(rows, vocabulary.plural)[0];
@@ -73,7 +74,7 @@ export function CampaignsSummary({
         {overTarget !== null ? (
           <>
             <dt className="text-xs text-ink-muted">
-              Over {formatCurrency(client.targetCpa, client.currency)} target
+              Over {formatCurrency(targetCpa, client.currency)} target
             </dt>
             <dd className="mt-1 text-lg font-semibold tracking-[-0.01em] text-ink tabular">
               {overTarget} of {delivering.length}

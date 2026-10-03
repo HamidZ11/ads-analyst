@@ -170,7 +170,7 @@ export function ConceptA({ lab }: { lab: CreativesLab }) {
                       </p>
                       <TargetLine
                         cpa={current.derived.cpa}
-                        target={targetCpa}
+                        target={targetCpa ?? 0}
                         currency={currency}
                       />
                     </td>

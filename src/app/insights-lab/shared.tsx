@@ -3,7 +3,8 @@ import { Delta } from "@/components/ui/delta";
 import { formatDateRange } from "@/domain/format";
 import { cn } from "@/lib/cn";
 import { StaticPresets } from "../campaigns-lab/lab-frame";
-import { PRIORITY_LABEL, type Evidence, type InsightsLab, type Priority } from "./fixtures";
+import type { Evidence, InsightsLab } from "./fixtures";
+import { PRIORITY_LABEL, type Priority } from "./priority";
 
 export const MATERIALITY = 0.05;
 

@@ -18,6 +18,7 @@ export function luxeWorkspace(): Workspace {
     client,
     adAccount: repository.listAdAccounts(client.id)[0] ?? null,
     coverage: repository.getCoverage(client.id),
+    dataSource: repository.getDataSource(client.id),
     preset: "7d",
     periods,
     comparison: comparisonLabel(periods),

@@ -31,6 +31,7 @@ export const CREATIVE_TYPE_LABELS: Record<CreativeType, string> = {
   image: "Image",
   video: "Video",
   carousel: "Carousel",
+  unknown: "Format unknown",
 };
 
 export interface ConversionVocabulary {
@@ -55,7 +56,9 @@ export function conversionVocabulary(type: ClientType): ConversionVocabulary {
 export function primaryMetricKeys(client: Client): MetricKey[] {
   switch (client.type) {
     case "ecommerce":
-      return ["spend", "revenue", "conversions", "cpa", "roas", "ctr"];
+      return tracksRevenue(client)
+        ? ["spend", "revenue", "conversions", "cpa", "roas", "ctr"]
+        : ["spend", "conversions", "cpa", "ctr", "cpc", "cpm"];
     case "lead_generation":
       return ["spend", "conversions", "cpa", "ctr", "cpc", "cpm"];
     case "saas":
@@ -67,5 +70,6 @@ export function primaryMetricKeys(client: Client): MetricKey[] {
 
 /** Whether revenue-based metrics are meaningful for the client. */
 export function tracksRevenue(client: Client): boolean {
+  if (client.revenueTracked !== undefined) return client.revenueTracked;
   return client.type === "ecommerce" || client.targetRoas !== null;
 }

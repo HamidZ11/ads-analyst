@@ -16,11 +16,17 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { agency, clients, client, coverage } = await getWorkspace();
+  const { agency, clients, client, coverage, dataSource } = await getWorkspace();
   return (
     <html lang="en" className={`${inter.variable} h-full`}>
       <body className="min-h-full font-sans">
-        <AppShell agency={agency} clients={clients} client={client} coverage={coverage}>
+        <AppShell
+          agency={agency}
+          clients={clients}
+          client={client}
+          coverage={coverage}
+          sourceKind={dataSource.kind}
+        >
           {children}
         </AppShell>
       </body>

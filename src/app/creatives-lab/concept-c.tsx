@@ -144,7 +144,8 @@ function Entry({
 export function ConceptC({ lab }: { lab: CreativesLab }) {
   const { client, creatives, delivering, vocabulary, showRoas, totals, types, comparison } =
     lab;
-  const { currency, targetCpa } = client;
+  const { currency } = client;
+  const targetCpa = client.targetCpa ?? 0;
   const ctx: EntryContext = { currency, targetCpa, vocabulary, showRoas };
   const leaders = delivering.slice(0, 2);
   const rest = delivering.slice(2);

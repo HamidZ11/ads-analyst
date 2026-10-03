@@ -75,7 +75,10 @@ export function buildCreativesLab() {
       conversionSeries: daily.map((p) => p.conversions),
       split,
       adSpend,
-      overTarget: cpa === null || client.targetCpa <= 0 ? null : cpa > client.targetCpa,
+      overTarget:
+        cpa === null || client.targetCpa === null || client.targetCpa <= 0
+          ? null
+          : cpa > client.targetCpa,
     };
   });
 

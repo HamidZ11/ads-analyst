@@ -1,6 +1,6 @@
 import type { DataCoverage } from "@/data";
 import { formatDate } from "@/domain/format";
-import type { Agency, Client } from "@/domain/types";
+import type { Agency, Client, DataSourceKind } from "@/domain/types";
 import { ClientSwitcher } from "./client-switcher";
 import { NavLinks } from "./nav-links";
 import { ProductMark } from "./product-mark";
@@ -10,6 +10,8 @@ export interface SidebarProps {
   clients: Client[];
   client: Client;
   coverage: DataCoverage | null;
+  /** Labels the data-state tile; defaults to the seeded demo dataset. */
+  sourceKind?: DataSourceKind;
 }
 
 /**
@@ -17,7 +19,13 @@ export interface SidebarProps {
  * Hierarchy: product and agency, then the client (the operating context),
  * then grouped navigation, then the data state as a quiet tile.
  */
-export function Sidebar({ agency, clients, client, coverage }: SidebarProps) {
+export function Sidebar({
+  agency,
+  clients,
+  client,
+  coverage,
+  sourceKind = "seed",
+}: SidebarProps) {
   const switcherClients = clients.map(({ id, name, type, currency }) => ({
     id,
     name,
@@ -48,7 +56,7 @@ export function Sidebar({ agency, clients, client, coverage }: SidebarProps) {
         />
         <span className="min-w-0 flex-1 leading-tight">
           <span className="block truncate font-medium text-ink-secondary">
-            Meta Ads · demo dataset
+            {sourceKind === "meta_csv" ? "Meta Ads · CSV import" : "Meta Ads · demo dataset"}
           </span>
           <span className="block truncate text-ink-muted tabular">
             {coverage

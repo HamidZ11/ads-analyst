@@ -71,3 +71,6 @@ next-env.d.ts
 # impeccable-ignore-end
 # Belt and braces: any screenshot the tool writes under .impeccable, at any depth.
 **/.impeccable/**/*.png
+
+# Imported client data written by the local import store (never committed)
+/.data/

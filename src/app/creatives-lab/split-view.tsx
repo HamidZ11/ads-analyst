@@ -83,6 +83,7 @@ export function SplitView({
     image: creatives.filter((c) => c.type === "image").length,
     video: creatives.filter((c) => c.type === "video").length,
     carousel: creatives.filter((c) => c.type === "carousel").length,
+    unknown: creatives.filter((c) => c.type === "unknown").length,
   };
   const sortLabel: Record<SortKey, string> = {
     spend: "Spend",

@@ -28,7 +28,9 @@ export function AccountStructure({
         icon={Building2}
         title="Account"
         description={
-          adAccount ? `${adAccount.name} · ${adAccount.externalId}` : "No ad account connected"
+          adAccount
+            ? [adAccount.name, adAccount.externalId].filter(Boolean).join(" · ")
+            : "No ad account connected"
         }
       />
       <CardBody>

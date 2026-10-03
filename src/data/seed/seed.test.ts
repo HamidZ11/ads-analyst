@@ -190,7 +190,7 @@ describe("deliberate performance patterns emerge from the numbers", () => {
     const { current, previous } = compareCampaign("cmp_luxe_01");
     expect(current.totals.spend).toBeGreaterThan(previous.totals.spend * 1.08);
     expect(current.totals.conversions).toBeGreaterThan(previous.totals.conversions);
-    expect(current.derived.cpa!).toBeLessThan(luxe.targetCpa);
+    expect(current.derived.cpa!).toBeLessThan(luxe.targetCpa!);
     expect(current.derived.roas!).toBeGreaterThan(previous.derived.roas!);
     expect(current.derived.roas!).toBeGreaterThan(luxe.targetRoas!);
   });
@@ -256,7 +256,7 @@ describe("deliberate performance patterns emerge from the numbers", () => {
     const all = snapshot(repository.queryMetrics({ clientId: luxe.id, entityIds: adIds }));
     expect(all.totals.spend).toBeGreaterThan(4000);
     expect(all.totals.conversions).toBeLessThan(15);
-    expect(all.derived.cpa!).toBeGreaterThan(luxe.targetCpa * 5);
+    expect(all.derived.cpa!).toBeGreaterThan(luxe.targetCpa! * 5);
   });
 
   it("D. a recovering campaign: poor previous period, markedly better current period", () => {
@@ -285,7 +285,7 @@ describe("deliberate performance patterns emerge from the numbers", () => {
       expect(star.derived.cpa!).toBeLessThan(other.derived.cpa!);
       expect(star.derived.roas!).toBeGreaterThan(other.derived.roas!);
     }
-    expect(star.derived.cpa!).toBeLessThan(luxe.targetCpa * 0.6);
+    expect(star.derived.cpa!).toBeLessThan(luxe.targetCpa! * 0.6);
   });
 
   it("F. spend increasing while conversions decline", () => {

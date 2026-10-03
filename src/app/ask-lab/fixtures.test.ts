@@ -23,6 +23,7 @@ function workspace(repo = repository): Workspace {
     client,
     adAccount: repo.listAdAccounts(client.id)[0],
     coverage: repo.getCoverage(client.id),
+    dataSource: repo.getDataSource(client.id),
     today: anchor,
     preset: "7d",
     periods,

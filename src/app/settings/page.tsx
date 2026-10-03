@@ -16,8 +16,9 @@ export default async function SettingsPage() {
       />
       <ClientSettings workspace={workspace} />
       <Note className="mt-4">
-        Settings are read-only in this release. Editing targets and connecting integrations
-        arrive later.
+        {workspace.dataSource.kind === "meta_csv"
+          ? "Currency, business type and timezone are fixed after the first import because imported amounts and days depend on them."
+          : "Demo clients are read-only. Import a Meta Ads CSV export from Clients to create a client whose targets you can edit."}
       </Note>
     </>
   );

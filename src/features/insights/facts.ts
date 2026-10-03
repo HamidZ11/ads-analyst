@@ -86,7 +86,7 @@ export function collectInsightFacts(
       clientName: client.name,
       currency: client.currency,
       vocabulary: conversionVocabulary(client.type),
-      targetCpa: client.targetCpa > 0 ? client.targetCpa : null,
+      targetCpa: client.targetCpa !== null && client.targetCpa > 0 ? client.targetCpa : null,
       targetRoas:
         client.targetRoas !== null && client.targetRoas > 0 ? client.targetRoas : null,
       tracksRevenue: tracksRevenue(client),

@@ -4,12 +4,13 @@ import { getRepository, type AdAnalystRepository, type DataCoverage } from "@/da
 import {
   comparisonLabel,
   parseDatePreset,
+  periodAnchor,
   periodPairForPreset,
   todayInTimezone,
   type DatePreset,
   type PeriodPair,
 } from "@/domain/periods";
-import type { AdAccount, Agency, Client, IsoDate } from "@/domain/types";
+import type { AdAccount, Agency, Client, ClientDataSource, IsoDate } from "@/domain/types";
 import { CLIENT_COOKIE, RANGE_COOKIE } from "./cookies";
 
 /**
@@ -22,6 +23,8 @@ export interface Workspace {
   client: Client;
   adAccount: AdAccount | null;
   coverage: DataCoverage | null;
+  /** Where the client's data came from; for labels only, never for analysis. */
+  dataSource: ClientDataSource;
   preset: DatePreset;
   periods: PeriodPair;
   comparison: string;
@@ -37,14 +40,17 @@ export const getWorkspace = cache(async (): Promise<Workspace> => {
   const client = (requestedClient && repository.getClient(requestedClient)) || clients[0];
   const preset = parseDatePreset(store.get(RANGE_COOKIE)?.value);
   const today = todayInTimezone(client.timezone);
-  const periods = periodPairForPreset(preset, today);
+  const coverage = repository.getCoverage(client.id);
+  // Seeded data always reaches today, so only imported data can move the anchor.
+  const periods = periodPairForPreset(preset, periodAnchor(today, coverage?.lastDate ?? null));
 
   return {
     agency: repository.getAgency(),
     clients,
     client,
     adAccount: repository.listAdAccounts(client.id)[0] ?? null,
-    coverage: repository.getCoverage(client.id),
+    coverage,
+    dataSource: repository.getDataSource(client.id),
     preset,
     periods,
     comparison: comparisonLabel(periods),

@@ -5,6 +5,7 @@ import type {
   Agency,
   Campaign,
   Client,
+  ClientDataSource,
   Creative,
   DailyMetrics,
   Dataset,
@@ -60,6 +61,8 @@ export interface AdAnalystRepository {
   getAdLineage(adId: string): AdLineage | undefined;
   queryMetrics(query: MetricsQuery): DailyMetrics[];
   getCoverage(clientId: string): DataCoverage | null;
+  /** Where the client's data came from; "seed" when no import exists. For labels and audit only. */
+  getDataSource(clientId: string): ClientDataSource;
 }
 
 function groupBy<T, K>(items: readonly T[], keyOf: (item: T) => K): Map<K, T[]> {
@@ -93,6 +96,7 @@ export class InMemoryRepository implements AdAnalystRepository {
   private readonly clientByEntity: Map<string, string>;
   private readonly metricsByClient: Map<string, DailyMetrics[]>;
   private readonly metricsByEntity: Map<string, DailyMetrics[]>;
+  private readonly sourcesByClient: Map<string, ClientDataSource>;
 
   constructor(private readonly dataset: Dataset) {
     this.clientsById = indexBy(dataset.clients, (c) => c.id);
@@ -126,6 +130,7 @@ export class InMemoryRepository implements AdAnalystRepository {
       (m) => this.clientByEntity.get(m.entityId) ?? "",
     );
     this.metricsByEntity = groupBy(dataset.dailyMetrics, (m) => m.entityId);
+    this.sourcesByClient = indexBy(dataset.dataSources ?? [], (s) => s.clientId);
   }
 
   getAgency(): Agency {
@@ -220,5 +225,9 @@ export class InMemoryRepository implements AdAnalystRepository {
       if (row.date > lastDate) lastDate = row.date;
     }
     return { firstDate, lastDate, days: dates.size, rows: rows.length };
+  }
+
+  getDataSource(clientId: string): ClientDataSource {
+    return this.sourcesByClient.get(clientId) ?? { clientId, kind: "seed", imports: [] };
   }
 }

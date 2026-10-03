@@ -66,7 +66,7 @@ export interface CreativeBoardModel {
   currency: CurrencyCode;
   vocabulary: ConversionVocabulary;
   showRoas: boolean;
-  targetCpa: number;
+  targetCpa: number | null;
   comparison: string;
   currentLabel: string;
   previousLabel: string;
@@ -149,23 +149,31 @@ export function buildCreativeBoard(workspace: Workspace): CreativeBoardModel {
   });
 
   const totalSpend = items.reduce((sum, item) => sum + item.current.spend, 0);
-  const types: TypeBreakdown[] = (["image", "video", "carousel"] as CreativeType[]).map(
-    (type) => {
-      const of = rows.filter((r) => r.creative.type === type);
-      const totals = sumMetrics(of.map((r) => r.current.totals));
-      const derived = deriveMetrics(totals);
-      return {
-        type,
-        label: CREATIVE_TYPE_LABELS[type],
-        count: of.length,
-        spend: totals.spend,
-        share: totalSpend ? totals.spend / totalSpend : 0,
-        conversions: totals.conversions,
-        roas: derived.roas,
-        cpa: derived.cpa,
-      };
-    },
-  );
+  // Known formats always show (as before). "Format unknown" appears only when a
+  // data source could not say; known cells are dropped only when nothing is known,
+  // so an import without format data never claims "0 video creatives".
+  const known: CreativeType[] = ["image", "video", "carousel"];
+  const anyKnown = rows.some((r) => known.includes(r.creative.type));
+  const anyUnknown = rows.some((r) => r.creative.type === "unknown");
+  const shownTypes: CreativeType[] = [
+    ...(anyKnown || !anyUnknown ? known : []),
+    ...(anyUnknown ? (["unknown"] as CreativeType[]) : []),
+  ];
+  const types: TypeBreakdown[] = shownTypes.map((type) => {
+    const of = rows.filter((r) => r.creative.type === type);
+    const totals = sumMetrics(of.map((r) => r.current.totals));
+    const derived = deriveMetrics(totals);
+    return {
+      type,
+      label: CREATIVE_TYPE_LABELS[type],
+      count: of.length,
+      spend: totals.spend,
+      share: totalSpend ? totals.spend / totalSpend : 0,
+      conversions: totals.conversions,
+      roas: derived.roas,
+      cpa: derived.cpa,
+    };
+  });
 
   return {
     items,
