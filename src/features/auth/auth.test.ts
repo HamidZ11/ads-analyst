@@ -47,16 +47,30 @@ describe("deployment mode", () => {
 
 describe("route access", () => {
   it("redirects signed-out page requests to sign-in and answers APIs with 401", () => {
-    for (const path of ["/", "/campaigns", "/clients/import", "/settings", "/insights-lab"])
+    for (const path of [
+      "/overview",
+      "/campaigns",
+      "/clients/import",
+      "/settings",
+      "/insights-lab",
+    ])
       expect(accessDecision(path, false), path).toBe("redirect_to_sign_in");
     expect(accessDecision("/api/import", false)).toBe("unauthorized");
     expect(accessDecision("/api/ask", false)).toBe("unauthorized");
   });
 
-  it("allows signed-in sessions everywhere and sends them away from sign-in", () => {
-    for (const path of ["/", "/campaigns", "/api/import", "/auth/callback"])
+  it("allows signed-in sessions everywhere and sends them to the app from sign-in and the site root", () => {
+    for (const path of ["/overview", "/campaigns", "/api/import", "/auth/callback", "/pricing"])
       expect(accessDecision(path, true), path).toBe("allow");
-    expect(accessDecision("/sign-in", true)).toBe("redirect_home");
+    expect(accessDecision("/sign-in", true)).toBe("redirect_app");
+    expect(accessDecision("/", true)).toBe("redirect_app");
+  });
+
+  it("keeps the marketing pages public and exact", () => {
+    expect(accessDecision("/", false)).toBe("allow");
+    expect(accessDecision("/pricing", false)).toBe("allow");
+    expect(accessDecision("/pricing/anything", false)).toBe("redirect_to_sign_in");
+    expect(accessDecision("/pricing-lab", false)).toBe("redirect_to_sign_in");
   });
 
   it("keeps sign-in and the email callback public", () => {

@@ -728,3 +728,124 @@ The owner selected **Concept C — Hybrid Analyst Thread** with the refined Beau
 **Checks:** `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (276), `pnpm build --webpack`, `git diff --check`.
 
 **Next checkpoint:** owner configures a Supabase project and reviews sign-in, first workspace, import, re-import, targets and isolation with two accounts. No commit or push.
+
+---
+
+## 2026-10-03 — Landing-page exploration (manual selection pending)
+
+Started `/landing-lab` with three complete, vertically stacked homepage concepts: **A — Product-Led Precision** (product-first screen showcase), **B — Agency Operations Story** (account review through client conversation), and **C — Analytical Editorial** (a spend finding followed by evidence exhibits). Explores product-led, agency-led and outcome/analyst-led positioning using the existing white, cool-grey, ink and blue system. Copy describes CSV-based analysis, not live Meta monitoring, invented causes or automatic budget changes. Demo CTAs open the existing demo only when demo mode is active; otherwise they lead to the product proof.
+
+Six actual product screenshots cover Overview, Insights, a zero-conversion finding, Ask Analyst, Creatives and Campaigns. All use Luxe Skin Co. seeded demo data for 27 Sep–3 Oct 2026, are labelled as such, and carry embedded capture provenance. Keyboard-operable product tabs and a question/evidence switcher make the exploration interactive. Desktop review at 1440 and 1280, plus a structural check at 390, found no page-width overflow or broken anchors; demo navigation works and no browser errors occurred. Motion uses existing tokens and respects reduced motion.
+
+Only lab-specific source/assets and this appended note belong to this task. The approved production surfaces, root route and existing persistence/auth work are untouched. DESIGN.md and DECISIONS.md are not changed by this exploration. No merge, commit or push. **Manual human selection is required before production implementation.**
+
+**Checks:** `pnpm format:check`, `pnpm lint` (one spread-prop alt-text warning corrected; targeted lint clean), `pnpm typecheck`, `pnpm test` (276), `pnpm build --webpack`, `git diff --check`. The Impeccable target scan reported no findings; screenshot provenance scan: six rasters, none missing.
+
+---
+
+## 2026-10-03 — Landing-page exploration, round 2 (manual selection pending)
+
+**Round 1 rejected.** Concepts A, B and C did not reach the premium bar the owner set with two new references (an "Answer AIQ" and a "Flowstack" landing page; the images were not available to this session, so the brief's written principles were used). Diagnosis: the marketing pages spoke in the product's own voice (Inter at 48–76px, the app's grey canvas, blue buttons), followed the SaaS skeleton (split hero, tabbed full-screen screenshots, alternating copy and screenshot rows, three numbered steps, a checklist), and showed whole screens rather than the part that proves a claim. Round-1 sources were removed from `src/app/landing-lab/` (an archive was kept outside the repo for this session); its screenshots in `public/landing-lab/` are no longer referenced.
+
+**Three new directions at `/landing-lab`**, each a complete six-to-seven-section page with its own type, palette and one memorable device:
+
+- **1 — Editorial Intelligence:** Literata (display, optical size 72) with Schibsted Grotesk, warm white paper, ink, fine rules, one cobalt signal. Product evidence appears as numbered figures with captions and sources, the hero finding carries numbered callouts, "£638 spent. / 0 purchases." is set as an editorial statement, and an engraving-like plate draws a week of spend as hatched bands per campaign, followed to purchases and the £28 target. Ledger detail is shown as two crops joined by a break mark.
+- **2 — Modern Product Monument:** Host Grotesk only, white, a three-line 105px headline, and one visual field: the live Overview standing on a heat field of 9 campaigns × 60 days of spend (each row against its own high), blurred into a cobalt-slate field and resolving into cells at the base. Sparse sections follow (Insights list, Ask, principle, close).
+- **3 — Data Editorial System:** Archivo across widths (condensed light for monumental figures, normal for prose). "31.4% more spend / 43.5% fewer purchases" over an indexed "scissors" chart (seven-day rolling spend and purchases for Autumn Reset Sale, both = 100 in the first week, one axis), a £638 → 0 ledger with a 14-day strip, a dark field of nine small multiples labelled with the findings Ad Analyst raised, product fragments, and a measured-versus-not-inferred table.
+
+**Real product, real data.** Exhibits are the shipped components (FindingDetail, AnswerView, InsightsWorkspace, OverviewAnalytics, CampaignsTable) rendered with the seeded Luxe Skin Co. workspace pinned to 3 Oct 2026, inside an inert `Specimen` frame that crops at fixed coordinates and scales to its slot, so text stays crisp. Crops were set from measured element positions; the Campaigns crop pins two viewport-dependent rules (name width, group padding) to their ≥1400px values so the same cells show at 1280. All coded art (`art.tsx`) is computed from the same seed; no numbers are typed by hand except copy that restates them. Motion is one authored moment per concept (plates unveil; the product rises into its field; the scissor lines draw), armed after mount, off under reduced motion.
+
+**Verification (headless Chrome DOM geometry, no screenshots):** at 1440×900 and 1280×800 no horizontal overflow, headline lines fit their columns, the primary action and a product exhibit sit above the fold in Concepts 1 and 2 (Concept 3 leads with its figures; the chart begins at the fold), no SVG label leaves its drawing, no crop slices visible text, all eight reveals fire on scroll, all four faces load, no console errors. Text contrast ≥ 4.95:1 for body copy, 3.41:1 for the large muted statement, ≥ 3.1:1 for chart lines. Mobile was not polished (stacking only), per the brief.
+
+DESIGN.md and DECISIONS.md are unchanged until a direction is selected. No commit or push.
+
+---
+
+## 2026-10-03 — Landing page: Concept 1 selected, refinement pass 1 (manual approval pending)
+
+**Selection:** the owner chose **Concept 1 — Editorial Intelligence**. Its identity is locked: warm paper, Literata with Schibsted Grotesk, the 12-column grid, fine rules, numbered figures with sources, restrained cobalt, the hatched spend-flow engraving and the motion. Concepts 2 and 3 are retired from review (`/landing-lab` now renders Concept 1 only); their source stays in the folder for reference until production translation.
+
+**Focus: product exhibits.** Each exhibit is still the shipped component with seeded data, now cropped to one claim and set on a flat white plate with fixed internal padding, a hairline edge and no shadow. Scales sit between 1.10 and 1.24 at 1440 (0.97–1.10 at 1280), so product text never drops below about 12.6px.
+
+- **Fig. 1 (hero, Insights):** label, headline, campaign and the four figures only, cropped edge to edge of the content; markers 1 and 2 on "+31.4%" and "£110.83 over".
+- **Fig. 2 (£638 / 0 purchases):** the finding's headline and its three figures (the comparison table, suggested action and rule box are cropped out; the copy carries them). A measured cobalt leader runs from "0 purchases." on the page to the "0" inside the plate, routed through the gap between columns so it crosses no text, and appears only after its plate has revealed.
+- **Fig. 3 (Overview):** the lead measure alone: return on ad spend 2.71x, +3.4% from 2.62x, and 0.79x short of the 3.50x target. The supporting tiles, sparklines and period control are no longer in view.
+- **Fig. 4 (Campaigns):** names and cost per purchase joined by the hatched break, now four rows with a fifth fading out to show the ledger continues, larger, with one marker on the distance from target.
+- **Fig. 6 (Ask Analyst):** the answer only (correction, summary, cost per purchase, spend, purchases). The question is set on the page as a quotation instead of a chat bubble; one marker on "+0.2% from £26.84".
+
+**Structure:** hero + Fig. 1 → a borrowed monumental figure moment ("31.4% more spend / 43.5% fewer purchases", Literata at 188px, spend in cobalt, the two figures staggered) → £638 / 0 purchases → every number arrives with its comparison (Figs. 3 and 4) → where the week's money went (Fig. 5, unchanged) → ask the account a question (Fig. 6) → evidence before explanation → close with three short how-it-works lines. The standalone agencies section folded into the close; the nav is Product and How it works. Captions set the source on two right-aligned lines so every caption fits two lines.
+
+**Verification (headless Chrome DOM geometry, no screenshots):** at 1440 and 1280 no horizontal overflow, no crop slices visible text (the fading fifth ledger row is intentional), no SVG label leaves its drawing, the leader crosses no text and lands 14px left of its target, all markers sit inside their plates, all six reveals fire. Motion timings and reduced-motion behaviour are unchanged; the only addition is the leader waiting for its plate.
+
+The production app, DESIGN.md and DECISIONS.md are untouched. No commit or push. **Manual visual approval is required before production translation.**
+
+---
+
+## 2026-10-03 — Landing page reset: premium software first (manual approval pending)
+
+**Editorial Intelligence rejected after visual review.** The owner found it too magazine-like, too research-publication-like and too dependent on figure captions, callouts and analytical plates: interesting, but not an effortless premium software brand. The early concepts had been the opposite failure, polished but bland. The target is now premium software first, editorial discipline second: clean, spacious, confident, instantly understood, one strong idea per screen.
+
+**New direction at `/landing-lab`** (one page; the earlier concept sources remain in the folder but are no longer rendered):
+
+- **Hero:** "Know what changed before your client asks." in Host Grotesk 600 at 96px over two lines, a one-sentence support line, one filled "Try the demo" and a "See the product" text link. Nav: Product, How it works, For agencies, Sign in, an outlined Try the demo.
+- **Product showcase (the one visual field):** the live Overview standing in a cobalt-to-navy field with a very soft texture drawn from sixty days of real campaign spend, bleeding off the base, plus one floating panel: the real Insights finding "Spend rose 31.4% while purchases fell 43.5%".
+- **Sections, each one idea and one product panel:** Catch wasted spend (the zero-conversion finding through its suggested action); every campaign measured against its target (Campaigns summary strip and the ledger as two stacked crops, without the tabs, search and group row; four rows fading into a fifth) with three how-it-works lines; Ask the account a question (question, correction, figures and related findings down to "These are observations, not an attribution"); creatives carrying the account (format split and the two creatives leading by spend); Evidence before explanation (two sentences); close, "Know what changed before your next client call."
+- **Removed:** serif display, figure numbers and captions, numbered callouts, the hatched engraving and break marks, monumental metric typography, footnote framing.
+- **Kept:** warm ivory, deep ink, restrained cobalt, real product UI with seeded data, generous spacing, and the motion language (hero settles in, the product rises into its field with the floating finding following, each panel unveils top-down). Arming now happens before first paint, so nothing flashes; reduced motion shows everything static.
+
+**Product treatment:** every panel is the shipped component rendered with the pinned Luxe Skin Co. workspace, cropped in its own coordinates and scaled so text stays legible (0.94–1.17 at 1440, 0.88–1.18 at 1280) and crisp. One small line under the showcase and the footer say the views use a seeded demo account.
+
+**Verification (headless Chrome DOM geometry, no screenshots):** at 1440 and 1280 no horizontal overflow, headline lines fit, headline, support, both actions and the top of the product sit in the first viewport, no crop slices visible text except the intended bleed and fades, all seven reveals fire, no console errors.
+
+DESIGN.md and DECISIONS.md are unchanged. No commit or push. **Manual visual approval is required.**
+
+---
+
+## 2026-10-03 — Pricing study (manual approval pending)
+
+**Approved landing direction retained.** The premium-software-first landing page at `/landing-lab` passed visual review and is unchanged, apart from a temporary "Pricing" link in its nav pointing at the new study.
+
+**Pricing exploration at `/pricing-lab`,** in the same language (Host Grotesk, warm ivory, deep ink, one cobalt field, low-radius buttons, thin borders) and the same motion grammar:
+
+- **Single-plan strategy:** one Agency plan, £29 a month, with "Or £290 billed yearly, two months free" as a quiet secondary line. It's for small agencies managing up to 10 client accounts. No tiers, no comparison table, no "most popular" badge.
+- **Structure:** nav with Pricing current; a two-tone hero ("Simple pricing. Built for agencies doing the work." with "Everything in Ad Analyst, for up to 10 client accounts."); one wide white plan panel set in the cobalt field (price, annual line, Try the demo, Sign in, and a note that trying the demo doesn't start a subscription), with the nine real capabilities listed beside it; an understated "Managing more than 10 client accounts? Contact us" line; "No feature gates."; six FAQs answered from the current product (CSV import today and a direct Meta connection later; no manual data entry; no automatic budget changes); "Evidence before explanation."; and the close.
+- **Billing intentionally not implemented:** no Stripe, checkout, billing logic or API. Every action is Try the demo, Sign in or Contact us. "Contact us" has no destination yet because no sales address exists; in the study it lands on the FAQ answer about larger workspaces.
+- **Motion:** the hero settles, the plan rises into its field and the price lifts into place a beat later. It is armed before first paint and static under reduced motion.
+
+**Verification (headless Chrome DOM geometry, no screenshots):** at 1440 and 1280 there is no horizontal overflow, the headline wraps as set, the price sits inside the first viewport, all reveals fire, only the landing face loads, and there are no console errors. Text contrast is at least 3.70:1 for the large muted headline line and 5.01:1 for small text.
+
+DESIGN.md and DECISIONS.md are unchanged; there is no permanent pricing decision yet. No commit or push. **Manual approval is required before the marketing site is translated into production.**
+
+---
+
+## 2026-10-03 — Marketing site translated to production (manual production approval pending)
+
+**Approved:** the premium-software-first landing direction and the single-plan pricing page passed visual review. This pass translates both from `/landing-lab` and `/pricing-lab` into production routes without redesign; the labs stay as review references.
+
+**Routing.** `/` was the app's Overview. The landing page now owns `/`, so the Overview moved to `/overview` (`APP_HOME` in `src/lib/routes.ts`). The page file moved unchanged, and the sidebar's Overview item points there through `src/features/navigation.ts`. The marketing pages live in a `(marketing)` route group with their own layout (Host Grotesk, shared nav and footer, no app shell). The root layout keeps the app shell, chosen by a small client `SurfaceSwitch` that reads the active top-level segment, so the shell persists across app navigation and is skipped for the marketing group. No app route folder moved.
+
+**Auth behaviour (smallest change to the persistence work):** `/` and `/pricing` are public. A signed-in visitor at `/` or `/sign-in` is redirected to `/overview` (`redirect_app`, which replaces `redirect_home`). The sign-in page and the email callback land on `/overview`. Demo mode is unchanged: no proxy, and sign-in forwards to the app. Access tests are updated and extended.
+
+**Links:** "Try the demo" goes to `/overview`, the existing demo experience in demo mode. In a Supabase deployment there is no public demo, so it leads to sign-in. That is an open product decision: host the demo as a separate demo-mode deployment, or add a public demo route. "Sign in" goes to `/sign-in`, and section links to `/#product`, `/#how-it-works` and `/#agencies`.
+
+**Pricing:** one Agency plan, £29 / month, with "£290/year · 2 months free" as the secondary line. Nine real capabilities are listed. Try the demo and Sign in are the actions, with the note that the demo doesn't start a subscription. No billing, checkout, Stripe or subscription state was added. The FAQ answers are trimmed without changing their meaning. **Open decision:** there is no contact destination for workspaces above 10 clients, so the page says "Larger workspaces are available on request." as plain text, with no link.
+
+**Shared marketing system (`src/features/marketing/`):** tokens, nav (an inline set from 1024px; below that a disclosure menu that closes on navigation and on Escape and returns focus), footer, the Host Grotesk face, and `RevealOnScroll`. Showcase pieces moved out of the lab: the pinned seeded evidence, `ProductCrop` (hidden until measured, so the server render never shows a product at the wrong scale), the client exhibit wrappers, the product canvases and the spend-field texture. The labs now import these.
+
+**Motion** is unchanged in feel. Above-the-fold moments (hero settle, product rise, the finding following, the plan rise, the price lift) are CSS keyframes, so the server-rendered page never flashes. Panels below the fold unveil as they arrive, and anything already on screen at hydration is left visible. Reduced motion disables all of it.
+
+**Responsive:** desktop crops render from 1024px. Below that, each showcase renders the real phone layout of the product at 375px, cropped to its point (Overview lead and KPIs; the finding and its figures; the Campaigns summary; the Ask correction and figures; the format split and leading creative). On phones the cobalt field runs edge to edge. Product text scales at 0.90–1.18 at every checked width, with no microscopic UI.
+
+**Verification (headless Chrome DOM checks, no screenshots)** at 1440, 1280, 390 and 360 on `/` and `/pricing`:
+
+- no horizontal page overflow and no crop slicing visible text, apart from the intended bleed and fades;
+- one exposed heading level 1 per page, and the product views' own headings sit inside hidden showcases;
+- the mobile menu opens, closes, closes on Escape and on navigation, and marks Pricing as current;
+- anchors land, every reveal fires, and reduced motion is static;
+- titles, descriptions and Open Graph text are present (no image, because none exists);
+- the app shell is absent on marketing pages and present on every app route, with the correct active item;
+- no console errors.
+
+The production build was also served without configuration and with an unreachable Supabase URL to confirm signed-out access to `/`, `/pricing` and `/overview`. Signed-in redirects are covered by unit tests; there is no live Supabase project.
+
+DESIGN.md has no marketing section yet, so it is unchanged; the marketing pages are not marked locked. No commit or push. **Manual review of the production renders is required.**

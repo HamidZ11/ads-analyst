@@ -13,7 +13,7 @@ pnpm install
 pnpm dev
 ```
 
-Without Supabase variables, `pnpm dev` serves the seeded demo clients read-only, with no sign-in. Open http://localhost:3000 and switch clients from the top-left of the sidebar (or the top bar on mobile). Imports are disabled in demo mode.
+Without Supabase variables, `pnpm dev` serves the seeded demo clients read-only, with no sign-in. http://localhost:3000 is the public landing page (pricing at `/pricing`); the app starts at http://localhost:3000/overview. Switch clients from the top-left of the sidebar (or the top bar on mobile). Imports are disabled in demo mode.
 
 ### With Supabase (sign-in, imports, persistence)
 
@@ -21,7 +21,7 @@ Without Supabase variables, `pnpm dev` serves the seeded demo clients read-only,
 2. Apply the migrations in `supabase/migrations/`: `supabase link --project-ref <ref>` then `supabase db push`, or paste the SQL into the SQL editor in order.
 3. Copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or the legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY`). No service-role key is used.
 4. In Authentication → URL Configuration, set the Site URL (for example `http://localhost:3000`) and add `http://localhost:3000/auth/callback` (and your production `/auth/callback`) to the redirect URLs. Keep the Email provider enabled.
-5. `pnpm dev`, open http://localhost:3000, sign in with your email and open the link in the same browser. The first sign-in creates your workspace; import a Meta Ads CSV from Clients.
+5. `pnpm dev`, open http://localhost:3000/sign-in, sign in with your email and open the link in the same browser. The first sign-in creates your workspace; import a Meta Ads CSV from Clients.
 
 Set `AD_ANALYST_ALLOW_SIGNUPS=false` to stop new addresses creating accounts, and `NEXT_PUBLIC_SITE_URL` when the public origin differs from the request host. A production build without Supabase variables shows "Not connected yet" unless `AD_ANALYST_DEMO_MODE=true`.
 

@@ -1,0 +1,9 @@
+/* Showcases crop the Campaigns ledger at fixed coordinates. Pin the two
+   viewport-dependent rules (name width and group padding) to their ≥1400px
+   values so the crop shows the same cells at every review width. */
+.ledgerPin tbody tr > td:first-child {
+  max-width: 380px;
+}
+.ledgerPin [class*="min-[1400px]:pl-8"] {
+  padding-left: 2rem;
+}

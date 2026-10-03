@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { accessDecision } from "@/features/auth/access";
+import { APP_HOME } from "@/lib/routes";
 import { appMode } from "@/lib/supabase/config";
 
 /**
@@ -43,8 +44,8 @@ export async function proxy(request: NextRequest) {
     return carryCookies(
       NextResponse.json({ ok: false, message: "Sign in to continue." }, { status: 401 }),
     );
-  if (decision === "redirect_home")
-    return carryCookies(NextResponse.redirect(new URL("/", request.url)));
+  if (decision === "redirect_app")
+    return carryCookies(NextResponse.redirect(new URL(APP_HOME, request.url)));
   const target = new URL("/sign-in", request.url);
   return carryCookies(NextResponse.redirect(target));
 }

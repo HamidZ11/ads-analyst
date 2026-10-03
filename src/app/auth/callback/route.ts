@@ -2,6 +2,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { appMode } from "@/lib/supabase/config";
 import { supabaseServerClient } from "@/lib/supabase/server";
+import { APP_HOME } from "@/lib/routes";
 
 const OTP_TYPES: readonly EmailOtpType[] = ["magiclink", "email", "signup", "invite"];
 
@@ -24,7 +25,7 @@ export async function GET(request: Request) {
   else if (tokenHash && type && OTP_TYPES.includes(type))
     ok = !(await db.auth.verifyOtp({ token_hash: tokenHash, type })).error;
   if (!ok) return fail;
-  const response = NextResponse.redirect(new URL("/", url.origin));
+  const response = NextResponse.redirect(new URL(APP_HOME, url.origin));
   response.headers.set("Cache-Control", "private, no-store");
   return response;
 }

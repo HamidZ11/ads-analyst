@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ProductMark } from "@/components/shell/product-mark";
 import { SignInForm } from "@/features/auth/sign-in-form";
 import { loadSession } from "@/features/workspace/server";
+import { APP_HOME } from "@/lib/routes";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -12,7 +13,7 @@ export default async function SignInPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const session = await loadSession();
-  if (session.kind === "app") redirect("/");
+  if (session.kind === "app") redirect(APP_HOME);
   const linkError = (await searchParams).error === "link";
   return (
     <main

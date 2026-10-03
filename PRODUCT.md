@@ -16,7 +16,7 @@ Ad Analyst is an analytics product for small marketing agencies. It shows what c
 
 ## Positioning
 
-Agency-shaped from the start: a multi-client workspace where one selected client drives every page, with the client's own targets (cost per conversion, return on ad spend) framing every number. Findings are computed deterministically from daily metrics before any model-generated explanation is layered on, so every statement can be traced to the figures behind it.
+Agency-shaped from the start: a multi-client workspace where one selected client drives every page, with the client's own targets (cost per conversion, return on ad spend) framing every number. Findings are computed deterministically from daily metrics before any model-generated explanation is layered on, so every statement can be traced to the figures behind it. The agency-first audience is a launch hypothesis to test with real customers, not a proven market (D-056).
 
 ## Operating Context
 
@@ -31,7 +31,9 @@ Agency-shaped from the start: a multi-client workspace where one selected client
 
 - Implemented: application shell, client switcher, date presets and period comparisons, interactive Overview charts, Campaigns ledger, Creatives board and inspector, deterministic Insights with fatigue proxies and winner signals, and a deterministic Ask Analyst thread (all locked). Meta Ads CSV import (four visible steps: Upload, Review setup, Review import, Import, over an automatic parse, map and validate pipeline) creates or refreshes imported clients that every page reads through the same repository; the Clients page lists sources and imports, and Settings edits optional targets for imported clients. CSV import passed manual review.
 - Data handling: imported data is stored in Supabase Postgres, scoped to the workspace by Row Level Security on every table; each import is written in one transaction and re-imports update days rather than double counting (D-048 to D-053). The live Supabase project still has to be configured and verified end to end. Column recognition is built from documented Ads Manager labels and synthetic fixtures; real Ads Manager exports still need validation before release. CSV exports carry no creative artwork; imported creatives show a neutral placeholder and "Format unknown" when the export has no format column.
-- Deliberately not yet built: custom date ranges, campaign drilldown, external LLM interpretation, persistent Ask history, Meta API connection and sync, deleting imported data, workspace switching and member invitations, password or OAuth sign-in, editable settings for demo clients, dark theme.
+- Public site: a landing page at `/` and a pricing page at `/pricing`. The Agency plan is £29 a month, or £290 a year, for up to 10 client accounts; Enterprise covers more than 10 client accounts at custom pricing. The app starts at `/overview` (D-054 to D-056).
+- Deliberately not yet built: custom date ranges, campaign drilldown, external LLM interpretation, persistent Ask history, Meta API connection and sync, deleting imported data, workspace switching and member invitations, password or OAuth sign-in, editable settings for demo clients, billing and subscriptions, a sales contact destination, dark theme.
+- Launch checkpoints (not started): live Supabase and RLS validation against a real project, billing, a sales contact address for Enterprise, a public demo for production deployments, and deployment itself.
 - Terminology: "conversions" is rendered per client as purchases, leads or trials; CPA is cost per conversion; ROAS is return on ad spend as a multiple.
 - Constraint: no feature may fabricate findings; placeholders state what will appear and what produces it.
 - Constraint: desktop (1440, 1280) is the primary target; 390 and 360 must stay clean and usable without sacrificing desktop density.
