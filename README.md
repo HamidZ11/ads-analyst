@@ -82,3 +82,16 @@ The dataset is generated deterministically (seeded PRNG) and anchored to today's
 - **Arc Cloud** (SaaS, USD, America/New_York, target CPA $85).
 
 Patterns are expressed only as trajectories of spend, CPM, CTR, CVR and order value; nothing is flagged. `src/data/seed/seed.test.ts` asserts that each pattern is detectable from the numbers alone.
+
+## Before Launch
+
+Ad Analyst is currently parked. Before a production launch:
+
+1. Create or attach a production Supabase project.
+2. Validate authentication, RLS and two-user workspace isolation against the real database.
+3. Decide how the public demo should work in production.
+4. Add billing and subscription handling.
+5. Add a real sales/support contact email.
+6. Deploy the production application.
+7. Validate imports with a real Meta Ads export.
+8. Get the product in front of real users before building additional features.
