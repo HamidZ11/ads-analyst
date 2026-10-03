@@ -64,10 +64,15 @@ function keepLatest<T>(map: Map<string, Latest<T>>, key: string, date: IsoDate, 
  * on the last day of the file" only when the export has no delivery column
  * (validation has already warned about that).
  */
+export type EntityKind = "cmp" | "set" | "ad" | "cr";
+
 export function normalizeImport(
   rows: readonly ImportRow[],
   client: Client,
   account: { externalId: string | null; name: string | null },
+  /** How an entity's identity key becomes its ID; client-namespaced by default. */
+  idFor: (kind: EntityKind, key: string) => string = (kind, key) =>
+    entityId(client.id, kind, key),
 ): NormalizedImport {
   const lastDate = rows.reduce((max, r) => (r.date > max ? r.date : max), "");
   const accountId = `${client.id}_acct`;
@@ -90,10 +95,10 @@ export function normalizeImport(
   for (const row of rows) {
     const keys = identityKeys(row);
     const ids = {
-      campaign: entityId(client.id, "cmp", keys.campaign),
-      adSet: entityId(client.id, "set", keys.adSet),
-      ad: entityId(client.id, "ad", keys.ad),
-      creative: entityId(client.id, "cr", keys.creative),
+      campaign: idFor("cmp", keys.campaign),
+      adSet: idFor("set", keys.adSet),
+      ad: idFor("ad", keys.ad),
+      creative: idFor("cr", keys.creative),
     };
     if (row.date === lastDate && row.spend > 0) {
       spentLastDay.add(ids.campaign);
@@ -163,11 +168,7 @@ export function normalizeImport(
   };
   const idOf = (kind: "campaign" | "adSet" | "ad") => (row: ImportRow) => {
     const keys = identityKeys(row);
-    return entityId(
-      client.id,
-      kind === "campaign" ? "cmp" : kind === "adSet" ? "set" : "ad",
-      keys[kind],
-    );
+    return idFor(kind === "campaign" ? "cmp" : kind === "adSet" ? "set" : "ad", keys[kind]);
   };
 
   return {

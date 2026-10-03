@@ -10,7 +10,7 @@ import { getWorkspace } from "@/features/workspace/server";
 export const metadata: Metadata = { title: "Clients" };
 
 export default async function ClientsPage() {
-  const { agency, clients, client, repository } = await getWorkspace();
+  const { agency, clients, client, repository, mode } = await getWorkspace();
   const rows = clients.map((c) => ({
     client: c,
     coverage: repository.getCoverage(c.id),
@@ -38,8 +38,9 @@ export default async function ClientsPage() {
         <ClientsTable rows={rows} selectedId={client.id} />
       </Card>
       <Note className="mt-3">
-        Demo clients are seeded and read-only. A new client is created from its first Meta Ads
-        CSV export; later imports refresh the days they contain.
+        {mode === "demo"
+          ? "Demo clients are seeded and read-only. Connect a database to import your own Meta Ads exports."
+          : "A new client is created from its first Meta Ads CSV export; later imports refresh the days they contain."}
       </Note>
     </>
   );

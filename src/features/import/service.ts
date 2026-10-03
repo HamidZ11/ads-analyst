@@ -1,19 +1,17 @@
-import { randomUUID } from "node:crypto";
 import {
   CSV_LIMITS,
+  buildImportPayload,
   cleanText,
   inspectHeaders,
   isSupportedCurrency,
-  mergeClientData,
-  normalizeImport,
   parseCsv,
   sanitizeMapping,
-  stableHash,
   summarizeRows,
   validateImport,
   type ImportIssue,
+  type ImportPayload,
 } from "@/data/import";
-import { type ImportStore, StoreReadError } from "@/data/store";
+import { GatewayError, type ImportWriteResult } from "@/data/supabase/gateway";
 import { tracksRevenue } from "@/domain/labels";
 import { todayInTimezone } from "@/domain/periods";
 import type { Client, ClientType, CurrencyCode, IsoDate } from "@/domain/types";
@@ -21,8 +19,8 @@ import type { Client, ClientType, CurrencyCode, IsoDate } from "@/domain/types";
 /**
  * The only write path for imported data. It trusts nothing from the browser:
  * the CSV is parsed again, the mapping is rebuilt from known fields, the
- * destination is checked, and validation runs in full before anything is
- * stored. Seeded demo clients can never be written to.
+ * destination must be one of the caller's own clients, and validation runs in
+ * full before a single atomic write. Demo data is never a destination.
  */
 
 export interface NewClientInput {
@@ -141,55 +139,47 @@ export function readImportRequest(body: unknown): ImportRequest | string {
   };
 }
 
-export function runImport(
-  request: ImportRequest,
-  store: ImportStore,
-  context: { now: Date; seededClients: readonly Client[] },
-): ImportResponse {
-  let state;
-  try {
-    state = store.read();
-  } catch (error) {
-    if (error instanceof StoreReadError)
-      return {
-        ok: false,
-        status: 500,
-        message: `${error.message} Nothing was imported, so existing data is untouched.`,
-      };
-    throw error;
-  }
+export interface ImportContext {
+  now: Date;
+  /** Clients in the caller's active workspace: the only possible destinations. */
+  clients: readonly Client[];
+  /** The platform account already connected to a client, if any. */
+  accountIdFor: (clientId: string) => string | null;
+}
 
+export type ImportPlan =
+  | { ok: false; status: number; message: string; issues?: ImportIssue[] }
+  | {
+      ok: true;
+      payload: ImportPayload;
+      clientName: string;
+      currency: CurrencyCode;
+      summary: ReturnType<typeof summarizeRows>;
+      warnings: number;
+    };
+
+const UNAVAILABLE_CLIENT = "That client isn't available. Choose another client.";
+
+/** Parse, validate and normalise: everything short of writing. Pure. */
+export function planImport(request: ImportRequest, context: ImportContext): ImportPlan {
   const parsed = parseCsv(request.csv, CSV_LIMITS);
   if (!parsed.ok) return { ok: false, status: 422, message: parsed.error.message };
   const { table } = parsed;
   const inspection = inspectHeaders(table.headers);
   const mapping = sanitizeMapping(request.mapping, table.headers.length);
 
-  // Resolve the destination client.
   let client: Client;
-  let existing = null as (typeof state.clients)[number] | null;
+  let destination: ImportPayload["client"];
   if (request.destination.kind === "existing") {
     const id = request.destination.clientId;
-    if (context.seededClients.some((c) => c.id === id))
-      return {
-        ok: false,
-        status: 403,
-        message: "Demo clients are read-only. Create a new client for imported data.",
-      };
-    existing = state.clients.find((b) => b.client.id === id) ?? null;
-    if (!existing)
-      return {
-        ok: false,
-        status: 404,
-        message: "That client no longer exists. Choose another client.",
-      };
-    client = existing.client;
+    // Same answer whether the client is in another workspace or doesn't exist.
+    const found = context.clients.find((c) => c.id === id);
+    if (!found) return { ok: false, status: 404, message: UNAVAILABLE_CLIENT };
+    client = found;
+    destination = { mode: "existing", id: found.id };
   } else {
     const input = request.destination.client;
-    const taken = [...context.seededClients, ...state.clients.map((b) => b.client)].some(
-      (c) => c.name.toLowerCase() === input.name.toLowerCase(),
-    );
-    if (taken)
+    if (context.clients.some((c) => c.name.toLowerCase() === input.name.toLowerCase()))
       return {
         ok: false,
         status: 409,
@@ -203,8 +193,8 @@ export function runImport(
         message: "A ROAS target needs a conversion value column. Map one or clear the target.",
       };
     client = {
-      id: `cli_${stableHash(`${input.name}|${context.now.toISOString()}|${randomUUID()}`).slice(0, 12)}`,
-      agencyId: context.seededClients[0]?.agencyId ?? "agy_northstar",
+      id: "new",
+      agencyId: "new",
       name: input.name,
       type: input.type,
       currency: input.currency,
@@ -212,6 +202,16 @@ export function runImport(
       targetCpa: input.targetCpa,
       targetRoas: input.targetRoas,
       revenueTracked: revenueMapped,
+    };
+    destination = {
+      mode: "new",
+      name: input.name,
+      type: input.type,
+      currency: input.currency,
+      timezone: input.timezone,
+      target_cpa: input.targetCpa,
+      target_roas: input.targetRoas,
+      revenue_tracked: revenueMapped,
     };
   }
 
@@ -223,7 +223,8 @@ export function runImport(
       currency: client.currency,
       businessType: client.type,
       revenueTracked: tracksRevenue(client),
-      existingAccountId: existing?.adAccount.externalId || null,
+      existingAccountId:
+        destination.mode === "existing" ? context.accountIdFor(client.id) : null,
       today: todayInTimezone(client.timezone, context.now),
     },
     inspection,
@@ -232,84 +233,121 @@ export function runImport(
     return {
       ok: false,
       status: 422,
-      message: `The file has ${validation.errors} ${validation.errors === 1 ? "problem" : "problems"} to fix before it can be imported.`,
+      message:
+        validation.errors === 1
+          ? "One thing stops this import."
+          : `${validation.errors} things stop this import.`,
       issues: validation.issues,
     };
 
   const summary = summarizeRows(validation.rows);
-  const normalized = normalizeImport(validation.rows, client, {
-    externalId: validation.accountId,
-    name: validation.accountName,
-  });
-  const { bundle, daysAdded, daysReplaced } = mergeClientData(existing, client, normalized, {
-    id: `imp_${stableHash(`${client.id}|${context.now.toISOString()}|${request.fileName}`).slice(0, 12)}`,
-    source: "meta_csv",
-    importedAt: context.now.toISOString(),
-    fileName: request.fileName || "export.csv",
-    fileBytes: Math.max(0, Math.round(request.fileBytes)),
-    rows: validation.sourceRows,
-    firstDate: summary.firstDate!,
-    lastDate: summary.lastDate!,
-    accountExternalId: validation.accountId,
-    currency: client.currency,
-    outcomeColumn: table.headers[mapping.conversions!] ?? "",
-    revenueColumn:
-      tracksRevenue(client) && mapping.revenue !== undefined
-        ? table.headers[mapping.revenue]
-        : null,
-  });
-  store.write({
-    version: 1,
-    clients: existing
-      ? state.clients.map((b) => (b.client.id === client.id ? bundle : b))
-      : [...state.clients, bundle],
+  const payload = buildImportPayload({
+    rows: validation.rows,
+    client,
+    destination,
+    account: { externalId: validation.accountId, name: validation.accountName },
+    record: {
+      file_name: request.fileName || "export.csv",
+      file_bytes: Math.max(0, Math.round(request.fileBytes)),
+      row_count: validation.sourceRows,
+      date_start: summary.firstDate!,
+      date_end: summary.lastDate!,
+      currency: client.currency,
+      outcome_column: table.headers[mapping.conversions!] ?? "",
+      revenue_column:
+        tracksRevenue(client) && mapping.revenue !== undefined
+          ? table.headers[mapping.revenue]
+          : null,
+    },
   });
   return {
     ok: true,
+    payload,
+    clientName: client.name,
+    currency: client.currency,
+    summary,
+    warnings: validation.warnings,
+  };
+}
+
+/** Maps a database failure to a safe message; nothing about other workspaces is revealed. */
+export function importFailure(
+  error: unknown,
+  clientName: string,
+): { status: number; message: string } {
+  const kind = error instanceof GatewayError ? error.kind : "unavailable";
+  switch (kind) {
+    case "duplicate_name":
+      return { status: 409, message: `A client called ${clientName} already exists.` };
+    case "not_found":
+    case "forbidden":
+      return { status: 404, message: UNAVAILABLE_CLIENT };
+    case "account_mismatch":
+      return {
+        status: 422,
+        message: `This file is for a different ad account than ${clientName}.`,
+      };
+    case "invalid":
+      return { status: 422, message: "Some values were rejected, so nothing was imported." };
+    default:
+      return {
+        status: 503,
+        message: "The database couldn't be reached. Nothing was imported; try again.",
+      };
+  }
+}
+
+/** Plans the import, then writes it in one transaction through `write`. */
+export async function runImport(
+  request: ImportRequest,
+  context: ImportContext,
+  write: (payload: ImportPayload) => Promise<ImportWriteResult>,
+): Promise<ImportResponse> {
+  const plan = planImport(request, context);
+  if (!plan.ok) return plan;
+  let written: ImportWriteResult;
+  try {
+    written = await write(plan.payload);
+  } catch (error) {
+    return { ok: false, ...importFailure(error, plan.clientName) };
+  }
+  return {
+    ok: true,
     result: {
-      clientId: client.id,
-      clientName: client.name,
-      currency: client.currency,
-      firstDate: summary.firstDate!,
-      lastDate: summary.lastDate!,
-      campaigns: summary.campaigns,
-      ads: summary.ads,
-      spend: summary.spend,
-      conversions: summary.conversions,
-      daysAdded,
-      daysReplaced,
-      warnings: validation.warnings,
+      clientId: written.clientId,
+      clientName: plan.clientName,
+      currency: plan.currency,
+      firstDate: plan.summary.firstDate!,
+      lastDate: plan.summary.lastDate!,
+      campaigns: plan.summary.campaigns,
+      ads: plan.summary.ads,
+      spend: plan.summary.spend,
+      conversions: plan.summary.conversions,
+      daysAdded: written.daysAdded,
+      daysReplaced: written.daysReplaced,
+      warnings: plan.warnings,
     },
   };
 }
 
-/** Updates an imported client's optional targets; demo clients stay read-only. */
-export function updateTargets(
-  store: ImportStore,
-  clientId: string,
-  targets: { targetCpa: unknown; targetRoas: unknown },
-): { ok: true } | { ok: false; message: string } {
-  const state = store.read();
-  const bundle = state.clients.find((b) => b.client.id === clientId);
-  if (!bundle)
-    return { ok: false, message: "Targets can only be edited for imported clients." };
-  const targetCpa = positiveOrNull(targets.targetCpa, MAX_TARGET_CPA);
-  const targetRoas = positiveOrNull(targets.targetRoas, MAX_TARGET_ROAS);
+/** Optional targets from a form: positive numbers or blank; ROAS needs conversion value. */
+export function readTargets(
+  input: { targetCpa: unknown; targetRoas: unknown },
+  revenueTracked: boolean,
+):
+  | { ok: true; targetCpa: number | null; targetRoas: number | null }
+  | { ok: false; message: string } {
+  const targetCpa = positiveOrNull(input.targetCpa, MAX_TARGET_CPA);
+  const targetRoas = positiveOrNull(input.targetRoas, MAX_TARGET_ROAS);
   if (targetCpa === "invalid")
     return { ok: false, message: "Target CPA must be a positive amount." };
   if (targetRoas === "invalid")
     return { ok: false, message: "Target ROAS must be a positive multiple." };
-  if (targetRoas !== null && !tracksRevenue(bundle.client))
+  if (targetRoas !== null && !revenueTracked)
     return {
       ok: false,
       message:
         "A ROAS target needs conversion value, which this client's imports do not include.",
     };
-  store.write({
-    version: 1,
-    clients: state.clients.map((b) =>
-      b.client.id === clientId ? { ...b, client: { ...b.client, targetCpa, targetRoas } } : b,
-    ),
-  });
-  return { ok: true };
+  return { ok: true, targetCpa, targetRoas };
 }

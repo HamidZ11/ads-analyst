@@ -2,16 +2,28 @@
 
 Analytics for small marketing agencies running Meta Ads. Ad Analyst helps an agency see what changed, where performance is deteriorating, where money is being wasted, and where there is room to scale.
 
-This repository is the **foundation release (APP 01)**: application shell, design system, typed multi-client domain model, deterministic seeded demo data, navigation and responsive layout. There is no authentication, no external ad API, no AI and no CSV import yet.
+It covers the analysis surfaces (Overview, Campaigns, Creatives, Insights, Ask Analyst), Meta Ads CSV import, and hosted persistence on Supabase (Postgres, Auth, Row Level Security) with workspace isolation. There is no external ad API and no AI model.
 
 ## Run locally
+
+### Demo mode (no setup)
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-Then open http://localhost:3000. Switch between the seeded clients with the client switcher in the top-left of the sidebar (or the top bar on mobile).
+Without Supabase variables, `pnpm dev` serves the seeded demo clients read-only, with no sign-in. http://localhost:3000 is the public landing page (pricing at `/pricing`); the app starts at http://localhost:3000/overview. Switch clients from the top-left of the sidebar (or the top bar on mobile). Imports are disabled in demo mode.
+
+### With Supabase (sign-in, imports, persistence)
+
+1. Create a Supabase project (or run `supabase start` locally with the Supabase CLI).
+2. Apply the migrations in `supabase/migrations/`: `supabase link --project-ref <ref>` then `supabase db push`, or paste the SQL into the SQL editor in order.
+3. Copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or the legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY`). No service-role key is used.
+4. In Authentication → URL Configuration, set the Site URL (for example `http://localhost:3000`) and add `http://localhost:3000/auth/callback` (and your production `/auth/callback`) to the redirect URLs. Keep the Email provider enabled.
+5. `pnpm dev`, open http://localhost:3000/sign-in, sign in with your email and open the link in the same browser. The first sign-in creates your workspace; import a Meta Ads CSV from Clients.
+
+Set `AD_ANALYST_ALLOW_SIGNUPS=false` to stop new addresses creating accounts, and `NEXT_PUBLIC_SITE_URL` when the public origin differs from the request host. A production build without Supabase variables shows "Not connected yet" unless `AD_ANALYST_DEMO_MODE=true`.
 
 ## Scripts
 
@@ -40,6 +52,12 @@ src/
   domain/         Pure domain model: types, period slicing, metric aggregation, formatting, labels
   data/           Repository contract, in-memory implementation and the seed generator
     seed/clients/ One seed spec per client (trajectories only, no pattern flags)
+    import/       Meta CSV reader, mapping, validation, normalisation and the import payload
+    supabase/     Workspace gateway (Postgres functions) and the snapshot repository
+  lib/supabase/   Deployment mode and the server Supabase client
+  proxy.ts        Session refresh and route protection (Next.js 16 proxy)
+supabase/
+  migrations/     Versioned SQL: tables, constraints, indexes, RLS policies, functions
   features/       Product features composed from domain + data (workspace, analytics queries, pages' parts)
   components/     Design-system primitives (ui/) and the application shell (shell/)
   lib/            Small helpers
@@ -53,7 +71,7 @@ Agency → Client → Ad Account → Campaign → Ad Set → Ad → Creative.
 
 Daily metrics (`spend`, `revenue`, `conversions`, `impressions`, `clicks`) are stored once, at ad level. Every higher level and every ratio (CTR, CPC, CPM, CPA, ROAS, conversion rate) is derived on demand by the utilities in `src/domain/metrics.ts`.
 
-The repository interface in `src/data/repository.ts` is the only read path. The in-memory implementation is seeded; a persistent implementation can replace it when CSV imports arrive without touching features.
+The repository interface in `src/data/repository.ts` is the only read path. In demo mode it is backed by the seed; with Supabase, each request loads the active workspace through one RLS-scoped database function into the same interface, so pages never query the database. Writes (imports, targets) go through Postgres functions that run in one transaction under the user's own permissions. See D-048 to D-053 in `docs/DECISIONS.md`.
 
 ## Seeded data
 
