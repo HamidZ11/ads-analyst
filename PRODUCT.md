@@ -28,8 +28,8 @@ Agency-shaped from the start: a multi-client workspace where one selected client
 
 ## Capabilities and Constraints
 
-- Shipped (APP 01): application shell, client switcher, date presets, Overview with real seeded values, Campaigns table, Creatives grid, honest placeholders for Insights and Ask Analyst, Clients list, read-only Settings.
-- Deliberately not yet built: interactive charts and the full date engine (APP 02), campaign drilldown, creative fatigue and winner signals, the deterministic insight engine (APP 05), Ask Analyst wiring, CSV import, authentication, editable settings, dark theme.
+- Implemented: application shell, client switcher, date presets and period comparisons, interactive Overview charts, Campaigns ledger, Creatives board and inspector, deterministic Insights with fatigue proxies and winner signals, Clients list and read-only Settings. Ask Analyst now has a deterministic hybrid analytical thread; production manual review is pending.
+- Deliberately not yet built: custom date ranges, campaign drilldown, external LLM interpretation, persistent Ask history, CSV import, authentication, editable settings, dark theme.
 - Terminology: "conversions" is rendered per client as purchases, leads or trials; CPA is cost per conversion; ROAS is return on ad spend as a multiple.
 - Constraint: no feature may fabricate findings; placeholders state what will appear and what produces it.
 - Constraint: desktop (1440, 1280) is the primary target; 390 and 360 must stay clean and usable without sacrificing desktop density.
