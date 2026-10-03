@@ -408,3 +408,52 @@ High-signal engineering record. One entry per meaningful implementation pass. De
 **Checks:** `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (50 tests), `pnpm build --webpack` (ten routes), `git diff --check`.
 
 **Next checkpoint:** owner's manual visual review of the production sidebar beside the Overview at 1440, 1280, 390 and 360; `/sidebar-lab` stays unlinked until then. No commit or push.
+
+---
+
+## 2026-10-03 — Sidebar locked and pushed; Campaigns exploration started in `/campaigns-lab`
+
+**Sidebar checkpoint:** the production sidebar (Concept B translation) passed manual visual review and was committed as `139666c` "Polish and lock Ad Analyst sidebar" and pushed to `origin/feat/foundation` (`8ba6437..139666c`, no force). The commit includes the shell files, DESIGN.md §6/§7/§10, D-033 and the unlinked `/sidebar-lab` reference. Hover and click animation polish is deferred to final product polish. All checks were green before the commit (format, lint, typecheck, 50 tests, Webpack build, whitespace).
+
+**Campaigns exploration (uncommitted):** `src/app/campaigns-lab/` renders three concepts at 1440px, each inside the approved shell: the real `ProductMark` and `ClientSwitcher`, a replica of the approved navigation with Campaigns active (the production `NavLinks` reads the lab's own URL), the approved footer tile, and the production `PageHeader` with a static preset replica. Data is the production `getCampaignRows` for a fixed Luxe Skin Co. workspace (7 days), plus per-campaign daily series, cost-against-target and account totals computed from the same metrics. Nothing is classified; `rankCampaignMovers` (existing deterministic ranking) supplies the "largest movement" fact.
+
+- **Concept A — Refined Analytical Table:** production header; toolbar of search, All/Active/Paused segment, count and a quiet "Columns" affordance; one framed table with a tinted header, 48px rows pairing each metric with its change beneath, status as a dot and word, cost/ROAS/CTR in secondary ink, a tinted totals row and a one-line comparison note.
+- **Concept B — Campaign Performance Ledger:** underline status tabs with counts (the Overview's tab idiom), search and a sort label right; an open table with a two-tier header grouping Delivery / Outcome / Efficiency by gutters and short rules; 56px entries with a 14px identity line, a metadata line carrying the status dot, 14px semibold spend and purchases, "from …" previous values beneath each change, the target beneath cost; an aligned account line as the footer.
+- **Concept C — Campaign Command Table:** a four-cell strip of facts (spend and purchases with change, campaigns over the £28 target, the largest movement from the mover ranking); search, segment and "Sorted by spend"; a framed table with 52px rows carrying a hollow dot for paused, a 56×18 daily-conversions sparkline, and the cost's position against target as a 56px bar with a target tick and an "over/under" sentence; a totals row stating the share of spend over target.
+
+**Skills:** Impeccable `shape` (three briefed directions), `layout` and `typeset` as checklists (hierarchy identity → values → changes → metadata → status; 13/14px values, 12px changes, rows 48/56/52), `polish` as one inspection round through a Chrome DevTools probe (three frames at 1440px, sidebars 240px with Campaigns active on a white row, tables 1116–1118px inside the 1198px main, uniform row heights, no overflow, no leaked values, no console errors; coloured change values 6 / 6 / 13 of 36–45 per concept). `design-premium` as the precision bar; `design-clean` as the restraint check. Detector: zero findings on `src/app/campaigns-lab`.
+
+**Production untouched:** `/campaigns` and every other page are unchanged; the working tree holds only the untracked lab. No DESIGN.md or decision change until a concept is selected.
+
+**Checks:** `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (50), `pnpm build --webpack` (eleven routes), `git diff --check`.
+
+**Next checkpoint:** owner reviews http://localhost:3000/campaigns-lab at 1440px and selects a concept. The lab is not committed or pushed.
+
+---
+
+## 2026-10-03 — Campaigns production implementation (Concept B with C's target context)
+
+**Phase:** APP 01.9, production Campaigns, from the manually selected `/campaigns-lab` concepts. The Overview and sidebar are locked and untouched. Nothing committed.
+
+**Lab comparison and selection:** three concepts were rendered beside the approved shell. The owner chose Concept B — Campaign Performance Ledger as the base (spacing, scanning, row hierarchy, long names, grouping, open composition, relationship with the Overview), Concept C — Campaign Command Table for its cost-against-target relationship and account summary only, and rejected Concept A. Recorded as D-034.
+
+**Production translation (`src/features/campaigns/campaigns-table.tsx`, new `campaigns-summary.tsx`, `src/app/campaigns/page.tsx`):**
+
+- Header: the Overview's language with "Luxe Skin Co. · 9 campaigns · 8 delivering" and the two-line period block beside the preset control.
+- Account summary (from C, in B's language): one open row under a hairline with spend and outcomes plus change, campaigns over the cost target (or delivering campaigns when a client has no cost target), and the largest movement from the existing `rankCampaignMovers` ranking. 16px values, no cards.
+- Toolbar (B): underline tabs All 9 · Active 8 · Paused 1 with real filtering, a 240px search, and a "Sorted by Spend" readout driven by the real sort state.
+- Ledger (B): Delivery / Outcome / Efficiency group labels over short rules, 32px group gutters (24px below 1400px), 56px rows, 14px identity line with a metadata line carrying the status dot (hollow for paused), 14px semibold spend and outcomes, change with "from £1,374" beneath, cost at 13px with C's target relationship beneath in semantic colour, ROAS and CTR quiet, an aligned totals row for the visible campaigns.
+
+**Deviations, all deliberate:** no micro-trend sparkline (B already carries direction and the previous value; a 7-point line next to "from 76" read as clutter); no "Columns" control (no such behaviour exists); the lab's static sort label became a live readout; the roadmap note was replaced by the comparison note; the ledger uses a 5% materiality threshold per the brief while the Overview's supporting metrics keep 3% (reconciliation deferred to global polish); the identity column is capped per breakpoint and numeric columns are pinned to their content width so the ledger fits 1280 without scrolling.
+
+**Render verification (Chrome DevTools, real routes):** 1440: table 1105px in a 1105px wrapper with no local scroll, identity column 409px, 56px rows, group gutters 32px, summary values 16px in four columns, three group headers, target lines ("£110.83 over target", "£6.24 under target"), two over and five under target coloured, six coloured changes, totals aligned; no page overflow. 1280: table and wrapper both 945px, identity 273px, gutters 24px, no scroll. 390 and 360: summary in two columns, the ledger at 880px scrolling inside its wrapper (522 / 552px), the identity column sticky at 207px with a hairline edge and an opaque white background, no page overflow. Interactions at 1440: the Paused tab filters to one row and hides the totals, searching "retinol" filters to one row with the focused input's accent border, clicking Purchases sorts descending (82, 57, 43) then ascending, the readout follows, and row hover tints to `surface-subtle`. No console errors or exceptions.
+
+**Functional matrix (curl):** three clients × five presets (7d, 14d, 30d, today, yesterday): all 200; headers read Purchases / Cost per purchase, Leads / Cost per lead, Trials / Cost per trial; target lines use each client's currency and target; no leaked values.
+
+**Skills:** Impeccable `layout` and `typeset` as checklists (hierarchy identity → values → changes → metadata → status; 14/13/12px roles), `polish` as two bounded inspection rounds through the probe (the second fixed the 1280 scroll and the phone sticky-column width). `design-premium` as the precision bar; `design-clean` as the restraint check.
+
+**Docs:** DESIGN.md §22 (Campaigns ledger rules), D-034, this entry.
+
+**Checks:** `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (50), `pnpm build --webpack`, `git diff --check`.
+
+**Next checkpoint:** owner's manual visual review of `/campaigns` at 1440, 1280, 390 and 360 for the three clients; `/campaigns-lab` stays unlinked until then. No commit or push.
