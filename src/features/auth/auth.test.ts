@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { appMode, signupsAllowed } from "@/lib/supabase/config";
+import { appMode, sessionCookieOptions, signupsAllowed } from "@/lib/supabase/config";
 import { readdirSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { APP_PATHS } from "@/lib/routes";
 import { accessDecision, isAppPath, isPublicPath } from "./access";
-import { signInFailureMessage, validEmail } from "./messages";
+import { signInFailureMessage, signInLinkOrigin, validEmail } from "./messages";
 
 describe("deployment mode", () => {
   it("uses Supabase when its URL and publishable key are set", () => {
@@ -126,6 +126,46 @@ describe("sign-in messages", () => {
     expect(signInFailureMessage({ status: 429 })).toMatch(/Too many/);
     expect(signInFailureMessage({ status: 500, code: "unexpected_failure" })).toMatch(
       /couldn't send/,
+    );
+  });
+});
+
+describe("session cookies and sign-in links", () => {
+  it("keeps session cookies away from page scripts, and on HTTPS in production", () => {
+    expect(sessionCookieOptions({ NODE_ENV: "production" })).toEqual({
+      httpOnly: true,
+      secure: true,
+    });
+    expect(sessionCookieOptions({ NODE_ENV: "development" })).toEqual({
+      httpOnly: true,
+      secure: false,
+    });
+  });
+
+  it("sends sign-in links to the configured origin", () => {
+    const request = "https://forged.example";
+    for (const NODE_ENV of ["production", "development"])
+      expect(
+        signInLinkOrigin({ NODE_ENV, NEXT_PUBLIC_SITE_URL: "https://app.example/" }, request),
+      ).toBe("https://app.example");
+    expect(
+      signInLinkOrigin(
+        { NODE_ENV: "production", NEXT_PUBLIC_SITE_URL: "http://localhost:3000" },
+        request,
+      ),
+    ).toBe("http://localhost:3000");
+  });
+
+  it("never builds a production sign-in link from request headers", () => {
+    expect(signInLinkOrigin({ NODE_ENV: "production" }, "https://forged.example")).toBeNull();
+    expect(
+      signInLinkOrigin(
+        { NODE_ENV: "production", NEXT_PUBLIC_SITE_URL: "javascript:alert(1)" },
+        "https://forged.example",
+      ),
+    ).toBeNull();
+    expect(signInLinkOrigin({ NODE_ENV: "development" }, "http://localhost:3000")).toBe(
+      "http://localhost:3000",
     );
   });
 });

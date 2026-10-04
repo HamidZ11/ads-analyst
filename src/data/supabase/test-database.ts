@@ -102,5 +102,7 @@ export function sqlGateway(db: PGlite, userId: string): WorkspaceGateway {
         targetCpa,
         targetRoas,
       ]),
+    consumeRateLimit: (action) =>
+      run<boolean>("select public.consume_rate_limit($1) as r", [action]),
   };
 }

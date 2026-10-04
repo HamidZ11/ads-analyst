@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { accessDecision } from "@/features/auth/access";
 import { APP_HOME } from "@/lib/routes";
-import { appMode } from "@/lib/supabase/config";
+import { appMode, sessionCookieOptions } from "@/lib/supabase/config";
 
 /**
  * Runs before every page and API route: refreshes the Supabase session cookie
@@ -17,6 +17,7 @@ export async function proxy(request: NextRequest) {
   let signedIn = false;
   if (mode.kind === "supabase") {
     const db = createServerClient(mode.url, mode.publishableKey, {
+      cookieOptions: sessionCookieOptions(),
       cookies: {
         getAll: () => request.cookies.getAll(),
         setAll: (list, headers) => {

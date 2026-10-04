@@ -1,5 +1,20 @@
 /** Pure helpers for the sign-in form; kept apart from server code so they can be tested. */
 
+import { configuredOrigin } from "@/lib/site";
+
+/**
+ * The origin an emailed sign-in link returns to: NEXT_PUBLIC_SITE_URL when
+ * set. Outside production the request's own origin stands in. A production
+ * build has no fallback (null), because the link carries a sign-in code and
+ * Host or X-Forwarded-Host can be forged behind some proxies.
+ */
+export function signInLinkOrigin(
+  env: Record<string, string | undefined>,
+  requestOrigin: string,
+): string | null {
+  return configuredOrigin(env) ?? (env.NODE_ENV === "production" ? null : requestOrigin);
+}
+
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function validEmail(email: string): boolean {

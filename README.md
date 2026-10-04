@@ -23,7 +23,7 @@ Without Supabase variables, `pnpm dev` serves the seeded demo clients read-only,
 4. In Authentication → URL Configuration, set the Site URL (for example `http://localhost:3000`) and add `http://localhost:3000/auth/callback` (and your production `/auth/callback`) to the redirect URLs. Keep the Email provider enabled.
 5. `pnpm dev`, open http://localhost:3000/sign-in, sign in with your email and open the link in the same browser. The first sign-in creates your workspace; import a Meta Ads CSV from Clients.
 
-Set `AD_ANALYST_ALLOW_SIGNUPS=false` to stop new addresses creating accounts, and `NEXT_PUBLIC_SITE_URL` to the production origin (sign-in emails, canonical URLs, the sitemap and robots.txt use it; see Search and indexing). A production build without Supabase variables shows "Not connected yet" unless `AD_ANALYST_DEMO_MODE=true`.
+Set `NEXT_PUBLIC_SITE_URL` to the production origin: sign-in emails, canonical URLs, the sitemap and robots.txt use it (see Search and indexing), and a production build refuses to send sign-in links without it. `AD_ANALYST_ALLOW_SIGNUPS=false` stops the app asking Supabase to create accounts; to actually close sign-ups, also turn off "Allow new users to sign up" in Supabase Auth. A production build without Supabase variables shows "Not connected yet" unless `AD_ANALYST_DEMO_MODE=true`.
 
 ## Scripts
 
@@ -71,7 +71,7 @@ Agency → Client → Ad Account → Campaign → Ad Set → Ad → Creative.
 
 Daily metrics (`spend`, `revenue`, `conversions`, `impressions`, `clicks`) are stored once, at ad level. Every higher level and every ratio (CTR, CPC, CPM, CPA, ROAS, conversion rate) is derived on demand by the utilities in `src/domain/metrics.ts`.
 
-The repository interface in `src/data/repository.ts` is the only read path. In demo mode it is backed by the seed; with Supabase, each request loads the active workspace through one RLS-scoped database function into the same interface, so pages never query the database. Writes (imports, targets) go through Postgres functions that run in one transaction under the user's own permissions. See D-048 to D-053 in `docs/DECISIONS.md`.
+The repository interface in `src/data/repository.ts` is the only read path. In demo mode it is backed by the seed; with Supabase, each request loads the active workspace through one RLS-scoped database function into the same interface, so pages never query the database. Writes (imports, targets) go through Postgres functions that check the caller and their membership and run in one transaction; users cannot write tables directly. See D-048 to D-053 and D-060 in `docs/DECISIONS.md`.
 
 ## Seeded data
 
@@ -102,6 +102,35 @@ Launch-only:
 4. Validate the home page JSON-LD with the Rich Results Test or the Schema Markup Validator.
 5. Add Open Graph artwork (1200×630) once approved artwork exists.
 6. Backlinks are off-site work: launch directories, agency and founder communities, useful original research, partnerships and real mentions. Nothing automated or paid.
+
+## Security
+
+Implemented (D-051, D-059, D-060):
+
+- Tenant isolation is enforced in Postgres: RLS on every table keyed on workspace membership, composite foreign keys that keep children in their parent's workspace, and no service-role key. Cookies (`aa_client`, `aa_workspace`) only choose among rows the user can already read.
+- One write boundary. Signed-in users can only read tables directly, through RLS (`workspace_members` not at all). Every write goes through a Postgres function that checks the caller, their membership and the input: `import_meta_csv` (imports), `update_client_targets` (targets), `ensure_default_workspace` (first sign-in) and `consume_rate_limit`. The two data writers run with owner rights and an empty `search_path`, so they check membership themselves; no table is directly writable. RLS policies stay in place as defence in depth.
+- The proxy and the data access layer both verify the session (`auth.getClaims()`); route handlers and server actions re-check it next to the data. Supabase session cookies are HTTP-only, `SameSite=Lax`, and `Secure` in production.
+- Imports are validated twice. The server re-parses the CSV (16 MB request, 10 MB CSV, 100,000 rows, 200 columns, 2,000 characters per cell), then `import_meta_csv` checks the payload's shape and sizes before writing, so a direct call cannot skip it. Limits per user and hour: 30 import attempts (spent by `/api/import` before it reads a file) and 30 written imports (counted in the import's own transaction). Import records name the caller.
+- Every response carries a same-origin Content Security Policy (no nonces, so inline scripts are allowed), `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`, a referrer policy, a permissions policy and, in production, HSTS. `X-Powered-By` is off.
+- Sign-in links only return to `NEXT_PUBLIC_SITE_URL` in production, never to an origin taken from request headers. The callback redirects to a fixed path; there are no user-supplied redirect targets.
+
+Known limit (live configuration, see D-059): sign-in links are requested from the server, so Supabase's per-IP auth limits see the server's address, not the visitor's, and act as one shared bucket. It is handled at deployment, not in code: CAPTCHA, host rate limiting and tuned Supabase limits (items 7, 8 and 11 below).
+
+Live validation before launch (none of this can be checked from the repository):
+
+1. Apply all pending migrations in order (`supabase db push`) before deploying this code: without them imports fail closed (the rate-limit function is missing) and tables stay directly writable.
+2. Run the two-user, two-workspace isolation check against the real project: each user sees only their own workspace in the app and through the Data API.
+3. Verify direct table writes are denied: with a signed-in user's session and the publishable key, an `insert`, `update` or `delete` on any table returns "permission denied".
+4. Verify controlled writes succeed: a CSV import, a re-import into the same client, and saving targets in Settings.
+5. Auth → Providers: anonymous sign-ins are off.
+6. Auth → Providers → Email: "Allow new users to sign up" matches the launch plan (`AD_ANALYST_ALLOW_SIGNUPS` alone does not close sign-ups).
+7. Auth → Attack Protection: enable CAPTCHA (needs a small sign-in form change).
+8. Auth → SMTP: configure custom SMTP; review Auth → Rate Limits with the shared server address in mind.
+9. Auth → URL Configuration: Site URL is the production origin; redirect URLs list only exact `<origin>/auth/callback` entries, with no broad wildcards.
+10. HTTPS only, and `NEXT_PUBLIC_SITE_URL` set to the production origin in the production build.
+11. Host rate-limit rules for `POST /sign-in` and `/api/*`.
+12. Preview and staging deployments use a separate Supabase project, never production.
+13. Spend caps and usage alerts on the Supabase and hosting plans. There is no paid AI or external API in the app.
 
 ## Before Launch
 

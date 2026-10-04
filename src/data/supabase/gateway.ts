@@ -31,10 +31,21 @@ export interface WorkspaceGateway {
     targetCpa: number | null,
     targetRoas: number | null,
   ): Promise<boolean>;
+  /** Counts one attempt by the signed-in user; false once their allowance for the window is spent. */
+  consumeRateLimit(action: RateLimitedAction): Promise<boolean>;
 }
 
+/** Operations with a per-user allowance, set in public.consume_rate_limit. */
+export type RateLimitedAction = "import";
+
 export type GatewayErrorKind =
-  "forbidden" | "not_found" | "account_mismatch" | "duplicate_name" | "invalid" | "unavailable";
+  | "forbidden"
+  | "not_found"
+  | "account_mismatch"
+  | "duplicate_name"
+  | "invalid"
+  | "rate_limited"
+  | "unavailable";
 
 /** A database failure with a safe, user-facing classification; raw errors are never shown. */
 export class GatewayError extends Error {
@@ -60,6 +71,7 @@ export function gatewayError(error: unknown): GatewayError {
   if (code === "42501") return new GatewayError("forbidden", text);
   if (code === "P0002") return new GatewayError("not_found", text);
   if (code === "P0003") return new GatewayError("account_mismatch", text);
+  if (code === "P0005") return new GatewayError("rate_limited", text);
   if (code === "23505" && /clients_workspace_name_key/.test(text))
     return new GatewayError("duplicate_name", text);
   if (/^(22|23|P0004)/.test(code)) return new GatewayError("invalid", text);
@@ -108,6 +120,7 @@ export function supabaseGateway(db: SupabaseClient): WorkspaceGateway {
         p_target_cpa: targetCpa,
         p_target_roas: targetRoas,
       }),
+    consumeRateLimit: (action) => call<boolean>("consume_rate_limit", { p_action: action }),
   };
 }
 

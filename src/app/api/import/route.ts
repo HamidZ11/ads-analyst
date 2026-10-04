@@ -1,5 +1,5 @@
 import { revalidatePath } from "next/cache";
-import { readImportRequest, runImport } from "@/features/import/service";
+import { IMPORT_LIMIT_MESSAGE, readImportRequest, runImport } from "@/features/import/service";
 import { loadSession } from "@/features/workspace/server";
 
 const json = (body: unknown, status = 200) =>
@@ -38,6 +38,22 @@ export async function POST(request: Request) {
       },
       503,
     );
+
+  // Spend the user's allowance before reading or parsing anything, so
+  // repeated large requests are refused cheaply. Fails closed.
+  let allowed: boolean;
+  try {
+    allowed = await gateway.consumeRateLimit("import");
+  } catch {
+    return json(
+      {
+        ok: false,
+        message: "The database couldn't be reached. Nothing was imported; try again.",
+      },
+      503,
+    );
+  }
+  if (!allowed) return json({ ok: false, message: IMPORT_LIMIT_MESSAGE }, 429);
 
   let body: unknown;
   try {

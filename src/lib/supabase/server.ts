@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { sessionCookieOptions } from "./config";
 
 /**
  * A Supabase client for this request, acting as the signed-in user (the
@@ -13,6 +14,7 @@ export async function supabaseServerClient(
 ): Promise<SupabaseClient> {
   const store = await cookies();
   return createServerClient(url, publishableKey, {
+    cookieOptions: sessionCookieOptions(),
     cookies: {
       getAll: () => store.getAll(),
       setAll: (list) => {

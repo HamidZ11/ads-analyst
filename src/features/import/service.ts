@@ -159,6 +159,8 @@ export type ImportPlan =
     };
 
 const UNAVAILABLE_CLIENT = "That client isn't available. Choose another client.";
+export const IMPORT_LIMIT_MESSAGE =
+  "You've reached the import limit for this hour. Nothing was imported; try again later.";
 
 /** Parse, validate and normalise: everything short of writing. Pure. */
 export function planImport(request: ImportRequest, context: ImportContext): ImportPlan {
@@ -289,6 +291,8 @@ export function importFailure(
       };
     case "invalid":
       return { status: 422, message: "Some values were rejected, so nothing was imported." };
+    case "rate_limited":
+      return { status: 429, message: IMPORT_LIMIT_MESSAGE };
     default:
       return {
         status: 503,

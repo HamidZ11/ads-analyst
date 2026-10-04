@@ -958,3 +958,40 @@ A technical pass on how the public site is crawled and indexed, made before any 
 **Tests:** route access (unknown URLs, robots and sitemap allowed; app pages and the API still protected; every page under `src/app` classified) and SEO (origin parsing, titles and descriptions, canonical with and without an origin, sitemap contents, robots rules, truthful JSON-LD, public links resolve with no lab routes).
 
 **Not done here (launch-only):** setting the production origin, Search Console verification and sitemap submission, keeping previews out of search, validating JSON-LD on the live URL, Open Graph artwork, and off-site work such as backlinks. No commit or push.
+
+## 2026-10-04 — Pre-deployment security audit and fixes
+
+Audit of the whole repository before any deployment, then fixes for verified issues only. No redesign, no product features, nothing committed or pushed.
+
+**Audit, clean:** no secrets in the tree, the `.env.example` history, the 19 commits of Git history or the build output (only `NEXT_PUBLIC_*` reaches the browser; the publishable key is public by design; no service-role key exists), so nothing needs rotating. RLS is on all ten tables and keyed on membership; composite foreign keys stop cross-workspace parents; `workspace_snapshot` and `import_meta_csv` check membership and resolve forged client IDs inside the caller's workspace; `anon` has no table or function privileges. Every route handler and server action re-checks the session next to the data, and client-supplied IDs (client, workspace cookie, Ask context) only select among rows the user can already read. No dynamic SQL, no SSRF surface (no server-side fetch), no open redirect (fixed targets only), no unsafe HTML (JSON-LD escapes `<`), no CSV export (so no formula injection). Errors reach users as fixed messages; logs carry Supabase/Postgres error text but no emails or file contents. `pnpm audit --prod`: no advisories.
+
+**Found and fixed (D-059):**
+
+- No security headers: added a same-origin CSP, frame denial, `nosniff`, referrer and permissions policies, HSTS outside development; `X-Powered-By` off.
+- Supabase session cookies were script-readable and not `Secure` (`@supabase/ssr` defaults), contrary to D-049: now HTTP-only, and `Secure` in production, in both the proxy and the server client.
+- With `NEXT_PUBLIC_SITE_URL` unset, the magic-link redirect was built from `X-Forwarded-Host`/`Host`: production now uses the configured origin only and refuses sign-in without it.
+- `/api/import` had no rate limit: new `public.consume_rate_limit` (30 imports per user per hour, Postgres-backed), checked before the body is read; fails closed.
+- `imports.imported_by` could be set to another user by a direct insert: the insert policy now requires `imported_by = auth.uid()`.
+- `AD_ANALYST_ALLOW_SIGNUPS=false` looked like an access control but Supabase Auth can be called directly: documented that the Supabase setting is the real switch.
+
+**Reported, not fixed:** direct PostgREST writes by a signed-in user to their own workspace bypass app validation and limits (MEDIUM; the fix reverses part of D-051 and needs a decision); sign-in requests share one Supabase per-IP bucket because they come from the server (MEDIUM; CAPTCHA plus host rate limiting); `braces` advisory in dev-only ESLint tooling, no patched version.
+
+**Files:** `next.config.ts`, `src/lib/site.ts`, `src/lib/supabase/config.ts`, `src/lib/supabase/server.ts`, `src/proxy.ts`, `src/features/auth/actions.ts`, `src/features/auth/messages.ts`, `src/data/supabase/gateway.ts`, `src/data/supabase/test-database.ts`, `src/app/api/import/route.ts`, new migration `supabase/migrations/20261004200000_rate_limits_and_import_attribution.sql`, tests (`auth.test.ts`, `schema.test.ts`, new `src/app/api/import/route.test.ts`), `README.md` (new Security section), `.env.example`, `docs/DECISIONS.md`.
+
+**Checks:** format, lint, typecheck, tests 295 → 307 (21 → 22 files; the three new route tests fail against the old route), production build, `git diff --check`, `pnpm audit`. Browser pass in dev (port 3000) and a production build in demo mode (port 3100): every app and marketing page loads with no CSP violations, Ask posts and the client switcher's server action work, HMR connects in dev.
+
+**Live validation still required:** migrations applied to the real project, the two-user isolation check, redirect allow-list without broad wildcards, anonymous sign-ins off, sign-up setting, custom SMTP, Supabase auth rate limits and CAPTCHA, host rate-limit rules, preview deployments kept off the production project, spend caps.
+
+## 2026-10-04 — Security follow-up: one controlled write boundary (M2)
+
+Follow-up to the pre-deployment audit. It keeps every earlier fix and resolves the direct-write gap (M2). Nothing committed or pushed, and no migration applied to a live project.
+
+**Mapped before changing grants:** the app never touches tables directly (`supabase.from` appears nowhere). Writes: `ensure_default_workspace` (definer; workspaces, workspace_members), `import_meta_csv` (invoker; clients, ad_accounts, campaigns, ad_sets, creatives, ads, daily_metrics, imports), `update_client_targets` (invoker; clients), `consume_rate_limit` (definer; rate_limits). Reads: `workspace_snapshot` (invoker), which needs `SELECT` on nine tables; nothing reads `workspace_members` directly. So no table needs a direct write grant.
+
+**Changes (D-060):** new forward migration `20261004210000_controlled_write_boundary.sql`. Every privilege on the ten tables is reset, then `SELECT` is granted on the nine that `workspace_snapshot` reads. `import_meta_csv` and `update_client_targets` become `security definer` with an empty `search_path`, an `auth.uid()` check, explicit membership checks and input validation that matches the importer's own limits. The new `import_write` allowance (30 per hour) is counted inside the import transaction, and a refused write maps to a 429 (`GatewayError` kind `rate_limited`, shared `IMPORT_LIMIT_MESSAGE`). RLS policies are unchanged.
+
+**Tests:** 8 new tests in `schema.test.ts` cover: owner direct writes refused on all ten tables; controlled writes still succeed; no write function reaches another workspace; forged workspace, client and user IDs fail; payload validation rejects 13 malformed cases and both bad target ranges without writing; future-dated rows still accepted; database write limit counts only committed imports; anonymous callers refused by every function. Four existing tests were updated, none weakened. Cross-workspace writes and import attribution now assert "permission denied", then restore the grant and show RLS still refuses. The composite foreign-key test runs as the table owner. The counter query filters by action. Against the schema without the new migration, 5 of the 23 schema tests fail (direct owner writes succeed, `"NaN"` spend is accepted, no write limit). With it, all pass.
+
+**Checks:** `pnpm format:check`, `lint`, `typecheck`, `test` (315 passed, 22 files), `build --webpack`, `audit --prod` (no advisories), `git diff --check`.
+
+**Still live work:** M3 (sign-in through the server shares Supabase's per-IP auth limit) stays deployment configuration: CAPTCHA, custom SMTP, tuned auth limits, host rate limits. The 13-item checklist is in README Security, including verifying that direct writes are refused on the real project.

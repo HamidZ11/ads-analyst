@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { appMode, signupsAllowed } from "@/lib/supabase/config";
 import { supabaseServerClient } from "@/lib/supabase/server";
 import { CLIENT_COOKIE, WORKSPACE_COOKIE } from "@/features/workspace/cookies";
-import { signInFailureMessage, validEmail } from "./messages";
+import { signInFailureMessage, signInLinkOrigin, validEmail } from "./messages";
 
 export interface SignInState {
   status: "idle" | "sent" | "error";
@@ -13,9 +13,8 @@ export interface SignInState {
   email: string;
 }
 
-async function siteOrigin(): Promise<string> {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-  if (configured) return configured;
+/** The origin of this request, used for sign-in links in development only. */
+async function requestOrigin(): Promise<string> {
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
   const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
@@ -39,11 +38,16 @@ export async function requestSignInLink(
   const mode = appMode();
   if (mode.kind !== "supabase")
     return { status: "error", message: "Sign-in isn't configured for this deployment.", email };
+  const origin = signInLinkOrigin(process.env, await requestOrigin());
+  if (!origin) {
+    console.error("[ad-analyst] sign-in is disabled: NEXT_PUBLIC_SITE_URL is not set.");
+    return { status: "error", message: "Sign-in isn't configured for this deployment.", email };
+  }
   const db = await supabaseServerClient(mode.url, mode.publishableKey);
   const { error } = await db.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${await siteOrigin()}/auth/callback`,
+      emailRedirectTo: `${origin}/auth/callback`,
       shouldCreateUser: signupsAllowed(),
     },
   });
