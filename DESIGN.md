@@ -430,6 +430,7 @@ Authentication is a utility, not a destination (D-049 to D-052). It uses the exi
 - Account: Settings opens with an Account section ("You only see this workspace's clients and data.") with "Signed in as", the workspace and a secondary "Sign out". It renders even when the workspace has no clients. There is no avatar menu in the sidebar.
 - Empty workspace: the sidebar replaces the client switcher with a 44px dashed `border-strong` box reading "No clients yet" in `ink-muted`; the mobile top bar omits the compact switcher. Analysis pages and Clients redirect to `/clients/import?client=new`; Settings shows the Account section, an "Import Meta CSV" header action and a Client section saying client settings appear after the first import.
 - Labels: in a signed-in deployment the Settings row reads "Workspace" with the workspace name; demo mode keeps "Agency".
+- Not found: unknown URLs answer with a 404 status and "Page not found" over "There's no page at this address." Signed out, it uses the sign-in column (product mark, 20px 600 heading) with a primary "Go to the home page" and a secondary "Pricing"; in an app session it sits inside the shell like the error boundary, with a primary "Go to Overview". Never a redirect.
 - Recoverable failure: the app-level error boundary shows "This page couldn't load", one reassurance sentence, primary "Try again" and secondary "Sign in again" inside the shell. Database messages are never shown.
 
 ## 28. Marketing site
@@ -440,6 +441,7 @@ The public pages (`/` and `/pricing`, D-054) share one system in `src/features/m
 - Controls: 6px-radius buttons, one filled primary per view, with a text link with an arrow as the secondary. The nav is inline from 1024px and a disclosure menu below that.
 - Product proof: real components with seeded data, cropped to the claim of their section (`ProductCrop`). Wide crops render from 1024px; below that, crops of the product's real phone layout render at 0.9× or more. White panels use a 12px radius and a hairline edge. No fake UI, metrics, logos or testimonials.
 - Motion: the hero settles; the product rises into its field and the floating finding follows; panels below the fold unveil top-down as they arrive. Hero motion is CSS-only so the server render never flashes. Reduced motion disables all of it.
+- Icon and sharing: the favicon is the marketing mark, an ink `#0b1020` rounded square with the white chart line (`src/app/icon.svg`, with a 16/32/48px `favicon.ico` rendered from it). Share cards are text-only until approved Open Graph artwork exists (D-058).
 - Pricing: two buying paths on one cobalt stage (D-055). Agency and Enterprise are equal white panels side by side from 1024px, with the same radius, padding and shadow. Their rows share a subgrid so name, line, price, sub-line, capacity, action and note align across both.
   - Agency keeps the 120px £29 with "/ month" and the quiet annual line. Enterprise answers with "Custom" at about 100px and "pricing" in the same position, so it is never small print.
   - Each panel's capacity sits in a hairline-ruled row with a check: "Up to 10 client accounts" or "More than 10 client accounts".

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { marketingSans } from "@/features/marketing/font";
 import { MarketingFooter } from "@/features/marketing/marketing-footer";
@@ -5,6 +6,10 @@ import { MarketingNav } from "@/features/marketing/marketing-nav";
 import { RevealOnScroll } from "@/features/marketing/reveal";
 import s from "@/features/marketing/marketing.module.css";
 import { cn } from "@/lib/cn";
+import { INDEXED } from "@/lib/site";
+
+/** The public pages are the only indexable routes (D-057). */
+export const metadata: Metadata = { robots: INDEXED };
 
 /** The public marketing site: its own face, navigation and footer; no app shell. */
 export default function MarketingLayout({ children }: { children: ReactNode }) {

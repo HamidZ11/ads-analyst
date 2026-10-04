@@ -23,7 +23,7 @@ Without Supabase variables, `pnpm dev` serves the seeded demo clients read-only,
 4. In Authentication → URL Configuration, set the Site URL (for example `http://localhost:3000`) and add `http://localhost:3000/auth/callback` (and your production `/auth/callback`) to the redirect URLs. Keep the Email provider enabled.
 5. `pnpm dev`, open http://localhost:3000/sign-in, sign in with your email and open the link in the same browser. The first sign-in creates your workspace; import a Meta Ads CSV from Clients.
 
-Set `AD_ANALYST_ALLOW_SIGNUPS=false` to stop new addresses creating accounts, and `NEXT_PUBLIC_SITE_URL` when the public origin differs from the request host. A production build without Supabase variables shows "Not connected yet" unless `AD_ANALYST_DEMO_MODE=true`.
+Set `AD_ANALYST_ALLOW_SIGNUPS=false` to stop new addresses creating accounts, and `NEXT_PUBLIC_SITE_URL` to the production origin (sign-in emails, canonical URLs, the sitemap and robots.txt use it; see Search and indexing). A production build without Supabase variables shows "Not connected yet" unless `AD_ANALYST_DEMO_MODE=true`.
 
 ## Scripts
 
@@ -82,6 +82,26 @@ The dataset is generated deterministically (seeded PRNG) and anchored to today's
 - **Arc Cloud** (SaaS, USD, America/New_York, target CPA $85).
 
 Patterns are expressed only as trajectories of spend, CPM, CTR, CVR and order value; nothing is flagged. `src/data/seed/seed.test.ts` asserts that each pattern is detectable from the numbers alone.
+
+## Search and indexing
+
+Implemented (D-057, D-058):
+
+- Only `/` and `/pricing` are indexable. The root layout marks every route `noindex, nofollow` and the `(marketing)` layout opts its pages back in, so the app, sign-in and 404 pages stay out of search results, and so does any new page outside `(marketing)`.
+- `NEXT_PUBLIC_SITE_URL` is the single source of the production origin (`src/lib/site.ts`). Set at build time, it gives `/` and `/pricing` canonical and Open Graph URLs, fills `/sitemap.xml` with exactly those two URLs and adds the sitemap to `/robots.txt`. Unset or localhost, all three are left out rather than guessed.
+- `/robots.txt` allows everything except `/api/` and `/auth/`. App pages and sign-in are deliberately not disallowed: the site links to them, and crawlers must fetch them to see their noindex (signed-out crawlers are redirected to sign-in). robots.txt is not access control; the proxy, the data layer and RLS are.
+- Unknown URLs return a real 404 (noindex). App pages still send signed-out visitors to sign-in, and the API still answers 401.
+- The home page has JSON-LD: `WebSite` (the site name, once the origin is set) and `SoftwareApplication` (name, category, "Web" and the hero lead). There are no offers, ratings, reviews, FAQ or breadcrumb schema.
+- Share cards are text-only (`summary`). The favicon is the marketing mark.
+
+Launch-only:
+
+1. Set `NEXT_PUBLIC_SITE_URL` in the production build. Make http→https and www/apex redirects single hops at the host.
+2. Keep preview and staging deployments out of search (a host-level `X-Robots-Tag: noindex`, or access protection).
+3. Verify the domain in Google Search Console, submit `/sitemap.xml`, inspect `/` and `/pricing`, request indexing where useful, then monitor page indexing, enhancements and Core Web Vitals.
+4. Validate the home page JSON-LD with the Rich Results Test or the Schema Markup Validator.
+5. Add Open Graph artwork (1200×630) once approved artwork exists.
+6. Backlinks are off-site work: launch directories, agency and founder communities, useful original research, partnerships and real mentions. Nothing automated or paid.
 
 ## Before Launch
 

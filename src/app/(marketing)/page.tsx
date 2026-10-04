@@ -11,22 +11,13 @@ import {
   OverviewCanvas,
 } from "@/features/marketing/product-canvases";
 import { ProductCrop, type Crop } from "@/features/marketing/product-crop";
+import { homeStructuredData, jsonLd, marketingMetadata } from "@/features/marketing/seo";
 import { SpendField } from "@/features/marketing/spend-field";
 import { cn } from "@/lib/cn";
 import { APP_HOME } from "@/lib/routes";
 import s from "./landing.module.css";
 
-export const metadata: Metadata = {
-  title: { absolute: "Ad Analyst — Meta Ads analysis for agencies" },
-  description:
-    "Ad Analyst helps agencies running several Meta Ads clients see which campaigns and creatives changed, how they compare with last week and each client’s targets, and where spend is being wasted.",
-  openGraph: {
-    title: "Ad Analyst — Meta Ads analysis for agencies",
-    description:
-      "See which campaigns and creatives changed, how they compare with last week and each client’s targets, and where spend is being wasted.",
-    type: "website",
-  },
-};
+export const metadata: Metadata = marketingMetadata("/");
 
 /* Product showcases are the shipped components with seeded data, cropped in
    their own unscaled coordinates. Wide crops render the desktop layout (from
@@ -82,6 +73,10 @@ export default function LandingPage() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(homeStructuredData()) }}
+      />
       <section className={cn(m.container, s.hero)} aria-labelledby="landing-title">
         <h1 id="landing-title" className={s.h1}>
           <span className={s.line}>Know what changed</span>{" "}

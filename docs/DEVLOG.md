@@ -931,3 +931,30 @@ DESIGN.md (Clients, Settings, Account and §28 Marketing site), DECISIONS.md (D-
 - **Launch checkpoints, not started:** live Supabase and RLS validation, billing, a sales contact address, a public demo strategy for production, and deployment.
 
 The work is committed in three commits (persistence and auth, the marketing site, final polish) and merged into `main` without squashing.
+
+---
+
+## 2026-10-04 — SEO and discoverability readiness (public site)
+
+A technical pass on how the public site is crawled and indexed, made before any deployment. No redesign, copy rewrite or new pages; the landing and pricing pages render as before.
+
+**Audit findings (production build):**
+
+- In any non-demo deployment the proxy sent every unrecognised path to `/sign-in`, including `/robots.txt`, `/sitemap.xml` and mistyped URLs, so unknown URLs were soft 404s.
+- No robots policy: the app and sign-in were indexable by default. No canonical tags, sitemap or robots file. The favicon was still the Create Next App icon.
+- Already sound: unique titles on both pages, one H1 and a clean section outline on each, all marketing copy in the server HTML, metadata in the server-rendered head, no images (the visuals are live components and CSS), working anchors and CTAs, no lab links, no multi-hop redirects (`/pricing/` → `/pricing` is one 308; the app and sign-in redirects are one hop each), and fonts through `next/font` with preloads scoped per route and size-adjusted fallbacks.
+
+**Changes (D-057, D-058):**
+
+- Indexing: noindex by default from the root layout; `(marketing)` opts `/` and `/pricing` in. Verified: marketing pages `index, follow`; `/overview` (demo) and `/sign-in` `noindex, nofollow`; 404s `noindex`.
+- Proxy: app pages are named in `APP_PATHS`; signed-out visitors to them still go to sign-in and the API still answers 401. Other paths fall through, so unknown URLs render a new not-found page with a 404 status (standalone when signed out, inside the shell in an app session).
+- One origin source, `NEXT_PUBLIC_SITE_URL`, drives canonical and Open Graph URLs, `/sitemap.xml` (only `/` and `/pricing`) and the sitemap line in `/robots.txt`. Unset or localhost leaves them out. `/robots.txt` allows everything but `/api/` and `/auth/`.
+- Metadata: home and pricing descriptions trimmed to 149 and 139 characters; pricing now mentions Enterprise. Open Graph adds site name, `en_GB` and the URL; cards stay text-only.
+- Structured data on the home page: `WebSite` (with the origin) and `SoftwareApplication`, with no offers, ratings, reviews, FAQ or breadcrumbs.
+- Favicon: the marketing mark as `icon.svg` plus a 1.8KB `favicon.ico` (16/32/48px), replacing the 25.9KB default.
+
+**Performance, measured at 390px with 4× CPU and slow 4G:** LCP 1.5s (the hero lead), CLS 0, one 103ms long task, 86KB of HTML transferred (36KB with Brotli). Unchanged by this pass. Known costs, left as they are: the landing page's product exhibits render both desktop and phone variants of the real components, about 5,900 elements whose headings sit inside `aria-hidden`, `inert` crops; marketing pages render per request (`private, no-store`) because the root layout reads the session; and they load the app shell's JavaScript (about 40KB gzipped) through `SurfaceSwitch`. Moving the app shell into an `(app)` route-group layout would make the marketing pages static and drop that JavaScript; it touches every app route and is not needed for indexing.
+
+**Tests:** route access (unknown URLs, robots and sitemap allowed; app pages and the API still protected; every page under `src/app` classified) and SEO (origin parsing, titles and descriptions, canonical with and without an origin, sitemap contents, robots rules, truthful JSON-LD, public links resolve with no lab routes).
+
+**Not done here (launch-only):** setting the production origin, Search Console verification and sitemap submission, keeping previews out of search, validating JSON-LD on the live URL, Open Graph artwork, and off-site work such as backlinks. No commit or push.

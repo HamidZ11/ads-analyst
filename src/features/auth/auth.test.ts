@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { appMode, signupsAllowed } from "@/lib/supabase/config";
-import { accessDecision, isPublicPath } from "./access";
+import { readdirSync } from "node:fs";
+import { join, relative, sep } from "node:path";
+import { APP_PATHS } from "@/lib/routes";
+import { accessDecision, isAppPath, isPublicPath } from "./access";
 import { signInFailureMessage, validEmail } from "./messages";
 
 describe("deployment mode", () => {
@@ -47,13 +50,7 @@ describe("deployment mode", () => {
 
 describe("route access", () => {
   it("redirects signed-out page requests to sign-in and answers APIs with 401", () => {
-    for (const path of [
-      "/overview",
-      "/campaigns",
-      "/clients/import",
-      "/settings",
-      "/insights-lab",
-    ])
+    for (const path of [...APP_PATHS, "/clients/import", "/overview/anything"])
       expect(accessDecision(path, false), path).toBe("redirect_to_sign_in");
     expect(accessDecision("/api/import", false)).toBe("unauthorized");
     expect(accessDecision("/api/ask", false)).toBe("unauthorized");
@@ -69,8 +66,42 @@ describe("route access", () => {
   it("keeps the marketing pages public and exact", () => {
     expect(accessDecision("/", false)).toBe("allow");
     expect(accessDecision("/pricing", false)).toBe("allow");
-    expect(accessDecision("/pricing/anything", false)).toBe("redirect_to_sign_in");
-    expect(accessDecision("/pricing-lab", false)).toBe("redirect_to_sign_in");
+    expect(isPublicPath("/pricing/anything")).toBe(false);
+    expect(isPublicPath("/pricing-lab")).toBe(false);
+  });
+
+  it("lets unknown URLs through to a real 404 instead of sending them to sign-in", () => {
+    for (const path of [
+      "/nope",
+      "/pricing/anything",
+      "/pricing-lab",
+      "/insights-lab",
+      "/import",
+    ])
+      expect(accessDecision(path, false), path).toBe("allow");
+    expect(isAppPath("/overviewing")).toBe(false);
+    expect(isAppPath("/clients/import")).toBe(true);
+  });
+
+  it("serves robots.txt and the sitemap to signed-out crawlers", () => {
+    expect(accessDecision("/robots.txt", false)).toBe("allow");
+    expect(accessDecision("/sitemap.xml", false)).toBe("allow");
+  });
+
+  it("classifies every page in src/app as public or as an app page", () => {
+    const appDir = join(process.cwd(), "src/app");
+    const pages = readdirSync(appDir, { recursive: true, encoding: "utf8" })
+      .filter((file) => /(^|[\\/])page\.tsx$/.test(file))
+      .map((file) => {
+        const segments = relative(appDir, join(appDir, file))
+          .split(sep)
+          .slice(0, -1)
+          .filter((segment) => !/^\(.*\)$/.test(segment));
+        return `/${segments.join("/")}`;
+      });
+    expect(pages.length).toBeGreaterThan(5);
+    for (const page of pages)
+      expect(isPublicPath(page) || isAppPath(page), `${page} is unclassified`).toBe(true);
   });
 
   it("keeps sign-in and the email callback public", () => {

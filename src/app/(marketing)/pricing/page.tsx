@@ -3,22 +3,13 @@ import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { landingEvidence } from "@/features/marketing/evidence";
 import m from "@/features/marketing/marketing.module.css";
+import { marketingMetadata } from "@/features/marketing/seo";
 import { SpendField } from "@/features/marketing/spend-field";
 import { cn } from "@/lib/cn";
 import { APP_HOME } from "@/lib/routes";
 import s from "./pricing.module.css";
 
-export const metadata: Metadata = {
-  title: { absolute: "Pricing — Ad Analyst" },
-  description:
-    "One plan for agencies: £29 a month, or £290 a year, for up to 10 client accounts, with every part of Ad Analyst included.",
-  openGraph: {
-    title: "Pricing — Ad Analyst",
-    description:
-      "One plan for agencies: £29 a month, or £290 a year, for up to 10 client accounts, with every part of Ad Analyst included.",
-    type: "website",
-  },
-};
+export const metadata: Metadata = marketingMetadata("/pricing");
 
 /* Two buying paths on one stage: Agency (self-serve, £29) and Enterprise
    (more than 10 client accounts, custom pricing). They differ in capacity, not

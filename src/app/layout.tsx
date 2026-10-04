@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { SurfaceSwitch } from "@/components/shell/surface-switch";
 import { loadSession } from "@/features/workspace/server";
+import { NOT_INDEXED, publicOrigin } from "@/lib/site";
 import "./globals.css";
 
 const inter = Inter({
@@ -10,9 +11,14 @@ const inter = Inter({
   display: "swap",
 });
 
+const origin = publicOrigin();
+
+/** Nothing is indexed unless it opts in: only the marketing layout does (D-057). */
 export const metadata: Metadata = {
+  metadataBase: origin ? new URL(origin) : undefined,
   title: { default: "Ad Analyst", template: "%s · Ad Analyst" },
   description: "Meta Ads analytics for small marketing agencies.",
+  robots: NOT_INDEXED,
 };
 
 /**
