@@ -1008,3 +1008,5 @@ Two requested refinements to the public site. Nothing else changed.
 DESIGN.md §28 records both.
 
 **Checks:** `pnpm check` (format, lint, typecheck, 315 tests in 22 files, production build).
+
+**Environmental fix (separate commit):** `pnpm check` failed on four duplicate generated files in the build cache (`.next/types/routes.d 2.ts` and three others, created the same minute; likely iCloud or Finder conflict copies). The earlier `tsconfig.json` exclusion `**/* [0-9].ts` never matched, because TypeScript's include and exclude patterns support only `*`, `?` and `**/`, not character classes. It is now `**/* ?.ts`. A planted copy is loaded under the old pattern and ignored under the new one; the other 924 type-checked files are unchanged, and no tracked file has a space in its name.
