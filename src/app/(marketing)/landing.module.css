@@ -47,7 +47,7 @@
 /* Hero -------------------------------------------------------------------- */
 
 .hero {
-  padding-top: clamp(48px, 8.8vw, 128px);
+  padding-top: clamp(40px, 4.8vw, 72px);
 }
 .heroRow {
   display: grid;

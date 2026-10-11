@@ -995,3 +995,16 @@ Follow-up to the pre-deployment audit. It keeps every earlier fix and resolves t
 **Checks:** `pnpm format:check`, `lint`, `typecheck`, `test` (315 passed, 22 files), `build --webpack`, `audit --prod` (no advisories), `git diff --check`.
 
 **Still live work:** M3 (sign-in through the server shares Supabase's per-IP auth limit) stays deployment configuration: CAPTCHA, custom SMTP, tuned auth limits, host rate limits. The 13-item checklist is in README Security, including verifying that direct writes are refused on the real project.
+
+---
+
+## 2026-10-11 — Marketing nav button and landing hero spacing
+
+Two requested refinements to the public site. Nothing else changed.
+
+- The nav's "Try the demo" is now a filled ink button with white text (38px, hover `#1e2539`), matching the pages' primary buttons, instead of an outlined one. The nav is shared, so this shows on `/` and `/pricing`. The cobalt focus ring is unchanged.
+- The landing hero sits closer to the nav: the top padding went from `clamp(48px, 8.8vw, 128px)` to `clamp(40px, 4.8vw, 72px)`. The gap from the nav to the headline is 72px at 1512px (was 128px), 61px at 1280px and 40px on phones (was 48px), and the product field starts 56px higher at 1512px. The pricing hero keeps its own spacing.
+
+DESIGN.md §28 records both.
+
+**Checks:** `pnpm check` (format, lint, typecheck, 315 tests in 22 files, production build).
