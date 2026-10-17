@@ -1200,3 +1200,15 @@ Owner bug report: in Safari (macOS and iOS) the hero's Overview crop was a blank
 **Checks:** `pnpm check`.
 
 **Not in this commit:** the CTA band from the earlier brief is still uncommitted in the working tree; it is committed separately next.
+
+---
+
+## 2026-10-17 — Shared closing call to action
+
+Owner brief, item 1 of 2 (D-076).
+
+- New `src/features/marketing/cta-band.tsx` with styles in `marketing.module.css` (`.cta`, `.ctaTitle`, `.ctaLine`, `.ctaActions`). It replaces the close sections in `page.tsx` and `pricing/page.tsx`; their `.close`, `.closeTitle` and `.closeActions` styles are removed. Not rendered on `/privacy` or `/terms`.
+- Measured in the dev server: at 1440px the 40px headline is one line, starts at the headline grid edge (x = 80) on both pages, and has 108px of padding above and below; at 1280px it is still one line; at 390px it is 28px on two lines, with 64px padding and no page overflow. The audit and demo pair was checked by inserting the same markup (no contact address is set locally) and fits beside each other on desktop.
+- Tests: `cta-band.test.ts` (on `/` and `/pricing` once, not on the legal pages, the old close gone; audit and demo with an address; the demo as the primary and no audit wording without one).
+
+**Checks:** `pnpm check`.

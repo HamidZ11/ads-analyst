@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { CPA_QUESTION, landingEvidence } from "@/features/marketing/evidence";
+import { CtaBand } from "@/features/marketing/cta-band";
 import { AnswerExhibit, FindingExhibit } from "@/features/marketing/exhibits";
 import m from "@/features/marketing/marketing.module.css";
 import { auditMailto, HERO_HEADLINE, HERO_LEAD } from "@/features/marketing/hero";
@@ -297,20 +298,7 @@ export default function LandingPage() {
         </Panel>
       </section>
 
-      <section className={cn(m.container, s.close)} aria-labelledby="close-title">
-        <h2 id="close-title" className={s.closeTitle}>
-          Know what changed before your next client call.
-        </h2>
-        <div className={cn(m.actions, s.closeActions)}>
-          <Link href={APP_HOME} className={m.button}>
-            Try the demo
-          </Link>
-          <Link href="/sign-in" className={m.textLink}>
-            Sign in
-            <ArrowRight aria-hidden size={16} strokeWidth={1.75} />
-          </Link>
-        </div>
-      </section>
+      <CtaBand />
     </>
   );
 }

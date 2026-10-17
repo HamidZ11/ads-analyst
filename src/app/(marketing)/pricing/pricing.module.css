@@ -5,8 +5,7 @@
 /* Type -------------------------------------------------------------------- */
 
 .h1,
-.h2,
-.closeTitle {
+.h2 {
   font-weight: 600;
   color: var(--ink);
   text-wrap: balance;
@@ -265,19 +264,6 @@
   color: var(--ink-2);
   font-size: 16.5px;
   line-height: 1.6;
-}
-
-.close {
-  padding: var(--section) 0 clamp(96px, 11vw, 160px);
-}
-.closeTitle {
-  max-width: 15ch;
-  font-size: clamp(40px, 5.4vw, 78px);
-  line-height: 1;
-  letter-spacing: -0.04em;
-}
-.closeActions {
-  margin-top: 40px;
 }
 
 /* Motion: the hero settles; the plans rise into their field; the prices lift

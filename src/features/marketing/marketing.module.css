@@ -223,6 +223,32 @@
   gap: 12px 30px;
 }
 
+/* Closing call to action (landing and pricing) --------------------------- */
+
+/* The padding is the whole gap: about 108px above the headline and below the
+   actions at 1440px, so the band never reads as another full section. */
+.cta {
+  padding: clamp(64px, 7.5vw, 112px) 0;
+}
+.ctaTitle {
+  color: var(--ink);
+  font-size: clamp(28px, 2.8vw, 40px);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.ctaLine {
+  max-width: 52ch;
+  margin-top: 12px;
+  color: var(--ink-2);
+  font-size: 17px;
+  line-height: 1.55;
+}
+.ctaActions {
+  margin-top: 28px;
+}
+
 /* Footer ------------------------------------------------------------------ */
 
 .footer {
