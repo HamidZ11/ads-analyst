@@ -1130,3 +1130,11 @@ Second owner brief, item 4 (D-069).
 - Tests: `overview-analytics.test.ts`: "Needs attention" and the short-of-target line inside the lead reading, the verdict appears once and the rail heading is gone; a met target reads "On target" with the distance above it.
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-17 — Opportunity dot matches its rule
+
+Owner follow-up, item 1 (D-070). `priority.tsx`: Opportunity dot `bg-accent` → `bg-positive`; DESIGN.md §24 updated. Test: the Opportunity label renders the `bg-positive` dot.
+
+**Checks:** `pnpm check`.

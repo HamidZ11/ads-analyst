@@ -426,7 +426,7 @@ Threads live only in the current mounted page. Start fresh clears answers and en
 
 **Decision:** Every finding row in the Insights list has a 2px rounded rule at its left edge (the same geometry as the existing selection rule) in its group's token: Needs attention `negative`, Opportunities `positive`, Watch `warning`. The existing `warning` token (`#b54708`) is used rather than adding one: 5.4:1 on white and 4.9:1 on the hover fill, well above the 3:1 non-text minimum. The selected row's rule turns `accent`, as before, rather than showing a second rule beside the group one.
 **Reason:** Owner brief (2026-10-17): the group should read at a glance down the list. One rule per row keeps the left edge clean, and blue still means selected (§1).
-**Consequences:** This is the one place green and red mark something other than a delta (DESIGN.md §2 records the exception). The priority dot is unchanged, so an Opportunity row shows a blue dot beside a green rule; aligning the dot with the rule is an open question for the owner.
+**Consequences:** This is the one place green and red mark something other than a delta (DESIGN.md §2 records the exception). The priority dot is unchanged, so an Opportunity row shows a blue dot beside a green rule; aligning the dot with the rule is an open question for the owner (resolved by D-070).
 
 ### D-068 — Period charts: solid stronger blue for this period, dashed grey for the previous one
 
@@ -439,3 +439,9 @@ Threads live only in the current mounted page. Start fresh clears answers and en
 **Decision:** The target verdict ("Needs attention", "On target", "No reading", "No target") and the distance line ("0.79x short of the 3.50x target") sit in a column beside the Overview's lead numeral, under its change. The rail's "Target status" section is removed rather than repeated, so the rail holds spend concentration and largest changes, and the progress bar's footer keeps only the target value. Above-target and under-target distances are now stated too ("above the", "under the"), where the bar previously said only "Meeting target".
 **Reason:** Owner brief (2026-10-17). The verdict is part of the lead reading (DESIGN.md §21: current, previous, target and distance legible together); in the rail it sat at 1400px+ beside the chart and, below that, under the chart, far from the number it judged. Showing it in both places would repeat the same sentence twice in one viewport.
 **Consequences:** This revisits the locked APP 01.8 Overview by explicit brief. The status column stays beside the numeral at 1440, 1280 and 360px for the seeded Luxe Skin reading; a wider numeral (a long currency cost) wraps it beneath. The landing page shows the same layout because it renders the real component.
+
+### D-070 — The Opportunity dot is green
+
+**Decision:** The 6px Opportunity priority dot uses `positive` instead of `accent`, in the Insights list and the detail's priority label, so it matches the Opportunities row rule (D-067). High impact stays `negative` and Watch stays a hollow `ink-faint` ring.
+**Reason:** Owner follow-up (2026-10-17): a blue dot beside a green rule gave one finding two colours.
+**Consequences:** Blue no longer marks any priority; in the Insights list it means only the selected row.

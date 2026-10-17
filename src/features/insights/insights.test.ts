@@ -15,6 +15,7 @@ import type { Dataset } from "@/domain/types";
 import { collectInsightFacts } from "./facts";
 import { FindingChart } from "./finding-chart";
 import { InsightsWorkspace } from "./insights-workspace";
+import { PriorityLabel } from "./priority";
 
 /**
  * The seed is anchored to a date. Its daily noise makes 7-day windows differ
@@ -351,5 +352,16 @@ describe("finding charts", () => {
     expect(current.every((line) => !line.dashed)).toBe(true);
     expect(previous.every((line) => line.dashed)).toBe(true);
     expect(html).toContain('stroke-dasharray="5 4"');
+  });
+});
+
+describe("priority dots", () => {
+  it("match the row rules: red for high impact, green for opportunities", () => {
+    const dot = (priority: "high" | "opportunity" | "watch") =>
+      renderToStaticMarkup(createElement(PriorityLabel, { priority }));
+    expect(dot("high")).toContain("bg-negative");
+    expect(dot("opportunity")).toContain("bg-positive");
+    expect(dot("opportunity")).not.toContain("bg-accent");
+    expect(dot("watch")).toContain("border-ink-faint");
   });
 });

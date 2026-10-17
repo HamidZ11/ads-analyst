@@ -1,10 +1,10 @@
 import { PRIORITY_LABELS, type InsightPriority } from "@/domain/insights";
 import { cn } from "@/lib/cn";
 
-/** Priority is a 6px dot: red for high impact, blue for opportunity, an outline for watch. */
+/** Priority is a 6px dot: red for high impact, green for opportunity (matching the row rule), an outline for watch. */
 const DOT: Record<InsightPriority, string> = {
   high: "bg-negative",
-  opportunity: "bg-accent",
+  opportunity: "bg-positive",
   watch: "border border-ink-faint bg-transparent",
 };
 
