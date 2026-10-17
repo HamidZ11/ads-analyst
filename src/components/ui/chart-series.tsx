@@ -1,6 +1,6 @@
 /**
  * Stroke styles for period-over-period charts (Overview performance chart,
- * Insights finding charts): this period is a solid, darker blue line; the
+ * Insights finding charts, Creatives inspector daily spend): this period is a solid, darker blue line; the
  * previous period is a dashed grey line. Legends draw the same strokes.
  */
 

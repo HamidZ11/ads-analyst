@@ -13,32 +13,32 @@ Concrete implementation rules for every UI pass. If a rule here conflicts with a
 
 ## 2. Colour tokens
 
-| Token                        | Hex                   | Use                                                                     |
-| ---------------------------- | --------------------- | ----------------------------------------------------------------------- |
-| `canvas`                     | `#f5f6f8`             | Page background                                                         |
-| `surface`                    | `#ffffff`             | Cards, sidebar, top bar, inputs                                         |
-| `surface-subtle`             | `#f8f9fb`             | Table headers, card footers, muted panels                               |
-| `surface-hover`              | `#f2f4f7`             | Hover on rows, nav items, ghost buttons                                 |
-| `surface-active`             | `#eaedf2`             | Pressed/neutral chips, neutral delta pills                              |
-| `border`                     | `#e4e7ec`             | Default 1px border and dividers                                         |
-| `border-strong`              | `#cfd5de`             | Input and secondary-button borders, dashed empty-state borders          |
-| `ink`                        | `#0f172a`             | Primary text, numerals                                                  |
-| `ink-secondary`              | `#3d4a5c`             | Secondary text, inactive nav labels                                     |
-| `ink-muted`                  | `#667085`             | Captions, table headers, descriptions                                   |
-| `ink-faint`                  | `#98a2b3`             | Placeholders, axis ticks, tertiary hints                                |
-| `accent`                     | `#2563eb`             | Primary buttons, active chart series, selected text                     |
-| `accent-strong`              | `#1d4ed8`             | Button hover, selected nav text                                         |
-| `accent-pressed`             | `#1e40af`             | Primary button pressed state                                            |
-| `accent-soft`                | `#e8f0fe`             | Selected nav item, selected segment, selected row, chart highlight band |
-| `accent-border`              | `#b9cff7`             | Border of focused inputs and open menus                                 |
-| `positive` / `positive-soft` | `#15803d` / `#e8f5ec` | Favourable deltas; the Opportunities rule on Insights rows              |
-| `negative` / `negative-soft` | `#b42318` / `#fdecea` | Unfavourable deltas; the Needs attention rule on Insights rows          |
-| `warning` / `warning-soft`   | `#b54708` / `#fff3e0` | The Watch rule on Insights rows; otherwise reserved                     |
-| `chart-primary`              | `#2563eb`             | The selected series (sparklines, Creatives inspector)                   |
-| `chart-current`              | `#1d4ed8`             | This period's line in the Overview and Insights period charts           |
-| `chart-muted`                | `#a7b4c6`             | Earlier/comparison series                                               |
-| `chart-grid`                 | `#eceff3`             | Gridlines                                                               |
-| `tone-*` / `tone-*-ink`      | see css               | Creative thumbnail placeholders only                                    |
+| Token                        | Hex                   | Use                                                                      |
+| ---------------------------- | --------------------- | ------------------------------------------------------------------------ |
+| `canvas`                     | `#f5f6f8`             | Page background                                                          |
+| `surface`                    | `#ffffff`             | Cards, sidebar, top bar, inputs                                          |
+| `surface-subtle`             | `#f8f9fb`             | Table headers, card footers, muted panels                                |
+| `surface-hover`              | `#f2f4f7`             | Hover on rows, nav items, ghost buttons                                  |
+| `surface-active`             | `#eaedf2`             | Pressed/neutral chips, neutral delta pills                               |
+| `border`                     | `#e4e7ec`             | Default 1px border and dividers                                          |
+| `border-strong`              | `#cfd5de`             | Input and secondary-button borders, dashed empty-state borders           |
+| `ink`                        | `#0f172a`             | Primary text, numerals                                                   |
+| `ink-secondary`              | `#3d4a5c`             | Secondary text, inactive nav labels                                      |
+| `ink-muted`                  | `#667085`             | Captions, table headers, descriptions                                    |
+| `ink-faint`                  | `#98a2b3`             | Placeholders, axis ticks, tertiary hints                                 |
+| `accent`                     | `#2563eb`             | Primary buttons, active chart series, selected text                      |
+| `accent-strong`              | `#1d4ed8`             | Button hover, selected nav text                                          |
+| `accent-pressed`             | `#1e40af`             | Primary button pressed state                                             |
+| `accent-soft`                | `#e8f0fe`             | Selected nav item, selected segment, selected row, chart highlight band  |
+| `accent-border`              | `#b9cff7`             | Border of focused inputs and open menus                                  |
+| `positive` / `positive-soft` | `#15803d` / `#e8f5ec` | Favourable deltas; the Opportunities rule on Insights rows               |
+| `negative` / `negative-soft` | `#b42318` / `#fdecea` | Unfavourable deltas; the Needs attention rule on Insights rows           |
+| `warning` / `warning-soft`   | `#b54708` / `#fff3e0` | The Watch rule on Insights rows; otherwise reserved                      |
+| `chart-primary`              | `#2563eb`             | The selected series (sparklines)                                         |
+| `chart-current`              | `#1d4ed8`             | This period's line in the Overview, Insights and Creatives period charts |
+| `chart-muted`                | `#a7b4c6`             | Earlier/comparison series                                                |
+| `chart-grid`                 | `#eceff3`             | Gridlines                                                                |
+| `tone-*` / `tone-*-ink`      | see css               | Creative thumbnail placeholders only                                     |
 
 Rules
 
@@ -161,7 +161,7 @@ Production sidebar adopts Concept B — Premium Workspace Nav from `/sidebar-lab
 - One axis per chart. Two measures → two stacked small multiples (see Overview trend), never dual axes.
 - Line 2px, round joins. Area wash at 10% opacity of the series colour. Gridlines 1px `chart-grid`, three per chart (max, half, zero). Ticks 11px `ink-faint`, nice numbers (1/2/2.5/5 × 10ⁿ).
 - Selected period: `chart-primary`; earlier period: `chart-muted`. The selected period gets an `accent-soft` band at 40%.
-- Period-over-period charts (the Overview performance chart and Insights finding charts, D-068): this period is a solid 2px `chart-current` line (6.7:1 on white) with round caps, and its area wash, points and end dot use the same colour; the previous period (or the earlier days of a one-day view) is a dashed 1.75px `chart-muted` line, `5 4` dashes with butt caps so the gaps stay open. Both use `non-scaling-stroke`, so dashes keep their length at any width. Legends draw the same strokes as 14px samples (`SeriesSwatch`). The target stays a thinner, darker 1px `ink-muted` CSS dash, straight across the plot, so it never reads as the previous period. Styles live in `src/components/ui/chart-series.tsx`.
+- Period-over-period charts (the Overview performance chart, Insights finding charts and the Creatives inspector's daily spend, D-068, D-071): this period is a solid 2px `chart-current` line (6.7:1 on white) with round caps, and its area wash, points and end dot use the same colour; the previous period (or the earlier days of a one-day view) is a dashed 1.75px `chart-muted` line, `5 4` dashes with butt caps so the gaps stay open. Both use `non-scaling-stroke`, so dashes keep their length at any width. Legends draw the same strokes as 14px samples (`SeriesSwatch`). The target stays a thinner, darker 1px `ink-muted` CSS dash, straight across the plot, so it never reads as the previous period. Styles live in `src/components/ui/chart-series.tsx`.
 - Legend top-right of the card header when a chart has ≥2 series or two periods. Single-series sparklines have no legend.
 - Sparklines: 88×26, 1.5px line, 2.5px end dot with a white ring, previous period muted.
 - Bars (spend breakdown): 6px tall, `accent` on an `accent-soft` track, label and value in text tokens.
@@ -354,7 +354,7 @@ Production Creatives adopts `/creatives-lab` Concept C — Analytical Creative B
 - Remaining creatives: horizontal entries with 72×90 artwork, a 14px title clamped to two lines, and four metrics at 15px 600 (spend, outcomes, cost with target relationship, ROAS or CPC), in two ruled columns from 1400px and one column below.
 - Idle creatives: "No delivery this period" with 20×24 artwork and muted names only; no performance values.
 - Selection: every delivering entry is a stretched button with `aria-pressed`; the selected entry sits on `surface-subtle` with a 2px `accent` rule at its left edge and its rank in `accent-strong`. Hover is a faint `surface-hover` tint. No outline, glow, shadow or transform.
-- Inspector: a non-modal Radix dialog on the right, 440px wide from 640px and full width below, white with a left hairline and `shadow-md`, entering with `rise-in` and leaving with `fade-out`. It opens on selection, updates when another entry is selected, closes on Escape or its close button, and returns focus to the entry. Content, top to bottom: context line ("#1 by spend · Video · 1 ad · 1 campaign"), title, 120×150 artwork beside the seeded headline and spend / outcomes at 18px with change; cost with target relationship, ROAS and CTR with change; a 120px daily spend chart in the Overview grammar (current blue, previous grey by day index, three ticks, end value; a one-day period shows a sentence instead); "Used in" with each ad, its campaign and spend; a now / before / change table. Factual only: no classifications, no prose findings.
+- Inspector: a non-modal Radix dialog on the right, 440px wide from 640px and full width below, white with a left hairline and `shadow-md`, entering with `rise-in` and leaving with `fade-out`. It opens on selection, updates when another entry is selected, closes on Escape or its close button, and returns focus to the entry. Content, top to bottom: context line ("#1 by spend · Video · 1 ad · 1 campaign"), title, 120×150 artwork beside the seeded headline and spend / outcomes at 18px with change; cost with target relationship, ROAS and CTR with change; a 120px daily spend chart in the Overview grammar (current a solid blue line, previous a dashed grey line by day index, §13, three ticks, end value; a one-day period shows a sentence instead); "Used in" with each ad, its campaign and spend; a now / before / change table. Factual only: no classifications, no prose findings.
 - Metric hierarchy: identity, then spend and efficiency, then outcomes, then CTR and changes, then metadata. Changes use the 5% materiality rule; spend is never coloured; the cost target relationship is the only target indicator per entry.
 - Artwork hierarchy: 120×150 leaders and inspector, 72×90 standard entries, 20×24 idle; always a fixed box with a 60% hairline on `surface-subtle` so aspect never changes the rhythm.
 - Responsive: the toolbar wraps, the breakdown stacks below 640px, leader metrics fall to three then two columns, standard metrics to two, and the inspector covers the viewport below 640px. The page never overflows horizontally.

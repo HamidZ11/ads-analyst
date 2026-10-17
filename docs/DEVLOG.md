@@ -1138,3 +1138,14 @@ Second owner brief, item 4 (D-069).
 Owner follow-up, item 1 (D-070). `priority.tsx`: Opportunity dot `bg-accent` → `bg-positive`; DESIGN.md §24 updated. Test: the Opportunity label renders the `bg-positive` dot.
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-17 — Creatives inspector chart styles
+
+Owner follow-up, item 2 (D-071).
+
+- `creative-inspector.tsx`: lines, area wash and legend use `chart-series.tsx`; the legend wraps like the finding chart's. DESIGN.md §2, §13 and §23 updated; D-068's deferred item is closed.
+- Checked in the dev server (Autumn Reset video creative, 7 days): this period `rgb(29, 78, 216)` solid 2px, previous `rgb(167, 180, 198)` dashed `5px, 4px` 1.75px, both non-scaling; legend samples match. No render test: the inspector is a Radix dialog portal, which a static render does not output.
+
+**Checks:** `pnpm check`.

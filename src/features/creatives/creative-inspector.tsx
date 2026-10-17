@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { Dialog } from "radix-ui";
 import type { RefObject } from "react";
+import { CURRENT_LINE, PREVIOUS_LINE, SeriesSwatch } from "@/components/ui/chart-series";
 import { Delta } from "@/components/ui/delta";
 import { formatCurrency, formatDate, formatMetric, formatNumber } from "@/domain/format";
 import { CREATIVE_TYPE_LABELS } from "@/domain/labels";
@@ -215,13 +216,13 @@ export function CreativeInspector({
                   <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                     <h3 className="text-xs font-medium text-ink-secondary">Daily spend</h3>
                     {chart ? (
-                      <ul className="flex gap-3 text-xs text-ink-muted">
+                      <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
                         <li className="flex items-center gap-1.5">
-                          <span aria-hidden className="h-0.5 w-3 bg-chart-primary" />
+                          <SeriesSwatch series="current" />
                           {currentLabel}
                         </li>
                         <li className="flex items-center gap-1.5">
-                          <span aria-hidden className="h-0.5 w-3 bg-chart-muted" />
+                          <SeriesSwatch series="previous" />
                           {previousLabel}
                         </li>
                       </ul>
@@ -259,26 +260,20 @@ export function CreativeInspector({
                         >
                           <path
                             d={chart.current.area}
-                            fill="var(--color-chart-primary)"
+                            fill="var(--color-chart-current)"
                             fillOpacity="0.04"
                           />
                           <path
                             d={chart.previous.line}
                             fill="none"
-                            stroke="var(--color-chart-muted)"
-                            strokeWidth="1.75"
+                            {...PREVIOUS_LINE}
                             vectorEffect="non-scaling-stroke"
-                            strokeLinejoin="round"
-                            strokeLinecap="round"
                           />
                           <path
                             d={chart.current.line}
                             fill="none"
-                            stroke="var(--color-chart-primary)"
-                            strokeWidth="2"
+                            {...CURRENT_LINE}
                             vectorEffect="non-scaling-stroke"
-                            strokeLinejoin="round"
-                            strokeLinecap="round"
                           />
                         </svg>
                         {end && end.y !== null ? (

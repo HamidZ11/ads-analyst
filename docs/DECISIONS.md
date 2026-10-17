@@ -432,7 +432,7 @@ Threads live only in the current mounted page. Start fresh clears answers and en
 
 **Decision:** In the Overview performance chart and Insights finding charts, this period is a solid 2px line in a new `chart-current` token (`#1d4ed8`, the accent-strong value, 6.7:1 on white against `chart-primary`'s 5.2:1), and the previous period is a dashed 1.75px `chart-muted` line (`5 4`, butt caps). The legends draw the same strokes. Shared styles in `src/components/ui/chart-series.tsx`. Sparklines, the generic `LineChart` and the Creatives inspector chart are unchanged.
 **Reason:** Owner brief (2026-10-17): the two periods were both solid lines separated only by hue and lightness. A dash pattern separates them without colour, which also helps colour-blind readers and greyscale screenshots for clients.
-**Consequences:** The Overview chart now has two dashed elements, the previous period and the target; they stay distinct by weight, colour, pattern and shape (a curve against a straight rule). The Creatives inspector, described as "the Overview grammar", now differs from it; bringing it in line is a follow-up for the owner to decide.
+**Consequences:** The Overview chart now has two dashed elements, the previous period and the target; they stay distinct by weight, colour, pattern and shape (a curve against a straight rule). The Creatives inspector, described as "the Overview grammar", now differs from it; bringing it in line is a follow-up for the owner to decide (done in D-071).
 
 ### D-069 — Overview target status moves beside the lead figure
 
@@ -445,3 +445,9 @@ Threads live only in the current mounted page. Start fresh clears answers and en
 **Decision:** The 6px Opportunity priority dot uses `positive` instead of `accent`, in the Insights list and the detail's priority label, so it matches the Opportunities row rule (D-067). High impact stays `negative` and Watch stays a hollow `ink-faint` ring.
 **Reason:** Owner follow-up (2026-10-17): a blue dot beside a green rule gave one finding two colours.
 **Consequences:** Blue no longer marks any priority; in the Insights list it means only the selected row.
+
+### D-071 — The Creatives inspector chart follows the period chart styles
+
+**Decision:** The inspector's daily spend chart uses the shared `CURRENT_LINE` and `PREVIOUS_LINE` strokes, a `chart-current` area wash and `SeriesSwatch` legend samples, exactly as the Overview and Insights charts do (D-068).
+**Reason:** Owner follow-up (2026-10-17): DESIGN.md describes the inspector chart as the Overview grammar, and after D-068 it no longer was.
+**Consequences:** Every period-over-period chart now draws its periods the same way. Sparklines and the generic `LineChart` keep `chart-primary` and solid lines.
