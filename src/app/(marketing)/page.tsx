@@ -162,7 +162,12 @@ export default function LandingPage() {
         </p>
       </section>
 
-      <section id="product" className={cn(m.container, s.split)} aria-labelledby="week-title">
+      <section
+        id="product"
+        tabIndex={-1}
+        className={cn(m.container, s.split)}
+        aria-labelledby="week-title"
+      >
         <div className={s.copy}>
           <h2 id="week-title" className={s.h2}>
             Cut the waste. Scale what works.
@@ -188,7 +193,12 @@ export default function LandingPage() {
         </Panel>
       </section>
 
-      <section id="agencies" className={cn(m.container, s.wide)} aria-labelledby="agency-title">
+      <section
+        id="agencies"
+        tabIndex={-1}
+        className={cn(m.container, s.wide)}
+        aria-labelledby="agency-title"
+      >
         <div className={s.head}>
           <h2 id="agency-title" className={s.h2}>
             Every campaign, measured against its target.
@@ -224,7 +234,7 @@ export default function LandingPage() {
             </ProductCrop>
           </Compact>
         </Panel>
-        <ol id="how-it-works" className={s.steps} aria-label="How it works">
+        <ol id="how-it-works" tabIndex={-1} className={s.steps} aria-label="How it works">
           <li>
             <span className={s.stepN}>1</span>
             <p>

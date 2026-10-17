@@ -1274,3 +1274,18 @@ Owner brief (D-081).
 - Tests: `landing.test.ts` pins the outline to five sections in order.
 
 **Checks:** `pnpm check`, then `pnpm check:browsers http://localhost:3100/`.
+
+---
+
+## 2026-10-17 — In-page navigation (Impeccable, animate playbook)
+
+Owner brief (D-082). Run through the project's Impeccable skill: context loaded, the animate playbook and craft floor applied; one decision asked (sticky nav: yes).
+
+- **Diagnosis** (Playwright WebKit 26 and Chromium, 1440 × 900 and 390 × 844, fresh contexts): header `position: relative`; every section link an instant jump; `history.length` 2 → 5 after three clicks; on arrival the target's reveal panel still mid-transition, and after How it works the For agencies panel above at `clip-path: inset(0 0 100%)`; mobile menu closed and landed at 24px; deep links landed but with nothing to account for a header.
+- **Fix:** `section-nav.tsx` (`SectionLink`, `goToSection`, `useActiveSection`), `marketing-nav.tsx` (sticky bar state, section links, `flushSync` close), `marketing-footer.tsx` (Product and How it works as section links), `reveal.tsx` (settle panels through a jump target on click, deep link and `hashchange`), `marketing.module.css` (`--nav-height`, sticky bar and hairline, link rule, no ring on focused sections), `landing.module.css` (scroll margins), `page.tsx` (`tabIndex={-1}` on the three targets).
+- **Verified**, same matrix plus reduced motion: sticky bar; native smooth scroll (about 40 frames in Chromium, 14 in WebKit) and an instant jump under reduced motion; every target's top 24px under the bar (100px at 1440, 88px at 390); the active link right on arrival and held through the scroll; focus on the section; `history.length` unchanged at 2 with the hash replaced; the menu closed before the scroll; every reveal panel up to the target unclipped; a scroll down the page reads none, Product, For agencies, How it works; deep links to all three land 24px under the bar with the right link active and nothing clipped. Pricing: sticky, hairline after scrolling, Pricing underlined, no section state.
+- **Rejected:** a one-pixel IntersectionObserver band for the active state (missed How it works at 1440px); shrinking the bar on scroll (its height would move the page).
+- **Environment:** iCloud kept creating `.next/types/* 10.ts`…`15.ts` while the dev server ran; deleted 44 copies (gitignored cache) and widened the `tsconfig.json` exclude to two and three characters.
+- Tests: `section-nav.test.ts` (hash links and `aria-current="location"`, focusable targets, scroll margins, sticky bar and height tokens).
+
+**Checks:** `pnpm check` (367 tests), `pnpm check:browsers http://localhost:3100/` (52 crop checks), overflow probe on `/`, `/pricing`, `/privacy`, `/terms` in three engines at three widths.

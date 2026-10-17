@@ -16,6 +16,8 @@
   --gutter: clamp(20px, 5.56vw, 80px);
   --col-gap: 24px;
   --section: clamp(112px, 15vw, 216px);
+  /* The sticky bar's height; section links land 24px below it. */
+  --nav-height: 76px;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --field-hi: #8fa6ff;
   --field-blur: 46px;
@@ -32,6 +34,11 @@
 .site ::selection {
   background: #dbe2ff;
   color: var(--ink);
+}
+/* Sections receive focus after a section link (for screen readers); they are
+   not controls, so they show no ring. */
+.site [tabindex="-1"]:focus {
+  outline: none;
 }
 .site a:focus-visible,
 .site button:focus-visible {
@@ -63,16 +70,34 @@
 
 /* Navigation -------------------------------------------------------------- */
 
+/* Sticky on the page's own ivory (no translucency); a hairline fades in once
+   the page has scrolled, so the bar reads as a layer only when content
+   passes beneath it. Its height never changes, so nothing below moves. */
 .navBar {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 20;
+  background: var(--bg);
+}
+.navBar::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  background: var(--line);
+  opacity: 0;
+  transition: opacity 160ms ease;
+  pointer-events: none;
+}
+.navBar[data-scrolled]::after {
+  opacity: 1;
 }
 .nav {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   width: min(var(--max), calc(100% - 2 * var(--gutter)));
-  height: 76px;
+  height: var(--nav-height);
   margin-inline: auto;
 }
 .wordmark {
@@ -100,14 +125,30 @@
 }
 .links a:hover,
 .quiet:hover,
-.links a[aria-current="page"] {
+.links a[aria-current] {
   color: var(--ink);
 }
-.links a[aria-current="page"] {
-  font-weight: 500;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 8px;
+/* The current page or section: a 1px rule that grows from the centre and
+   fades in (transform and opacity only, about 200ms). The weight stays the
+   same, so the nav never reflows as the section changes. */
+.links a {
+  position: relative;
+}
+.links a::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -8px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0;
+  transform: scaleX(0.4);
+  transition:
+    transform 200ms var(--ease),
+    opacity 160ms ease;
+}
+.links a[aria-current]::after {
+  opacity: 1;
+  transform: none;
 }
 .navActions {
   display: flex;
@@ -165,7 +206,7 @@
   font-size: 17px;
   font-weight: 500;
 }
-.menuPanel li a[aria-current="page"] {
+.menuPanel li a[aria-current] {
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 6px;
@@ -323,9 +364,12 @@
 /* Below 1024px: the nav collapses into a menu. ------------------------- */
 
 @media (max-width: 1023px) {
+  .site {
+    --nav-height: 64px;
+  }
   .nav {
     grid-template-columns: 1fr auto;
-    height: 64px;
+    height: var(--nav-height);
   }
   .links,
   .navActions {

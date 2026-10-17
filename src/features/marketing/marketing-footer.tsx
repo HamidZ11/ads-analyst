@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { CONTACT_EMAIL } from "@/lib/site";
 import s from "./marketing.module.css";
+import { SectionLink } from "./section-nav";
 
 export const LINKEDIN_URL = "https://www.linkedin.com/in/hamid-aziz-05858a33b/";
 
 const FOOTER_LINKS = [
-  { href: "/#product", label: "Product" },
-  { href: "/#how-it-works", label: "How it works" },
   { href: "/pricing", label: "Pricing" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
@@ -23,6 +22,8 @@ export function MarketingFooter({ email = CONTACT_EMAIL }: { email?: string | nu
     <footer className={s.footer}>
       <div className={s.footerInner}>
         <nav aria-label="Footer" className={s.footerLinks}>
+          <SectionLink section="product">Product</SectionLink>
+          <SectionLink section="how-it-works">How it works</SectionLink>
           {FOOTER_LINKS.map((link) => (
             <Link key={link.href} href={link.href}>
               {link.label}

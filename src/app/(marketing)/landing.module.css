@@ -240,7 +240,7 @@
 .split,
 .wide {
   margin-top: clamp(72px, 9vw, 128px);
-  scroll-margin-top: 24px;
+  scroll-margin-top: calc(var(--nav-height) + 24px);
 }
 .panel {
   overflow: hidden;
@@ -302,7 +302,7 @@
   column-gap: var(--col-gap);
   margin-top: 56px;
   list-style: none;
-  scroll-margin-top: 24px;
+  scroll-margin-top: calc(var(--nav-height) + 24px);
 }
 .steps li {
   display: flex;
