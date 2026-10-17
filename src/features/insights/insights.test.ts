@@ -1,11 +1,19 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { InMemoryRepository } from "@/data/repository";
 import { buildSeedDataset } from "@/data/seed";
-import { PRIORITY_ORDER, runInsightEngine, type Finding } from "@/domain/insights";
+import {
+  countByPriority,
+  PRIORITY_ORDER,
+  runInsightEngine,
+  type Finding,
+} from "@/domain/insights";
 import { percentChange, snapshot } from "@/domain/metrics";
 import { periodPairForPreset, type DatePreset } from "@/domain/periods";
 import type { Dataset } from "@/domain/types";
 import { collectInsightFacts } from "./facts";
+import { InsightsWorkspace } from "./insights-workspace";
 
 /**
  * The seed is anchored to a date. Its daily noise makes 7-day windows differ
@@ -268,5 +276,50 @@ describe("isolation", () => {
       dailyMetrics: dataset.dailyMetrics.filter((r) => r.date > ANCHOR),
     });
     expect(run("cli_peak", "7d", silent)).toEqual([]);
+  });
+});
+
+describe("finding rows", () => {
+  const findings = run("cli_luxe");
+  const html = renderToStaticMarkup(
+    createElement(InsightsWorkspace, {
+      model: {
+        clientName: "Luxe Skin Co.",
+        currency: "GBP",
+        findings,
+        counts: countByPriority(findings),
+        briefing: "",
+        period: "in the last 7 days",
+        currentLabel: "",
+        previousLabel: "",
+        comparison: "",
+        campaignCount: 0,
+        creativeCount: 0,
+      },
+    }),
+  );
+  const rows = [
+    ...html.matchAll(/<button type="button" aria-pressed="(true|false)"[^>]*class="([^"]*)"/g),
+  ]
+    .map(([, pressed, cls]) => ({ selected: pressed === "true", cls }))
+    .filter((button) => button.cls.includes("before:absolute"));
+
+  it("carry a left rule in their group's colour, and the accent when selected", () => {
+    const rule = {
+      high: "before:bg-negative",
+      opportunity: "before:bg-positive",
+      watch: "before:bg-warning",
+    };
+    expect(rows).toHaveLength(findings.length);
+    expect(new Set(findings.map((f) => f.priority))).toEqual(
+      new Set(["high", "opportunity", "watch"]),
+    );
+    rows.forEach((row, index) => {
+      const expected = row.selected ? "before:bg-accent" : rule[findings[index].priority];
+      expect(row.cls, findings[index].id).toContain(expected);
+      const others = Object.values(rule).filter((c) => c !== expected);
+      for (const other of others) expect(row.cls, findings[index].id).not.toContain(other);
+    });
+    expect(rows.filter((row) => row.selected)).toHaveLength(1);
   });
 });

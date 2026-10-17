@@ -25,6 +25,14 @@ const GROUP_TITLES: Record<InsightPriority, string> = {
   watch: "Watch",
 };
 
+/* The 2px rule at each row's left edge names its group; the selected row's
+   rule is the accent instead, so the edge never carries two colours. */
+const GROUP_RULE: Record<InsightPriority, string> = {
+  high: "before:bg-negative",
+  opportunity: "before:bg-positive",
+  watch: "before:bg-warning",
+};
+
 const TABS: Array<{ value: Filter; label: string }> = [
   { value: "all", label: "All" },
   { value: "high", label: "High impact" },
@@ -88,10 +96,10 @@ function FindingRow({
         aria-haspopup={desktop ? undefined : "dialog"}
         onClick={(event) => onSelect(event.currentTarget)}
         className={cn(
-          "relative flex w-full items-start gap-4 rounded-md px-3 py-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent",
+          "relative flex w-full items-start gap-4 rounded-md px-3 py-3 text-left transition-colors before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:rounded-full focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent",
           selected && desktop
-            ? "bg-surface-subtle before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:rounded-full before:bg-accent"
-            : "hover:bg-surface-hover",
+            ? "bg-surface-subtle before:bg-accent"
+            : cn("hover:bg-surface-hover", GROUP_RULE[finding.priority]),
         )}
       >
         <span className="min-w-0 flex-1">

@@ -1090,3 +1090,15 @@ Second owner brief, item 1 (D-066).
 - Tests: `campaign-name.test.ts` (splitting, edge cases with empty segments, title and accessible name, order, the prefix, unchanged plain names).
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-17 — Insights group rules
+
+Second owner brief, item 2 (D-067).
+
+- `insights-workspace.tsx`: the left-edge pseudo-element now renders on every row, coloured by group (`GROUP_RULE`); the selected desktop row keeps `accent`. Below 1280px no row is selected, so every row shows its group colour.
+- `warning` already existed (`#b54708`); contrast checked for all four rule colours on `surface` and `surface-hover` and recorded in DESIGN.md §2, which also notes the green/red exception. §24 updated.
+- Test: rendering the Luxe Skin workspace, each row has exactly its group's rule, the selected row has the accent, and all three groups occur.
+
+**Checks:** `pnpm check`.
