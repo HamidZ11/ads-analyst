@@ -1,8 +1,10 @@
 /**
- * The public origin of the production site, used for canonical URLs, the
- * sitemap, robots.txt and structured data. One source: NEXT_PUBLIC_SITE_URL,
- * the same variable sign-in emails use. Set it in the build environment, since
- * robots.txt and the sitemap are generated at build time.
+ * Site-wide public configuration. The public origin of the production site,
+ * used for canonical URLs, the sitemap, robots.txt and structured data, has
+ * one source: NEXT_PUBLIC_SITE_URL, the same variable sign-in emails use. Set
+ * it in the build environment, since robots.txt and the sitemap are generated
+ * at build time. The contact address and payment link below are build-time
+ * values too.
  */
 
 type Env = Record<string, string | undefined>;
@@ -55,3 +57,39 @@ export const NOT_INDEXED = { index: false, follow: false } as const;
 
 /** Public pages opt in. Only the marketing layout uses this. */
 export const INDEXED = { index: true, follow: true } as const;
+
+/* An address safe to put in a mailto: one @, a dotted domain, and nothing
+   that would start a header (`?`, `&`) or break out of an attribute. */
+const EMAIL = /^[^\s@?&<>"']+@[^\s@?&<>"']+\.[^\s@?&<>"']+$/;
+
+/** NEXT_PUBLIC_CONTACT_EMAIL, or null when it is unset or not an address. */
+export function contactEmail(env: Env = process.env): string | null {
+  const raw = env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
+  return raw && EMAIL.test(raw) ? raw : null;
+}
+
+/** NEXT_PUBLIC_STRIPE_PAYMENT_LINK, or null when it is unset or not an https URL. */
+export function stripePaymentLink(env: Env = process.env): string | null {
+  const raw = env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK?.trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    return url.protocol === "https:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+/* Each variable is read by its literal name so Next.js inlines it in client
+   bundles too. Null means unset or invalid: whatever depends on the value is
+   hidden rather than rendered as a dead link. */
+
+/** Where sales, Enterprise and data-deletion requests go. */
+export const CONTACT_EMAIL = contactEmail({
+  NEXT_PUBLIC_CONTACT_EMAIL: process.env.NEXT_PUBLIC_CONTACT_EMAIL,
+});
+
+/** The Stripe Payment Link for the Agency plan. */
+export const STRIPE_PAYMENT_LINK = stripePaymentLink({
+  NEXT_PUBLIC_STRIPE_PAYMENT_LINK: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK,
+});

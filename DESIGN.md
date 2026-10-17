@@ -447,5 +447,5 @@ The public pages (`/` and `/pricing`, D-054) share one system in `src/features/m
   - Agency keeps the 120px £99 with "/ month" and the quiet annual line. Enterprise answers with "Custom" at about 100px and "pricing" in the same position, so it is never small print.
   - Each panel's capacity sits in a hairline-ruled row with a check: "Up to 10 client accounts" or "More than 10 client accounts".
   - The product they share is listed once, in an "Included in both plans" band beneath both panels (warm white, ink underline title, two columns of hairline rows).
-  - Agency's actions are Try the demo and Sign in. Enterprise's "Email us for pricing" is plain text and never styled as a link or button until a contact address exists.
+  - Agency's actions are Try the demo and Sign in. Enterprise's action is a filled "Email us for pricing" button, a mailto to `NEXT_PUBLIC_CONTACT_EMAIL` (D-062); without a valid address the action row stays empty, so nothing renders as a dead link and the subgrid still aligns.
   - Below 1024px the panels stack, Agency first, then the band. No tiers beyond these two, no comparison tables, no "Most popular" badges and no invented enterprise features.

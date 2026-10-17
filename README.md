@@ -140,7 +140,7 @@ Ad Analyst is currently parked. Before a production launch:
 2. Validate authentication, RLS and two-user workspace isolation against the real database.
 3. Decide how the public demo should work in production.
 4. Add billing and subscription handling.
-5. Add a real sales/support contact email.
+5. Set a real sales/support contact email in `NEXT_PUBLIC_CONTACT_EMAIL` (and the Agency Stripe Payment Link in `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` once billing exists).
 6. Deploy the production application.
 7. Validate imports with a real Meta Ads export.
 8. Get the product in front of real users before building additional features.

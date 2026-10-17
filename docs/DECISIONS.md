@@ -348,7 +348,7 @@ Threads live only in the current mounted page. Start fresh clears answers and en
 
 **Decision:** Ad Analyst has a single plan, Agency: £29 a month, or £290 a year (two months free), for up to 10 client accounts, with the whole product included. Agencies with more than 10 client accounts are served as Enterprise, priced on request. Enterprise is a secondary treatment that differs only in capacity; it is not a second tier with its own features. Billing is not implemented.
 **Reason:** Early pricing should be simple to read and honest about what exists. Splitting analysis across tiers would gate the product's core value, and inventing enterprise features (SSO, SLAs, API access) would claim capabilities that do not exist.
-**Consequences:** The pricing page shows Agency and Enterprise as two equal panels, with the shared product listed once beneath them, so larger agencies read as a first-class path rather than an afterthought. There is no contact address yet, so "Email us for pricing" is plain text. A contact destination is a launch prerequisite, as are billing and the >10-client mechanism itself.
+**Consequences:** The pricing page shows Agency and Enterprise as two equal panels, with the shared product listed once beneath them, so larger agencies read as a first-class path rather than an afterthought. There is no contact address yet, so "Email us for pricing" is plain text (superseded by D-062: it is a mailto when an address is configured, hidden otherwise). A contact destination is a launch prerequisite, as are billing and the >10-client mechanism itself.
 
 **Amended** by D-061: the Agency price is now £99 a month, or £990 a year.
 
@@ -389,3 +389,9 @@ Threads live only in the current mounted page. Start fresh clears answers and en
 **Decision:** Amends D-055's price only. Agency is £99 a month, or £990 a year (still two months free), for up to 10 client accounts. Enterprise, the shared product list and the single-plan structure are unchanged. The pricing page, its meta description, PRODUCT.md and DESIGN.md carry the new figures.
 **Reason:** Owner pricing decision (2026-10-17).
 **Consequences:** Billing is still not built, so nothing charges at either price. The page layout is unchanged: the price keeps two digits.
+
+### D-062 — Contact address and payment link are optional build-time configuration; unset means hidden
+
+**Decision:** `src/lib/site.ts` exports `CONTACT_EMAIL` from `NEXT_PUBLIC_CONTACT_EMAIL` and `STRIPE_PAYMENT_LINK` from `NEXT_PUBLIC_STRIPE_PAYMENT_LINK`, both documented in `.env.example`. Each is null when unset or invalid: the address must be a plain `name@domain.tld` with no `?`, `&`, quotes or angle brackets (so it cannot add mailto headers or break an attribute), and the link must be an https URL. Enterprise's "Email us for pricing" is a filled button linking to `mailto:<address>?subject=Ad%20Analyst%20Enterprise`; with no address the action is not rendered. Anything that later depends on either value follows the same rule: hide it, never render a dead link. Nothing uses `STRIPE_PAYMENT_LINK` yet.
+**Reason:** Owner brief (2026-10-17). The address and the payment link are launch configuration, not code, and the site must stay truthful before they exist.
+**Consequences:** Both are `NEXT_PUBLIC_` values, read by literal name so Next.js inlines them; changing them needs a rebuild. Wiring the payment link to an Agency action is a separate decision, as is billing itself (D-055). Both Agency and Enterprise now carry a filled button, one per panel.

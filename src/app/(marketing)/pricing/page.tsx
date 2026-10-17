@@ -7,6 +7,7 @@ import { marketingMetadata } from "@/features/marketing/seo";
 import { SpendField } from "@/features/marketing/spend-field";
 import { cn } from "@/lib/cn";
 import { APP_HOME } from "@/lib/routes";
+import { CONTACT_EMAIL } from "@/lib/site";
 import s from "./pricing.module.css";
 
 export const metadata: Metadata = marketingMetadata("/pricing");
@@ -53,6 +54,20 @@ const FAQ = [
     a: "No. It shows what changed and where to look. Decisions and changes in Meta Ads stay with you.",
   },
 ];
+
+/** Enterprise's action: a mailto when a contact address is configured, nothing
+    otherwise. The empty row keeps the panel's subgrid aligned with Agency's. */
+function EnterpriseActions({ email }: { email: string | null }) {
+  return (
+    <div className={s.planActions}>
+      {email && (
+        <a href={`mailto:${email}?subject=Ad%20Analyst%20Enterprise`} className={m.button}>
+          Email us for pricing
+        </a>
+      )}
+    </div>
+  );
+}
 
 export default function PricingPage() {
   const { series } = landingEvidence();
@@ -123,11 +138,7 @@ export default function PricingPage() {
                 <Check aria-hidden size={16} strokeWidth={1.75} />
                 More than 10 client accounts
               </p>
-              {/* No contact address exists yet, so this stays honest plain text:
-                  no link, no button, nothing that pretends to send an email. */}
-              <div className={s.planActions}>
-                <p className={s.contact}>Email us for pricing</p>
-              </div>
+              <EnterpriseActions email={CONTACT_EMAIL} />
               <p className={s.planNote}>
                 Quoted for the number of client accounts you manage. Prices in GBP.
               </p>

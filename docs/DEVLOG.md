@@ -1021,3 +1021,17 @@ Owner brief, item 1 of 4. The Agency plan moves from £29 a month (£290 a year)
 - Tests: `pricing.test.ts` and the pricing-description test in `seo.test.ts` now assert £99 and £990.
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-17 — Contact address and payment link configuration
+
+Owner brief, item 2 of 4 (D-062).
+
+- `src/lib/site.ts`: `contactEmail()` and `stripePaymentLink()` validate the two new variables; `CONTACT_EMAIL` and `STRIPE_PAYMENT_LINK` are the values the site uses, null when unset or invalid. Both added to `.env.example`.
+- Pricing: Enterprise's "Email us for pricing" is a filled mailto button when `CONTACT_EMAIL` is set. Unset, the action row is empty (kept so the panels' subgrid rows still line up). The unused `.contact` style is removed.
+- `STRIPE_PAYMENT_LINK` is configuration only: no surface uses it yet, so nothing is hidden or shown by it today.
+- Docs: PRODUCT.md, DESIGN.md §28, README Before Launch item 5, D-055 marked superseded on the contact line.
+- Tests: validation of both values (including header-injection and `javascript:` inputs), the pricing page with no address (no mailto, no "Email us"), with a valid address (the mailto button) and with an invalid one (hidden).
+
+**Checks:** `pnpm check`.

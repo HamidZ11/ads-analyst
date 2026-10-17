@@ -6,7 +6,13 @@ import { describe, expect, it } from "vitest";
 import LandingPage, { metadata as landingMetadata } from "@/app/(marketing)/page";
 import { metadata as pricingMetadata } from "@/app/(marketing)/pricing/page";
 import { APP_HOME, APP_PATHS, MARKETING_PATHS } from "@/lib/routes";
-import { INDEXED, NOT_INDEXED, publicOrigin } from "@/lib/site";
+import {
+  contactEmail,
+  INDEXED,
+  NOT_INDEXED,
+  publicOrigin,
+  stripePaymentLink,
+} from "@/lib/site";
 import {
   homeStructuredData,
   jsonLd,
@@ -35,6 +41,41 @@ describe("public origin", () => {
   it("normalises to scheme and host, without a trailing slash or path", () => {
     expect(publicOrigin({ NEXT_PUBLIC_SITE_URL: `${ORIGIN}/` })).toBe(ORIGIN);
     expect(publicOrigin({ NEXT_PUBLIC_SITE_URL: ` ${ORIGIN}/some/path ` })).toBe(ORIGIN);
+  });
+});
+
+describe("contact and payment configuration", () => {
+  it("accepts a plain address and rejects anything that could break a mailto", () => {
+    expect(contactEmail({ NEXT_PUBLIC_CONTACT_EMAIL: " hello@ad-analyst.example " })).toBe(
+      "hello@ad-analyst.example",
+    );
+    for (const bad of [
+      undefined,
+      "",
+      "hello",
+      "hello@localhost",
+      "a b@ad-analyst.example",
+      "hello@ad-analyst.example?bcc=x@y.z",
+      'hello@ad-analyst.example"onclick',
+    ])
+      expect(contactEmail({ NEXT_PUBLIC_CONTACT_EMAIL: bad }), String(bad)).toBeNull();
+  });
+
+  it("accepts only an https payment link", () => {
+    expect(
+      stripePaymentLink({ NEXT_PUBLIC_STRIPE_PAYMENT_LINK: "https://buy.stripe.com/test_123" }),
+    ).toBe("https://buy.stripe.com/test_123");
+    for (const bad of [
+      undefined,
+      "",
+      "buy.stripe.com/x",
+      "http://buy.stripe.com/x",
+      "javascript:alert(1)",
+    ])
+      expect(
+        stripePaymentLink({ NEXT_PUBLIC_STRIPE_PAYMENT_LINK: bad }),
+        String(bad),
+      ).toBeNull();
   });
 });
 
