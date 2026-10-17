@@ -1035,3 +1035,16 @@ Owner brief, item 2 of 4 (D-062).
 - Tests: validation of both values (including header-injection and `javascript:` inputs), the pricing page with no address (no mailto, no "Email us"), with a valid address (the mailto button) and with an invalid one (hidden).
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-17 — App starts at Insights
+
+Owner brief, item 3 of 4 (D-063).
+
+- `src/lib/routes.ts`: `APP_HOME` is now `/insights`; new `OVERVIEW_PATH` (`/overview`) replaces it in `APP_PATHS`. The proxy's signed-in redirect, the sign-in page redirect, the auth callback and the marketing "Try the demo" links follow `APP_HOME` with no code change.
+- Links that name the Overview now use `OVERVIEW_PATH`, so they keep going there: sidebar nav, import completion's "View Overview", the in-app 404's "Go to Overview".
+- PRODUCT.md and README updated; D-054 marked amended.
+- Tests: `auth.test.ts` asserts `APP_HOME` is `/insights` and both are app pages; the import-completion test still expects `/overview`.
+
+**Checks:** `pnpm check`.

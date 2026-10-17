@@ -1,4 +1,4 @@
-import { APP_HOME } from "@/lib/routes";
+import { OVERVIEW_PATH } from "@/lib/routes";
 
 /** After an import completes: select the imported client, then open its Overview. */
 export async function openImportedClient(
@@ -7,5 +7,5 @@ export async function openImportedClient(
   navigate: (href: string) => void,
 ): Promise<void> {
   await select(clientId);
-  navigate(APP_HOME);
+  navigate(OVERVIEW_PATH);
 }

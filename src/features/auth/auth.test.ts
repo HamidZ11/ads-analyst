@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { appMode, sessionCookieOptions, signupsAllowed } from "@/lib/supabase/config";
 import { readdirSync } from "node:fs";
 import { join, relative, sep } from "node:path";
-import { APP_PATHS } from "@/lib/routes";
+import { APP_HOME, APP_PATHS, OVERVIEW_PATH } from "@/lib/routes";
 import { accessDecision, isAppPath, isPublicPath } from "./access";
 import { signInFailureMessage, signInLinkOrigin, validEmail } from "./messages";
 
@@ -61,6 +61,13 @@ describe("route access", () => {
       expect(accessDecision(path, true), path).toBe("allow");
     expect(accessDecision("/sign-in", true)).toBe("redirect_app");
     expect(accessDecision("/", true)).toBe("redirect_app");
+  });
+
+  it("starts the app on Insights, which is an app page, and keeps the Overview at /overview", () => {
+    expect(APP_HOME).toBe("/insights");
+    expect(isAppPath(APP_HOME)).toBe(true);
+    expect(OVERVIEW_PATH).toBe("/overview");
+    expect(isAppPath(OVERVIEW_PATH)).toBe(true);
   });
 
   it("keeps the marketing pages public and exact", () => {

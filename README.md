@@ -13,7 +13,7 @@ pnpm install
 pnpm dev
 ```
 
-Without Supabase variables, `pnpm dev` serves the seeded demo clients read-only, with no sign-in. http://localhost:3000 is the public landing page (pricing at `/pricing`); the app starts at http://localhost:3000/overview. Switch clients from the top-left of the sidebar (or the top bar on mobile). Imports are disabled in demo mode.
+Without Supabase variables, `pnpm dev` serves the seeded demo clients read-only, with no sign-in. http://localhost:3000 is the public landing page (pricing at `/pricing`); the app starts at http://localhost:3000/insights (the Overview is at `/overview`). Switch clients from the top-left of the sidebar (or the top bar on mobile). Imports are disabled in demo mode.
 
 ### With Supabase (sign-in, imports, persistence)
 

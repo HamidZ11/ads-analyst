@@ -344,6 +344,8 @@ Threads live only in the current mounted page. Start fresh clears answers and en
 **Reason:** A public product needs a public front door, and agencies already in the product should not have to pass through marketing to reach their work.
 **Consequences:** "Try the demo" points at `/overview`. That is the seeded demo in a demo-mode deployment; a Supabase deployment has no public demo, so it leads to sign-in until a demo deployment or route is decided.
 
+**Amended** by D-063: the app now starts at `/insights`; the Overview stays at `/overview`.
+
 ### D-055 — One Agency plan at £29 a month; larger workspaces are Enterprise on request
 
 **Decision:** Ad Analyst has a single plan, Agency: £29 a month, or £290 a year (two months free), for up to 10 client accounts, with the whole product included. Agencies with more than 10 client accounts are served as Enterprise, priced on request. Enterprise is a secondary treatment that differs only in capacity; it is not a second tier with its own features. Billing is not implemented.
@@ -395,3 +397,9 @@ Threads live only in the current mounted page. Start fresh clears answers and en
 **Decision:** `src/lib/site.ts` exports `CONTACT_EMAIL` from `NEXT_PUBLIC_CONTACT_EMAIL` and `STRIPE_PAYMENT_LINK` from `NEXT_PUBLIC_STRIPE_PAYMENT_LINK`, both documented in `.env.example`. Each is null when unset or invalid: the address must be a plain `name@domain.tld` with no `?`, `&`, quotes or angle brackets (so it cannot add mailto headers or break an attribute), and the link must be an https URL. Enterprise's "Email us for pricing" is a filled button linking to `mailto:<address>?subject=Ad%20Analyst%20Enterprise`; with no address the action is not rendered. Anything that later depends on either value follows the same rule: hide it, never render a dead link. Nothing uses `STRIPE_PAYMENT_LINK` yet.
 **Reason:** Owner brief (2026-10-17). The address and the payment link are launch configuration, not code, and the site must stay truthful before they exist.
 **Consequences:** Both are `NEXT_PUBLIC_` values, read by literal name so Next.js inlines them; changing them needs a rebuild. Wiring the payment link to an Agency action is a separate decision, as is billing itself (D-055). Both Agency and Enterprise now carry a filled button, one per panel.
+
+### D-063 — The app starts at Insights
+
+**Decision:** Amends D-054's start page. `APP_HOME` is `/insights`: sign-in, the email callback, a signed-in visit to `/` or `/sign-in`, and "Try the demo" on the public site land there. The Overview keeps its URL as `OVERVIEW_PATH` (`/overview`), and the links that name it keep pointing there: the sidebar's Overview item, "View Overview" after an import, and "Go to Overview" on the in-app 404.
+**Reason:** Owner brief (2026-10-17): a session should open on what needs attention.
+**Consequences:** The Overview remains the visual benchmark (D-033); only the default destination moved. A new link that means "enter the app" uses `APP_HOME`; one that means "the Overview" uses `OVERVIEW_PATH`.

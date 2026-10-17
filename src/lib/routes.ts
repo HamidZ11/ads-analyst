@@ -3,8 +3,15 @@
  * Kept free of UI imports so the proxy bundle stays small.
  */
 
-/** Where the app starts: the Overview. The site root is the public landing page. */
-export const APP_HOME = "/overview";
+/** The Overview page. */
+export const OVERVIEW_PATH = "/overview";
+
+/**
+ * Where the app starts: Insights, so a session opens on what needs attention.
+ * Sign-in, the email callback, a signed-in visit to the site root and "Try the
+ * demo" land here. The site root is the public landing page.
+ */
+export const APP_HOME = "/insights";
 
 /** Public marketing pages: reachable signed out, rendered without the app shell. */
 export const MARKETING_PATHS = ["/", "/pricing"] as const;
@@ -17,7 +24,7 @@ export type MarketingPath = (typeof MARKETING_PATHS)[number];
  * paths are not sent there: they render a real 404.
  */
 export const APP_PATHS = [
-  APP_HOME,
+  OVERVIEW_PATH,
   "/campaigns",
   "/creatives",
   "/insights",

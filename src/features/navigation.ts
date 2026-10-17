@@ -8,7 +8,7 @@ import {
   MessageCircleQuestion,
   Settings,
 } from "lucide-react";
-import { APP_HOME } from "@/lib/routes";
+import { OVERVIEW_PATH } from "@/lib/routes";
 
 export type NavGroupId = "analyse" | "workspace";
 
@@ -33,7 +33,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
 
 export const PRIMARY_NAV: readonly NavItem[] = [
   {
-    href: APP_HOME,
+    href: OVERVIEW_PATH,
     label: "Overview",
     icon: LayoutDashboard,
     group: "analyse",

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ProductMark } from "@/components/shell/product-mark";
 import { buttonClasses } from "@/components/ui/button";
 import { loadSession } from "@/features/workspace/server";
-import { APP_HOME } from "@/lib/routes";
+import { OVERVIEW_PATH } from "@/lib/routes";
 
 export const metadata: Metadata = { title: "Page not found" };
 
@@ -32,7 +32,7 @@ export default async function NotFound() {
         {heading}
         {line}
         <div className="mt-5 flex gap-2">
-          <Link href={APP_HOME} className={buttonClasses("primary")}>
+          <Link href={OVERVIEW_PATH} className={buttonClasses("primary")}>
             Go to Overview
           </Link>
         </div>
