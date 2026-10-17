@@ -1076,3 +1076,17 @@ Second owner brief, item 0 (D-065).
 - Tests: Subscribe with a valid link; no Subscribe and no Stripe URL when the link is empty or `http:`.
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-17 — Campaign names: label and context
+
+Second owner brief, item 1 (D-066).
+
+- New `splitCampaignName` and `CampaignName`; applied in the Insights list, Overview (Largest changes, Top campaigns, What changed) and the Campaigns ledger. `campaigns-summary.tsx` drops its private `shortName` for the shared splitter.
+- Checked in the dev server: ledger rows stay 56px at 1024px; no clipped names on the Overview; Insights rows read the same at 1440px and 360px, with no page overflow.
+- Rejected on the way: an inline layout for the Insights list (rhythm broke where context wrapped).
+- DESIGN.md §9, §22 and §24 updated.
+- Tests: `campaign-name.test.ts` (splitting, edge cases with empty segments, title and accessible name, order, the prefix, unchanged plain names).
+
+**Checks:** `pnpm check`.

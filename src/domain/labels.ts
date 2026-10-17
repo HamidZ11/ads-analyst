@@ -73,3 +73,28 @@ export function tracksRevenue(client: Client): boolean {
   if (client.revenueTracked !== undefined) return client.revenueTracked;
   return client.type === "ecommerce" || client.targetRoas !== null;
 }
+
+export interface CampaignNameParts {
+  /** The last segment: what the campaign is about ("Autumn Reset Sale"). */
+  primary: string;
+  /** The earlier segments joined with " · " ("Prospecting · Advantage+ Shopping"), or null. */
+  context: string | null;
+}
+
+/**
+ * Meta campaign names are often pipe-separated, broadest first
+ * ("Prospecting | Advantage+ Shopping | Autumn Reset Sale"). The last segment
+ * identifies the campaign; the rest is context. A name without at least two
+ * non-empty segments is returned whole.
+ */
+export function splitCampaignName(name: string): CampaignNameParts {
+  const segments = name
+    .split("|")
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+  if (segments.length < 2) return { primary: name, context: null };
+  return {
+    primary: segments[segments.length - 1],
+    context: segments.slice(0, -1).join(" · "),
+  };
+}

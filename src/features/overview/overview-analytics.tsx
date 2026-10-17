@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight, Check, CircleAlert, Layers3 } from "lucide-react";
+import { CampaignName } from "@/components/ui/campaign-name";
 import { Delta } from "@/components/ui/delta";
 import { Sparkline } from "@/components/ui/sparkline";
 import { formatCurrency, formatMetric, formatPercent } from "@/domain/format";
@@ -322,12 +323,10 @@ function ContextRail({
         <ul className="mt-2 divide-y divide-border">
           {movers.map((mover) => (
             <li key={`${mover.campaign.id}-${mover.metric}`} className="py-2.5">
-              <p
-                title={mover.campaign.name}
+              <CampaignName
+                name={mover.campaign.name}
                 className="line-clamp-2 text-sm leading-5 font-medium text-ink"
-              >
-                {mover.campaign.name}
-              </p>
+              />
               <p className="mt-1 flex items-baseline justify-between gap-3 text-xs text-ink-muted">
                 <span>{mover.label}</span>
                 <Delta change={mover.change} higherIsBetter={mover.higherIsBetter} />
@@ -372,7 +371,10 @@ function TopCampaigns({ workspace, rows }: { workspace: Workspace; rows: Campaig
               {String(index + 1).padStart(2, "0")}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[14px] font-medium text-ink">{row.campaign.name}</p>
+              <CampaignName
+                name={row.campaign.name}
+                className="truncate text-[14px] font-medium text-ink"
+              />
               <div className="mt-1.5 h-1 rounded-full bg-surface-active">
                 <div
                   className="h-full rounded-full bg-ink-secondary"
@@ -420,7 +422,10 @@ function WhatChanged({ workspace, rows }: { workspace: Workspace; rows: Campaign
             className="flex items-center gap-3 py-3"
           >
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[14px] font-medium text-ink">{mover.campaign.name}</p>
+              <CampaignName
+                name={mover.campaign.name}
+                className="truncate text-[14px] font-medium text-ink"
+              />
               <p className="mt-0.5 text-xs text-ink-muted">{mover.label}</p>
             </div>
             <Delta

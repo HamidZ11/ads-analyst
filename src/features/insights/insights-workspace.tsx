@@ -3,6 +3,7 @@
 import { ChevronLeft } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { useRef, useState, useSyncExternalStore } from "react";
+import { CampaignName } from "@/components/ui/campaign-name";
 import {
   DETECTOR_LABELS,
   ENTITY_TYPE_LABELS,
@@ -101,9 +102,19 @@ function FindingRow({
           <span className="mt-1 block text-sm leading-5 font-medium text-ink">
             {finding.headline}
           </span>
-          <span className="mt-1 block truncate text-xs text-ink-muted" title={entity}>
-            {entity}
-          </span>
+          {finding.entity.type === "campaign" ? (
+            <span className="mt-1 block text-xs text-ink-muted">
+              <CampaignName
+                name={finding.entity.name}
+                prefix={`${ENTITY_TYPE_LABELS.campaign} · `}
+                className="truncate text-ink-secondary"
+              />
+            </span>
+          ) : (
+            <span className="mt-1 block truncate text-xs text-ink-muted" title={entity}>
+              {entity}
+            </span>
+          )}
         </span>
         <span className="shrink-0 pt-[18px] text-right">
           <span className="block text-sm font-semibold whitespace-nowrap text-ink tabular">

@@ -1,16 +1,10 @@
 import { Delta } from "@/components/ui/delta";
 import { formatCurrency, formatNumber } from "@/domain/format";
-import type { ConversionVocabulary } from "@/domain/labels";
+import { splitCampaignName, type ConversionVocabulary } from "@/domain/labels";
 import { percentChange, sumMetrics } from "@/domain/metrics";
 import type { Client } from "@/domain/types";
 import { rankCampaignMovers, type CampaignRow } from "@/features/analytics/queries";
 import { LEDGER_MATERIALITY } from "./campaigns-table";
-
-/** The last segment of a Meta-style "stage | audience | product" name, or the whole name. */
-function shortName(name: string): string {
-  const parts = name.split(" | ");
-  return parts[parts.length - 1] ?? name;
-}
 
 /**
  * One quiet row of account facts above the ledger: spend and outcomes with
@@ -99,7 +93,7 @@ export function CampaignsSummary({
               className="mt-1 truncate text-lg font-semibold tracking-[-0.01em] text-ink"
               title={lead.campaign.name}
             >
-              {shortName(lead.campaign.name)}
+              {splitCampaignName(lead.campaign.name).primary}
             </dd>
             <dd className="mt-0.5 flex items-center gap-1.5 text-xs text-ink-muted">
               <span>{lead.label}</span>

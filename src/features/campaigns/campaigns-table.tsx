@@ -2,6 +2,7 @@
 
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
 import { useMemo, useState } from "react";
+import { CampaignName } from "@/components/ui/campaign-name";
 import { Delta } from "@/components/ui/delta";
 import { Input } from "@/components/ui/input";
 import { Table } from "@/components/ui/table";
@@ -330,15 +331,13 @@ export function CampaignsTable({
                   className="h-14 border-b border-border bg-surface transition-colors hover:bg-surface-subtle"
                 >
                   <td className="sticky left-0 z-[1] max-w-[200px] min-w-[180px] border-r border-border bg-inherit pr-3 align-middle min-[1400px]:max-w-[380px] md:static md:max-w-[272px] md:border-r-0">
-                    <p
+                    <CampaignName
+                      name={campaign.name}
                       className={cn(
                         "truncate text-[14px] font-medium",
                         paused ? "text-ink-muted" : "text-ink",
                       )}
-                      title={campaign.name}
-                    >
-                      {campaign.name}
-                    </p>
+                    />
                     <p className="mt-0.5 flex items-center gap-1.5 text-xs whitespace-nowrap text-ink-muted">
                       <span
                         aria-hidden
