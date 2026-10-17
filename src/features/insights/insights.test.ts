@@ -5,6 +5,7 @@ import { InMemoryRepository } from "@/data/repository";
 import { buildSeedDataset } from "@/data/seed";
 import {
   countByPriority,
+  countsPhrase,
   PRIORITY_ORDER,
   runInsightEngine,
   type Finding,
@@ -393,5 +394,14 @@ describe("compact finding detail", () => {
       expect(full, dropped).toContain(dropped);
       expect(compact, dropped).not.toContain(dropped);
     }
+  });
+});
+
+describe("counts phrase", () => {
+  it("is the briefing's counts without the client and period", () => {
+    expect(countsPhrase({ high: 1, opportunity: 0, watch: 2 })).toBe(
+      "1 issue needs attention, no opportunities and 2 things to watch",
+    );
+    expect(countsPhrase({ high: 0, opportunity: 0, watch: 0 })).toBe("No findings");
   });
 });

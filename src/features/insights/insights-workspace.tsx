@@ -74,7 +74,8 @@ function emptyCopy(filter: Filter, model: InsightsModel) {
   return { title: "No findings for the selected filter.", description: elsewhere };
 }
 
-function FindingRow({
+/** One row of the findings list; also rendered, inert, on the landing page. */
+export function FindingRow({
   finding,
   selected,
   desktop,

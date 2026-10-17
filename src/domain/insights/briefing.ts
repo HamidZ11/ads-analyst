@@ -26,6 +26,12 @@ export function periodPhrase(preset: DatePreset, days: number): string {
 export function briefingSentence(counts: PriorityCounts, clientName: string, period: string) {
   const total = counts.high + counts.opportunity + counts.watch;
   if (total === 0) return `No findings for ${clientName} ${period}.`;
+  return `${countsPhrase(counts)} for ${clientName} ${period}.`;
+}
+
+/** The counts alone: "3 issues need attention, 3 opportunities and 2 things to watch". */
+export function countsPhrase(counts: PriorityCounts) {
+  if (counts.high + counts.opportunity + counts.watch === 0) return "No findings";
   const high =
     counts.high === 0
       ? "Nothing needs attention"
@@ -38,5 +44,5 @@ export function briefingSentence(counts: PriorityCounts, clientName: string, per
     counts.watch === 0
       ? "nothing to watch"
       : `${counts.watch} ${counts.watch === 1 ? "thing" : "things"} to watch`;
-  return `${high}, ${opportunities} and ${watch} for ${clientName} ${period}.`;
+  return `${high}, ${opportunities} and ${watch}`;
 }

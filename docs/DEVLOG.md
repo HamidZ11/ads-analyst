@@ -1238,3 +1238,15 @@ Owner brief (D-078). First, outside the code: pushed `main` to origin (39d3253..
 - DESIGN.md §28 updated. Tests: `product-crop.test.ts` (every surface has the crop class; `fitControls` only on the phone Overview).
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-17 — Landing stage 2, item 2: this week for Luxe Skin Co.
+
+Owner brief (D-079).
+
+- `briefing.ts`: `countsPhrase` (the counts without client and period); `briefingSentence` uses it, so the Insights page reads the same. `insights-workspace.tsx`: `FindingRow` exported, unchanged. `evidence.ts`: `weekRows` (deterioration, `only("scaling_winner")`, `only("underfunded_winner")`, `only("creative_fatigue")`). `exhibits.tsx`: `InsightsWeekExhibit`. `page.tsx`: the `#product` section now holds the copy and the excerpt; the `WASTE` crops and their label are removed.
+- Checked with Playwright in WebKit, Chromium and Firefox at 1440, 1280 and 390px: four rows with rules `rgb(180, 35, 24)`, `rgb(21, 128, 61)` twice and `rgb(181, 71, 8)`; campaign names split into label and context; nothing clipped; no page overflow; panel 685px wide at 1440px, 608px at 1280px, 331px at 390px.
+- DESIGN.md §28 updated. Tests: `landing.test.ts` (counts line, four real rows with an issue, the scaling winner and a watch item and all three rules, no repeat of the zero-conversion finding or its reason), `insights.test.ts` (`countsPhrase`).
+
+**Checks:** `pnpm check`.

@@ -4,7 +4,11 @@ import { ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { CPA_QUESTION, landingEvidence } from "@/features/marketing/evidence";
 import { CtaBand } from "@/features/marketing/cta-band";
-import { AnswerExhibit, FindingExhibit } from "@/features/marketing/exhibits";
+import {
+  AnswerExhibit,
+  FindingExhibit,
+  InsightsWeekExhibit,
+} from "@/features/marketing/exhibits";
 import m from "@/features/marketing/marketing.module.css";
 import { auditMailto, HERO_HEADLINE, HERO_LEAD } from "@/features/marketing/hero";
 import {
@@ -16,7 +20,12 @@ import { ProductCrop, type Crop } from "@/features/marketing/product-crop";
 import cropStyles from "@/features/marketing/product-crop.module.css";
 import { homeStructuredData, jsonLd, marketingMetadata } from "@/features/marketing/seo";
 import { SpendField } from "@/features/marketing/spend-field";
-import { formatInsightValue } from "@/domain/insights";
+import {
+  countsPhrase,
+  ENTITY_TYPE_LABELS,
+  formatInsightValue,
+  PRIORITY_LABELS,
+} from "@/domain/insights";
 import { cn } from "@/lib/cn";
 import { APP_HOME } from "@/lib/routes";
 import { CONTACT_EMAIL } from "@/lib/site";
@@ -30,8 +39,6 @@ export const metadata: Metadata = marketingMetadata("/");
 
 const HERO: Crop = { x: 0, y: 0, width: 1136, height: 880 };
 const HERO_COMPACT: Crop = { x: 14, y: 16, width: 350, height: 640 };
-const WASTE: Crop = { x: 16, y: 16, width: 608, height: 474 };
-const WASTE_COMPACT: Crop = { x: 18, y: 12, width: 339, height: 296 };
 /** Campaigns: the summary strip, then the ledger without its tabs, search and group row. */
 const CAMPAIGN_SUMMARY: Crop = { x: 16, y: 14, width: 1104, height: 84 };
 const CAMPAIGN_LEDGER: Crop = { x: 16, y: 204, width: 1104, height: 292 };
@@ -60,7 +67,7 @@ function Panel({ className, children }: { className?: string; children: ReactNod
 
 export default function LandingPage() {
   const evidence = landingEvidence();
-  const { workspace, insights, zeroConversion, answer, series } = evidence;
+  const { workspace, insights, zeroConversion, weekRows, answer, series } = evidence;
   const finding = {
     currency: workspace.client.currency,
     currentLabel: insights.currentLabel,
@@ -75,7 +82,14 @@ export default function LandingPage() {
         `${item.label} ${formatInsightValue(item.value, item.format, workspace.client.currency)}`,
     )
     .join(", ")}. Suggested action: ${zeroConversion.action}`;
-  const wasteLabel = `Ad Analyst Insights: ${zeroConversion.headline} Spend £638, purchases 0, clicks 864. Suggested action: ${zeroConversion.action}`;
+  const weekTitle = `This week for ${workspace.client.name}`;
+  const weekSummary = `${countsPhrase(insights.counts)}.`;
+  const weekLabel = `Ad Analyst Insights. ${weekTitle}: ${weekSummary} ${weekRows
+    .map(
+      (row) =>
+        `${PRIORITY_LABELS[row.priority]}, ${ENTITY_TYPE_LABELS[row.entity.type]} ${row.entity.name}: ${row.headline}`,
+    )
+    .join(" ")}`;
   const summaryLabel =
     "Ad Analyst Campaigns for Luxe Skin Co.: spend £7,420, 276 purchases, 2 of 8 delivering campaigns over the £28 target, largest movement Autumn Reset Sale with cost per purchase up 132.5%.";
   const askLabel = `Ad Analyst Ask Analyst. Question: ${CPA_QUESTION} Answer: ${answer.title} ${answer.summary}`;
@@ -164,28 +178,29 @@ export default function LandingPage() {
         </p>
       </section>
 
-      <section id="product" className={cn(m.container, s.split)} aria-labelledby="waste-title">
+      <section id="product" className={cn(m.container, s.split)} aria-labelledby="week-title">
         <div className={s.copy}>
-          <h2 id="waste-title" className={s.h2}>
-            Catch wasted spend before it gets expensive.
+          <h2 id="week-title" className={s.h2}>
+            Cut the waste. Scale what works.
           </h2>
           <p className={s.body}>
-            Overnight Repair Cream spent £638 in a week without a single purchase, and none the
-            week before. Insights flags it, shows the comparison and names the first thing to
-            check.
+            Insights ranks every finding for the client: what needs attention, where more budget
+            would go further, and what to watch, each with the figure behind it.
           </p>
         </div>
         <Panel className={s.splitPanel}>
-          <Wide>
-            <ProductCrop source={640} crop={WASTE} label={wasteLabel}>
-              <FindingExhibit finding={zeroConversion} {...finding} />
-            </ProductCrop>
-          </Wide>
-          <Compact>
-            <ProductCrop source={375} crop={WASTE_COMPACT} maxScale={1.15} label={wasteLabel}>
-              <FindingExhibit finding={zeroConversion} {...finding} />
-            </ProductCrop>
-          </Compact>
+          {/* The real Insights counts and list rows, rendered at their own
+              size and inert: an excerpt, not a crop (D-079). */}
+          <div role="img" aria-label={weekLabel}>
+            <div inert aria-hidden className={cn("font-sans text-ink", s.weekSurface)}>
+              <InsightsWeekExhibit
+                title={weekTitle}
+                summary={weekSummary}
+                findings={weekRows}
+                currency={workspace.client.currency}
+              />
+            </div>
+          </div>
         </Panel>
       </section>
 

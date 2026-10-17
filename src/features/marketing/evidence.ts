@@ -38,6 +38,8 @@ export interface LandingEvidence {
   insights: InsightsModel;
   deterioration: Finding;
   zeroConversion: Finding;
+  /** The landing's "this week" rows: one issue, two places to scale, one to watch. */
+  weekRows: Finding[];
   answer: AskAnswer;
   /** 60 days, oldest first, one series per campaign. */
   series: DailySeries[];
@@ -81,6 +83,11 @@ export function landingEvidence(): LandingEvidence {
     if (!finding) throw new Error(`Seeded finding ${detector}:${entityId} is missing.`);
     return finding;
   };
+  const only = (detector: Finding["detector"]) => {
+    const matches = insights.findings.filter((f) => f.detector === detector);
+    if (matches.length !== 1) throw new Error(`Expected one seeded ${detector} finding.`);
+    return matches[0];
+  };
 
   const coverage = workspace.coverage;
   if (!coverage) throw new Error("Seeded coverage is missing.");
@@ -116,6 +123,12 @@ export function landingEvidence(): LandingEvidence {
     insights,
     deterioration: find("campaign_deterioration", "cmp_luxe_05"),
     zeroConversion: find("zero_conversion_spend", "cmp_luxe_03"),
+    weekRows: [
+      find("campaign_deterioration", "cmp_luxe_05"),
+      only("scaling_winner"),
+      only("underfunded_winner"),
+      only("creative_fatigue"),
+    ],
     answer: answerQuestion(CPA_QUESTION, collectAskData(workspace)).answer,
     series,
     days,

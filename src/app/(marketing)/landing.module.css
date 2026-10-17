@@ -267,6 +267,11 @@
   grid-column: 6 / span 7;
   padding: clamp(16px, 1.8vw, 26px);
 }
+/* The Insights excerpt: app type and tokens on the panel's white. */
+.weekSurface {
+  pointer-events: none;
+  user-select: none;
+}
 .stackPanel,
 .widePanel {
   padding: clamp(16px, 1.8vw, 26px) clamp(18px, 2vw, 30px);
