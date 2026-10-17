@@ -132,7 +132,7 @@ export default function LandingPage() {
                 source={1136}
                 crop={HERO}
                 maxScale={1}
-                cssScale
+
                 label={overviewLabel}
               >
                 <OverviewCanvas evidence={evidence} />
@@ -143,7 +143,7 @@ export default function LandingPage() {
                 source={375}
                 crop={HERO_COMPACT}
                 maxScale={1.15}
-                cssScale
+
                 label={overviewLabel}
               >
                 <OverviewCanvas evidence={evidence} />

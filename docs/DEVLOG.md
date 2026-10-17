@@ -1182,3 +1182,21 @@ Owner brief (D-073). Headline, lead, actions and motion limit from D-072 unchang
 - Tests: `hero.test.ts` checks the compact card's content (label and context, three tiles, action, no reason or table) and the CSS-scaled server render; `insights.test.ts` checks that compact mode keeps headline, evidence and action and drops the reason, comparison and chart.
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-17 — Safari: blank hero Overview crop
+
+Owner bug report: in Safari (macOS and iOS) the hero's Overview crop was a blank white panel since 952b8b5 (D-073). Fixed under D-075.
+
+- **Reproduced** in Playwright WebKit 26.0 (build 2215), fresh contexts, 1440 × 900 and 390 × 844, JavaScript on and off. The surface's computed transform was `matrix(-0.748561, …)` at 1440px and `matrix(-10.863968, …)` at 390px, against 0.9437 and 1.0229 in Chromium; `CSS.supports("scale", "tan(atan2(1px, 2px))")` was true, so the JavaScript fallback was skipped.
+- **Cause:** WebKit resolves `tan(atan2(100cqw, 1136px))` with atan2's degrees read as radians (atan2(1072, 1136) is 43.34°; tan(43.34 rad) is −0.749). The negative scale mirrored the product out of the frame. The same probe showed every other crop at opacity 0 without JavaScript.
+- **Fix:** `ProductCrop` drops `cssScale`, container units and the opacity gate; the surface scales by `var(--crop-scale, 1)` until measured. `landing.module.css` sets the hero's steps on `.canvas`. The measuring effect always runs.
+- **Checked:** `pnpm check:browsers http://localhost:3100/` passes 112 crop checks: WebKit, Chromium and Firefox at 1440, 1280 and 390px plus WebKit as an emulated iPhone 13, JavaScript on and off. The hero's first paint without JavaScript is 0.9430 at 1440px, 0.8870 at 1280px and 1.0050 at 390px in all three engines. Every other crop is visible in every engine: measured with JavaScript, unscaled without.
+- **Manual Safari check** (real Safari, especially iOS, which Playwright only emulates): open `/` in a private window at desktop width and on a phone; the Overview must show behind the £638 card and below it on the phone; repeat with JavaScript off (Safari Settings → Advanced on macOS) and the Overview must still show, slightly narrower than its frame at most.
+- Tests: `hero.test.ts` asserts the server render uses `var(--crop-scale, 1)`, no trigonometry or container units and no zero opacity; new `crop-scale.test.ts` checks every step against the hero's layout formula from 320 to 1920px, with and without a scrollbar. Its first run caught a real error: the cap step had been placed at 1340px, but with a classic scrollbar the frame only reaches 1072px at 1360px.
+- Dev dependency: `playwright` 1.56.1; script `check:browsers`. README updated.
+
+**Checks:** `pnpm check`.
+
+**Not in this commit:** the CTA band from the earlier brief is still uncommitted in the working tree; it is committed separately next.

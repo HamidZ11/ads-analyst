@@ -16,13 +16,13 @@ export interface Crop {
  * the real component with seeded data: text stays crisp at any scale, and the
  * crop is inert, so it reads as an exhibit rather than a second app.
  *
- * By default the scale is measured after hydration, so the crop is
- * transparent until JavaScript runs. With `cssScale` the scale is CSS: the
- * frame is a size container and the surface scales by
- * `tan(atan2(100cqw, <crop width>px))`, which is the frame's width divided by
- * the crop's as a plain number. The server render is then already at its
- * final size and position, visible without JavaScript. Browsers without CSS
- * trigonometry fall back to the measured scale.
+ * The crop is always visible. Before hydration it scales by the inherited
+ * `--crop-scale` custom property, which a slot can set per breakpoint to a
+ * value at or just under its true scale (the hero does, D-075); without one it
+ * renders unscaled and clipped. After hydration the measured scale replaces
+ * it exactly. No CSS maths is involved: WebKit evaluates
+ * `tan(atan2(<container unit>, <length>))` with the angle in degrees as if it
+ * were radians, which scaled the hero crop negatively, off its frame.
  */
 export function ProductCrop({
   id,
@@ -31,7 +31,6 @@ export function ProductCrop({
   label,
   maxScale = 1.6,
   fade,
-  cssScale = false,
   className,
   surfaceClassName,
   children,
@@ -45,20 +44,16 @@ export function ProductCrop({
   maxScale?: number;
   /** Fade the crop out toward one edge, where the real list continues beyond it. */
   fade?: "bottom";
-  /** Scale in CSS, so the first paint is final and needs no JavaScript. */
-  cssScale?: boolean;
   className?: string;
   surfaceClassName?: string;
   children: ReactNode;
 }) {
   const frame = useRef<HTMLDivElement>(null);
-  // Unknown until measured: without `cssScale` the crop stays transparent
-  // rather than showing the product at the wrong scale before hydration.
+  // Null until measured; the CSS default carries the first paint.
   const [scale, setScale] = useState<number | null>(null);
   useLayoutEffect(() => {
     const element = frame.current;
     if (!element) return;
-    if (cssScale && CSS.supports("scale", `tan(atan2(1px, 2px))`)) return;
     const measure = () => {
       const width = element.clientWidth;
       if (width > 0) setScale(Math.min(maxScale, width / crop.width));
@@ -67,16 +62,10 @@ export function ProductCrop({
     const observer = new ResizeObserver(measure);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [crop.width, maxScale, cssScale]);
+  }, [crop.width, maxScale]);
 
   const offset = `translate(${-crop.x}px, ${-crop.y}px)`;
-  const transform =
-    scale !== null
-      ? `scale(${scale}) ${offset}`
-      : cssScale
-        ? `scale(tan(atan2(100cqw, ${crop.width}px))) ${offset}`
-        : `scale(1) ${offset}`;
-  const visible = cssScale || scale !== null;
+  const transform = `scale(${scale ?? "var(--crop-scale, 1)"}) ${offset}`;
 
   return (
     <div
@@ -88,7 +77,6 @@ export function ProductCrop({
       style={{
         aspectRatio: `${crop.width} / ${crop.height}`,
         maxWidth: crop.width * maxScale,
-        containerType: cssScale ? "inline-size" : undefined,
         maskImage:
           fade === "bottom"
             ? "linear-gradient(to bottom, #000 78%, transparent 100%)"
@@ -106,8 +94,6 @@ export function ProductCrop({
           width: source,
           transformOrigin: "0 0",
           transform,
-          opacity: visible ? 1 : 0,
-          transition: cssScale ? undefined : "opacity 320ms ease",
         }}
       >
         {children}

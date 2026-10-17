@@ -78,15 +78,14 @@ describe("landing hero", () => {
     expect(hero.match(/<h1/g)?.length).toBe(3);
   });
 
-  it("renders the Overview crops at their final CSS scale, visible without JavaScript", async () => {
-    const hero = await renderLanding();
-    expect(hero.match(/container-type:inline-size/g)?.length).toBe(2);
-    expect(hero).toContain(
-      "transform:scale(tan(atan2(100cqw, 1136px))) translate(0px, 0px);opacity:1",
-    );
-    expect(hero).toContain(
-      "transform:scale(tan(atan2(100cqw, 350px))) translate(-14px, -16px);opacity:1",
-    );
-    expect(hero).not.toMatch(/opacity:0/);
+  it("renders every crop visible before hydration, without CSS maths", async () => {
+    vi.resetModules();
+    const { default: LandingPage } = await import("@/app/(marketing)/page");
+    const html = renderToStaticMarkup(createElement(LandingPage));
+    expect(html).toContain("transform:scale(var(--crop-scale, 1)) translate(0px, 0px)");
+    expect(html).toContain("transform:scale(var(--crop-scale, 1)) translate(-14px, -16px)");
+    // WebKit evaluates tan(atan2(<container unit>, <length>)) wrongly (D-075).
+    expect(html).not.toMatch(/tan\(|atan2|cqw|container-type/);
+    expect(html).not.toMatch(/opacity:0/);
   });
 });

@@ -27,16 +27,17 @@ Set `NEXT_PUBLIC_SITE_URL` to the production origin: sign-in emails, canonical U
 
 ## Scripts
 
-| Script              | What it does                                      |
-| ------------------- | ------------------------------------------------- |
-| `pnpm dev`          | Start the development server                      |
-| `pnpm build`        | Production build                                  |
-| `pnpm lint`         | ESLint                                            |
-| `pnpm typecheck`    | TypeScript                                        |
-| `pnpm test`         | Vitest unit tests                                 |
-| `pnpm format`       | Prettier (write)                                  |
-| `pnpm format:check` | Prettier (check)                                  |
-| `pnpm check`        | Format check, lint, typecheck, test, build in one |
+| Script                      | What it does                                                                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                  | Start the development server                                                                                                          |
+| `pnpm build`                | Production build                                                                                                                      |
+| `pnpm lint`                 | ESLint                                                                                                                                |
+| `pnpm typecheck`            | TypeScript                                                                                                                            |
+| `pnpm test`                 | Vitest unit tests                                                                                                                     |
+| `pnpm format`               | Prettier (write)                                                                                                                      |
+| `pnpm format:check`         | Prettier (check)                                                                                                                      |
+| `pnpm check`                | Format check, lint, typecheck, test, build in one                                                                                     |
+| `pnpm check:browsers [url]` | Product crops in WebKit, Chromium and Firefox against a running server (needs `pnpm exec playwright install webkit chromium firefox`) |
 
 ## Design and engineering records
 

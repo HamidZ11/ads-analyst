@@ -91,6 +91,122 @@
     0 50px 100px -40px rgb(3 8 30 / 65%);
   transform: translateX(-50%);
 }
+/* The hero crops' first-paint scale (D-075): ProductCrop scales by
+   --crop-scale until hydration measures the frame. Each step is the scale at
+   the start of its range, rounded down, so the product can fall a few pixels
+   short of the frame's right edge (white on white) but never spills past it.
+   Below 1024px the frame is the phone crop, min(100vw - 32px, 350px × 1.15)
+   wide; from 1024px it is min(1072px, 90% of the container), computed with 17px
+   allowed for a classic scrollbar. */
+.canvas {
+  --crop-scale: 0.8;
+}
+@media (min-width: 320px) {
+  .canvas {
+    --crop-scale: 0.822;
+  }
+}
+@media (min-width: 336px) {
+  .canvas {
+    --crop-scale: 0.868;
+  }
+}
+@media (min-width: 352px) {
+  .canvas {
+    --crop-scale: 0.914;
+  }
+}
+@media (min-width: 368px) {
+  .canvas {
+    --crop-scale: 0.96;
+  }
+}
+@media (min-width: 384px) {
+  .canvas {
+    --crop-scale: 1.005;
+  }
+}
+@media (min-width: 400px) {
+  .canvas {
+    --crop-scale: 1.051;
+  }
+}
+@media (min-width: 416px) {
+  .canvas {
+    --crop-scale: 1.097;
+  }
+}
+@media (min-width: 432px) {
+  .canvas {
+    --crop-scale: 1.142;
+  }
+}
+@media (min-width: 435px) {
+  .canvas {
+    --crop-scale: 1.15;
+  }
+}
+@media (min-width: 1024px) {
+  .canvas {
+    --crop-scale: 0.707;
+  }
+}
+@media (min-width: 1056px) {
+  .canvas {
+    --crop-scale: 0.73;
+  }
+}
+@media (min-width: 1088px) {
+  .canvas {
+    --crop-scale: 0.752;
+  }
+}
+@media (min-width: 1120px) {
+  .canvas {
+    --crop-scale: 0.775;
+  }
+}
+@media (min-width: 1152px) {
+  .canvas {
+    --crop-scale: 0.797;
+  }
+}
+@media (min-width: 1184px) {
+  .canvas {
+    --crop-scale: 0.82;
+  }
+}
+@media (min-width: 1216px) {
+  .canvas {
+    --crop-scale: 0.842;
+  }
+}
+@media (min-width: 1248px) {
+  .canvas {
+    --crop-scale: 0.865;
+  }
+}
+@media (min-width: 1280px) {
+  .canvas {
+    --crop-scale: 0.887;
+  }
+}
+@media (min-width: 1312px) {
+  .canvas {
+    --crop-scale: 0.91;
+  }
+}
+@media (min-width: 1344px) {
+  .canvas {
+    --crop-scale: 0.932;
+  }
+}
+@media (min-width: 1360px) {
+  .canvas {
+    --crop-scale: 0.943;
+  }
+}
+
 /* The compact finding, in front of the Overview's lower right: the shipped
    Insights detail at its own width, with a deeper shadow and a hairline so it
    reads as a separate layer. */
