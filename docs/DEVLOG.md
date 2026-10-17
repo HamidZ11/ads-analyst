@@ -1064,3 +1064,15 @@ Owner brief, item 4 of 4 (D-064).
 **Checks:** `pnpm check`.
 
 **Needs the owner:** legal review of both pages and the confirmations in D-064.
+
+---
+
+## 2026-10-17 — Housekeeping and the Agency Subscribe button
+
+Second owner brief, item 0 (D-065).
+
+- `.gitignore` ignores `.claude/`. The 63 files already tracked there stay tracked; the local `.claude/launch.json` (dev server on port 3100) is now ignored.
+- Pricing: `AgencyActions` renders a filled "Subscribe" to `STRIPE_PAYMENT_LINK` plus a "Try the demo" text link when the link is set; otherwise the unchanged Try the demo and Sign in. DESIGN.md §28 and PRODUCT.md updated; D-062 marked amended.
+- Tests: Subscribe with a valid link; no Subscribe and no Stripe URL when the link is empty or `http:`.
+
+**Checks:** `pnpm check`.

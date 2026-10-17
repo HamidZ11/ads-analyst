@@ -41,7 +41,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Claude Code: machine-local settings (Impeccable installs its hook manifest here)
+# Claude Code: local agent configuration. Files already tracked under .claude/
+# (the Impeccable skill and agents) stay tracked; nothing new is added.
+.claude/
 .claude/settings.local.json
 
 # Impeccable engine binary ships next to the launcher; the launcher re-downloads the pinned version on first run

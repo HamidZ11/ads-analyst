@@ -7,7 +7,7 @@ import { marketingMetadata } from "@/features/marketing/seo";
 import { SpendField } from "@/features/marketing/spend-field";
 import { cn } from "@/lib/cn";
 import { APP_HOME } from "@/lib/routes";
-import { CONTACT_EMAIL } from "@/lib/site";
+import { CONTACT_EMAIL, STRIPE_PAYMENT_LINK } from "@/lib/site";
 import s from "./pricing.module.css";
 
 export const metadata: Metadata = marketingMetadata("/pricing");
@@ -54,6 +54,34 @@ const FAQ = [
     a: "No. It shows what changed and where to look. Decisions and changes in Meta Ads stay with you.",
   },
 ];
+
+/** Agency's actions: with a payment link, Subscribe is the one filled primary
+    and the demo becomes the text link; without one, the demo and sign-in. */
+function AgencyActions({ paymentLink }: { paymentLink: string | null }) {
+  if (paymentLink)
+    return (
+      <div className={s.planActions}>
+        <a href={paymentLink} className={m.button}>
+          Subscribe
+        </a>
+        <Link href={APP_HOME} className={m.textLink}>
+          Try the demo
+          <ArrowRight aria-hidden size={16} strokeWidth={1.75} />
+        </Link>
+      </div>
+    );
+  return (
+    <div className={s.planActions}>
+      <Link href={APP_HOME} className={m.button}>
+        Try the demo
+      </Link>
+      <Link href="/sign-in" className={m.textLink}>
+        Sign in
+        <ArrowRight aria-hidden size={16} strokeWidth={1.75} />
+      </Link>
+    </div>
+  );
+}
 
 /** Enterprise's action: a mailto when a contact address is configured, nothing
     otherwise. The empty row keeps the panel's subgrid aligned with Agency's. */
@@ -107,15 +135,7 @@ export default function PricingPage() {
                 <Check aria-hidden size={16} strokeWidth={1.75} />
                 Up to 10 client accounts
               </p>
-              <div className={s.planActions}>
-                <Link href={APP_HOME} className={m.button}>
-                  Try the demo
-                </Link>
-                <Link href="/sign-in" className={m.textLink}>
-                  Sign in
-                  <ArrowRight aria-hidden size={16} strokeWidth={1.75} />
-                </Link>
-              </div>
+              <AgencyActions paymentLink={STRIPE_PAYMENT_LINK} />
               <p className={s.planNote}>
                 The demo runs on a seeded sample agency. Trying it doesn’t start a subscription.
                 Prices in GBP.

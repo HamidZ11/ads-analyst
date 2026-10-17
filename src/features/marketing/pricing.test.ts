@@ -72,3 +72,34 @@ describe("pricing page with a contact address", () => {
     expect(html).not.toContain("Email us");
   });
 });
+
+describe("pricing page with a payment link", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  async function render(link: string) {
+    vi.stubEnv("NEXT_PUBLIC_STRIPE_PAYMENT_LINK", link);
+    vi.resetModules();
+    const { default: Page } = await import("@/app/(marketing)/pricing/page");
+    return renderToStaticMarkup(createElement(Page));
+  }
+
+  it("shows Subscribe on Agency as the filled primary, linking to the payment link", async () => {
+    const html = await render("https://buy.stripe.com/test_123");
+    expect(html).toMatch(
+      /<a href="https:\/\/buy\.stripe\.com\/test_123" class="[^"]*button[^"]*">Subscribe<\/a>/,
+    );
+    expect(html).toContain("Try the demo");
+  });
+
+  it("keeps the demo and sign-in actions when the link is unset or invalid", async () => {
+    for (const link of ["", "http://buy.stripe.com/x"]) {
+      const html = await render(link);
+      expect(html, link).not.toContain("Subscribe");
+      expect(html, link).not.toContain("buy.stripe.com");
+      expect(html, link).toContain('href="/sign-in"');
+    }
+  });
+});
