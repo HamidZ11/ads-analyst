@@ -1149,3 +1149,21 @@ Owner follow-up, item 2 (D-071).
 - Checked in the dev server (Autumn Reset video creative, 7 days): this period `rgb(29, 78, 216)` solid 2px, previous `rgb(167, 180, 198)` dashed `5px, 4px` 1.75px, both non-scaling; legend samples match. No render test: the inspector is a Radix dialog portal, which a static render does not output.
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-17 — Landing rework stage 1: the hero
+
+Owner brief (D-072). Only the hero changed.
+
+- Copy: `src/features/marketing/hero.ts` holds the live headline and lead, the two alternatives in a comment, and the audit mailto (`auditMailto`, `AUDIT_SUBJECT`, `AUDIT_BODY`). `seo.ts` takes the structured-data description from `HERO_LEAD`, so it stays the visible lead.
+- Visual: the Overview crop and the floating deterioration card are replaced by one card on the cobalt field with the zero-conversion finding from `landingEvidence()`, rendered by `FindingExhibit` without scaling, `inert` and `aria-hidden` inside a `role="img"` wrapper whose label carries the headline, action and reason. Unused hero crops and `OverviewCanvas` import removed from the page.
+- Actions: under the lead, left-aligned (the old right-aligned grid cell is gone). Audit only with `CONTACT_EMAIL`; otherwise the demo is the filled button.
+- Motion: headline 500ms, copy 60 + 500ms, field 400ms, card 60 + 500ms (all previously 900–2280ms); measured in the browser, the last hero animation ends at 560ms. Reduced motion unchanged.
+- Measured in the dev server (two-CTA layout checked by inserting the same markup, since no contact address is set locally): at 1440px and 1280px the headline holds two lines, lead and both actions start at the headline's left edge on one row, and the 760px card shows the whole finding (612px, not clipped); at 390px the headline sets on three lines, the lead on four, the actions stack left-aligned, the card is 358px wide and 750px tall with its comparison table fitting, and the page does not overflow (only the field's decorative texture is clipped, as before).
+- DESIGN.md §28 and PRODUCT.md updated.
+- Tests: `hero.test.ts` covers the mailto (subject, body, encoding), the audit-then-demo order with an address, the demo as the primary without one, and the whole finding in the hero with no Overview.
+
+**Checks:** `pnpm check`.
+
+**Stage 2:** the section below the hero repeats the same finding, and the Overview is no longer on the page.

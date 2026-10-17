@@ -1,6 +1,7 @@
 import type { Metadata, MetadataRoute } from "next";
 import { MARKETING_PATHS, type MarketingPath } from "@/lib/routes";
 import { absoluteUrl, publicOrigin } from "@/lib/site";
+import { HERO_LEAD } from "./hero";
 
 /* Search and sharing for the public site. Only the marketing pages are
    indexable (their layout opts in); the app, sign-in and 404s inherit the root
@@ -89,8 +90,7 @@ export function homeStructuredData(origin: string | null = publicOrigin()) {
     name: SITE_NAME,
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
-    description:
-      "Ad Analyst shows agencies the campaign and creative changes that matter, before the reporting meeting starts.",
+    description: HERO_LEAD,
     ...(url ? { url } : {}),
   };
   return {

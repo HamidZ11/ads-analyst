@@ -49,19 +49,12 @@
 .hero {
   padding-top: clamp(40px, 4.8vw, 72px);
 }
-.heroRow {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  column-gap: var(--col-gap);
-  align-items: end;
+/* The lead and both actions share one left edge with the headline. */
+.heroCopy {
   margin-top: clamp(28px, 3.4vw, 48px);
 }
-.lead {
-  grid-column: 1 / span 5;
-}
 .heroActions {
-  grid-column: 8 / span 5;
-  justify-content: flex-end;
+  margin-top: 32px;
 }
 
 /* Showcase: the one visual field ----------------------------------------- */
@@ -71,7 +64,7 @@
 }
 .field {
   position: relative;
-  height: clamp(560px, 55vw, 790px);
+  padding: clamp(40px, 5vw, 72px) clamp(20px, 4vw, 56px);
   overflow: hidden;
   border-radius: 14px;
   background:
@@ -84,31 +77,22 @@
   inset: -12%;
   opacity: 0.32;
 }
-.canvas {
-  position: absolute;
-  top: clamp(52px, 5.4vw, 76px);
-  left: 50%;
-  bottom: 0;
-  width: min(1072px, 90%);
-  overflow: hidden;
-  border-radius: 10px 10px 0 0;
-  background: var(--surface);
-  box-shadow:
-    0 0 0 1px rgb(255 255 255 / 14%),
-    0 50px 100px -40px rgb(3 8 30 / 65%);
-  transform: translateX(-50%);
-}
-.float {
-  position: absolute;
-  right: 4%;
-  bottom: clamp(40px, 4.4vw, 64px);
-  width: min(580px, 47%);
+/* The hero finding: the shipped Insights detail at its own width, whole,
+   from its priority line to "Why this was flagged". */
+.findingCard {
+  position: relative;
+  width: min(760px, 100%);
+  margin-inline: auto;
   overflow: hidden;
   border-radius: 10px;
   background: var(--surface);
   box-shadow:
-    0 0 0 1px rgb(11 16 32 / 6%),
-    0 36px 72px -28px rgb(3 8 30 / 55%);
+    0 0 0 1px rgb(255 255 255 / 14%),
+    0 50px 100px -40px rgb(3 8 30 / 65%);
+}
+.findingSurface {
+  pointer-events: none;
+  user-select: none;
 }
 .demoNote {
   margin-top: 16px;
@@ -241,26 +225,24 @@
   margin-top: 40px;
 }
 
-/* Motion: the approved grammar. The hero settles in; the product rises into
-   its field and the finding follows; each panel unveils top-down as it
-   arrives (armed by RevealOnScroll). Nothing moves under reduced motion. -- */
+/* Motion: the approved grammar. The hero settles in and the finding rises
+   into its field, all of it fully visible by 560ms after load (D-072); each
+   panel below unveils top-down as it arrives (armed by RevealOnScroll).
+   Nothing moves under reduced motion. ----------------------------------- */
 
 @media (prefers-reduced-motion: no-preference) {
   .h1,
-  .heroRow {
-    animation: settle 1200ms var(--ease) both;
+  .heroCopy {
+    animation: settle 500ms var(--ease) both;
   }
-  .heroRow {
-    animation-delay: 140ms;
+  .heroCopy {
+    animation-delay: 60ms;
   }
   .field {
-    animation: fade 900ms ease 120ms both;
+    animation: fade 400ms ease both;
   }
-  .canvas {
-    animation: rise 1600ms var(--ease) 260ms both;
-  }
-  .float {
-    animation: follow 1500ms var(--ease) 780ms both;
+  .findingCard {
+    animation: follow 500ms var(--ease) 60ms both;
   }
   .panel[data-armed] {
     clip-path: inset(0 0 0 0 round 12px);
@@ -279,12 +261,6 @@
 @keyframes fade {
   from {
     opacity: 0;
-  }
-}
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 56px);
   }
 }
 @keyframes follow {
@@ -306,8 +282,6 @@
   .line {
     white-space: normal;
   }
-  .lead,
-  .heroActions,
   .copy,
   .splitPanel,
   .head .h2,
@@ -315,7 +289,6 @@
     grid-column: 1 / -1;
   }
   .heroActions {
-    justify-content: flex-start;
     margin-top: 28px;
   }
   .splitPanel,
@@ -326,19 +299,7 @@
     margin-bottom: 40px;
   }
   .field {
-    height: auto;
-    padding: 40px 0 0;
-  }
-  .canvas {
-    position: relative;
-    top: 0;
-    left: auto;
-    width: min(460px, calc(100% - 40px));
-    margin-inline: auto;
-    transform: none;
-  }
-  .float {
-    display: none;
+    padding: 40px 20px;
   }
   .steps {
     grid-template-columns: 1fr;
@@ -349,17 +310,6 @@
   .widePanel,
   .askPanel {
     padding: 12px;
-  }
-}
-@media (max-width: 1023px) and (prefers-reduced-motion: no-preference) {
-  .canvas {
-    animation-name: rise-in-flow;
-  }
-}
-@keyframes rise-in-flow {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
   }
 }
 
@@ -378,10 +328,7 @@
   .field {
     margin-inline: calc(-1 * var(--gutter));
     border-radius: 0;
-    padding-top: 28px;
-  }
-  .canvas {
-    width: calc(100% - 32px);
+    padding: 28px 16px;
   }
   .splitPanel,
   .stackPanel,
