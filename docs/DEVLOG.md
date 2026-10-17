@@ -1117,3 +1117,16 @@ Second owner brief, item 3 (D-068).
 **Checks:** `pnpm check`.
 
 **Deferred:** the Creatives inspector chart still uses the earlier solid-line grammar.
+
+---
+
+## 2026-10-17 — Overview target status beside the lead figure
+
+Second owner brief, item 4 (D-069).
+
+- `overview-analytics.tsx`: new `TargetStatus` in the lead reading's column beside the numeral (Delta, verdict, distance). The rail's Target status section is gone and `ContextRail` no longer takes the summary; its reflowed grid is two columns. The bar footer shows only the target.
+- Measured in the dev server (Luxe Skin, 7 days): at 1440px the column starts 20px right of the numeral; at 1280px it fits after narrowing the gap to 16px and the minimum width to 128px (it wrapped beneath at 148px); at 360px it sits beside the 56px numeral with no page overflow.
+- DESIGN.md §21 updated.
+- Tests: `overview-analytics.test.ts`: "Needs attention" and the short-of-target line inside the lead reading, the verdict appears once and the rail heading is gone; a met target reads "On target" with the distance above it.
+
+**Checks:** `pnpm check`.

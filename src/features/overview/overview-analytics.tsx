@@ -129,6 +129,42 @@ function SupportMetric({
   );
 }
 
+/** The lead reading's target status: the verdict, then the distance from target. */
+function TargetStatus({
+  meets,
+  hasTarget,
+  detail,
+}: {
+  meets: boolean | null;
+  hasTarget: boolean;
+  detail: string;
+}) {
+  return (
+    <div className="mt-2">
+      <p
+        className={cn(
+          "flex items-center gap-1.5 text-[14px] font-semibold",
+          meets === null ? "text-ink-secondary" : meets ? "text-positive" : "text-negative",
+        )}
+      >
+        {meets === null ? null : meets ? (
+          <Check aria-hidden size={14} />
+        ) : (
+          <CircleAlert aria-hidden size={14} />
+        )}
+        {!hasTarget
+          ? "No target"
+          : meets === null
+            ? "No reading"
+            : meets
+              ? "On target"
+              : "Needs attention"}
+      </p>
+      <p className="mt-0.5 text-[13px] leading-5 text-ink-muted tabular">{detail}</p>
+    </div>
+  );
+}
+
 function LeadMetric({
   workspace,
   summary,
@@ -176,15 +212,36 @@ function LeadMetric({
       <p id="lead-performance-title" className="text-[14px] font-medium text-ink-secondary">
         {label}
       </p>
-      <div className="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+      <div className="mt-2 flex flex-wrap items-end gap-x-4 gap-y-3">
         <span className="text-[clamp(3.5rem,7vw,5.5rem)] leading-none font-semibold tracking-[-0.045em] text-ink tabular">
           {valueFor(key, current, workspace)}
         </span>
-        <Delta
-          change={change}
-          higherIsBetter={METRIC_DEFINITIONS[key].higherIsBetter}
-          className="text-lg"
-        />
+        <div className="min-w-[128px] flex-1 pb-1">
+          <Delta
+            change={change}
+            higherIsBetter={METRIC_DEFINITIONS[key].higherIsBetter}
+            className="text-lg"
+          />
+          <TargetStatus
+            meets={meetsTarget}
+            hasTarget={target !== null}
+            detail={
+              target === null
+                ? "Add a target to make this comparison explicit."
+                : meetsTarget === null
+                  ? `Target ${valueFor(key, target, workspace)}`
+                  : `${valueFor(key, gap === null ? 0 : Math.abs(gap), workspace)} ${
+                      meetsTarget
+                        ? lowerIsBetter
+                          ? "under"
+                          : "above"
+                        : lowerIsBetter
+                          ? "over"
+                          : "short of"
+                    } the ${valueFor(key, target, workspace)} target`
+            }
+          />
+        </div>
       </div>
       <p className="mt-3 text-[14px] text-ink-muted">
         from{" "}
@@ -205,28 +262,7 @@ function LeadMetric({
               style={{ left: "80%" }}
             />
           </div>
-          <div className="mt-2.5 flex flex-wrap items-baseline justify-between gap-2 text-[13px]">
-            <span
-              className={cn(
-                "font-medium tabular",
-                meetsTarget === null
-                  ? "text-ink-muted"
-                  : meetsTarget
-                    ? "text-positive"
-                    : "text-negative",
-              )}
-            >
-              {meetsTarget === null ? null : meetsTarget ? (
-                <Check aria-hidden size={13} className="mr-1 inline" />
-              ) : (
-                <CircleAlert aria-hidden size={13} className="mr-1 inline" />
-              )}
-              {meetsTarget === null
-                ? "Not enough data"
-                : meetsTarget
-                  ? "Meeting target"
-                  : `${valueFor(key, gap === null ? 0 : Math.abs(gap), workspace)} ${lowerIsBetter ? "over" : "short of"} target`}
-            </span>
+          <div className="mt-2.5 flex justify-end text-[13px]">
             <span className="text-ink-muted">
               Target{" "}
               <span className="font-semibold text-ink tabular">
@@ -240,24 +276,8 @@ function LeadMetric({
   );
 }
 
-function ContextRail({
-  workspace,
-  summary,
-  rows,
-}: {
-  workspace: Workspace;
-  summary: ClientPeriodSummary;
-  rows: CampaignRow[];
-}) {
-  const key = leadKey(workspace);
-  const current = metricValue(summary.comparison.current, key);
-  const target = targetFor(key, workspace);
-  const meets =
-    target === null || current === null
-      ? null
-      : key === "cpa"
-        ? current <= target
-        : current >= target;
+/** Spend concentration and the largest changes; the target status sits with the lead reading. */
+function ContextRail({ workspace, rows }: { workspace: Workspace; rows: CampaignRow[] }) {
   const delivering = rows
     .filter((row) => row.current.totals.spend > 0)
     .sort((a, b) => b.current.totals.spend - a.current.totals.spend);
@@ -273,31 +293,9 @@ function ContextRail({
   return (
     <aside
       aria-label="Contextual analysis"
-      className="grid min-w-0 gap-6 border-t border-border pt-6 min-[1400px]:block min-[1400px]:border-t-0 min-[1400px]:border-l min-[1400px]:pt-0 min-[1400px]:pl-6 md:grid-cols-3"
+      className="grid min-w-0 gap-6 border-t border-border pt-6 min-[1400px]:block min-[1400px]:border-t-0 min-[1400px]:border-l min-[1400px]:pt-0 min-[1400px]:pl-6 md:grid-cols-2"
     >
       <section className="min-w-0 min-[1400px]:border-b min-[1400px]:border-border min-[1400px]:pb-5">
-        <p className="text-xs font-medium text-ink-muted">Target status</p>
-        <p
-          className={cn(
-            "mt-2 text-2xl font-semibold tracking-[-0.02em]",
-            meets === false ? "text-negative" : meets ? "text-positive" : "text-ink",
-          )}
-        >
-          {target === null
-            ? "No target"
-            : current === null
-              ? "No reading"
-              : meets
-                ? "On target"
-                : "Needs attention"}
-        </p>
-        <p className="mt-1 text-xs leading-5 text-ink-muted">
-          {target === null
-            ? "Add a target to make this comparison explicit."
-            : `${key === "cpa" ? conversionVocabulary(workspace.client.type).costLabel : METRIC_DEFINITIONS[key].label} against ${valueFor(key, target, workspace)} target`}
-        </p>
-      </section>
-      <section className="min-w-0 min-[1400px]:border-b min-[1400px]:border-border min-[1400px]:py-5">
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs font-medium text-ink-muted">Spend concentration</p>
           <Layers3 aria-hidden size={15} className="text-ink-faint" />
@@ -519,7 +517,7 @@ export function OverviewAnalytics({
           }}
           singleDay={rangeLength(workspace.periods.current) === 1}
         />
-        <ContextRail workspace={workspace} summary={summary} rows={campaignRows} />
+        <ContextRail workspace={workspace} rows={campaignRows} />
       </div>
       <div className="mt-12 grid gap-10 lg:grid-cols-2">
         <TopCampaigns workspace={workspace} rows={campaignRows} />
