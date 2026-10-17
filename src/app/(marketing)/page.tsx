@@ -6,10 +6,15 @@ import { CPA_QUESTION, landingEvidence } from "@/features/marketing/evidence";
 import { AnswerExhibit, FindingExhibit } from "@/features/marketing/exhibits";
 import m from "@/features/marketing/marketing.module.css";
 import { auditMailto, HERO_HEADLINE, HERO_LEAD } from "@/features/marketing/hero";
-import { CampaignsPageCanvas, CreativesCanvas } from "@/features/marketing/product-canvases";
+import {
+  CampaignsPageCanvas,
+  CreativesCanvas,
+  OverviewCanvas,
+} from "@/features/marketing/product-canvases";
 import { ProductCrop, type Crop } from "@/features/marketing/product-crop";
 import { homeStructuredData, jsonLd, marketingMetadata } from "@/features/marketing/seo";
 import { SpendField } from "@/features/marketing/spend-field";
+import { formatInsightValue } from "@/domain/insights";
 import { cn } from "@/lib/cn";
 import { APP_HOME } from "@/lib/routes";
 import { CONTACT_EMAIL } from "@/lib/site";
@@ -21,6 +26,8 @@ export const metadata: Metadata = marketingMetadata("/");
    their own unscaled coordinates. Wide crops render the desktop layout (from
    1024px); compact crops render the real phone layout at 375px. */
 
+const HERO: Crop = { x: 0, y: 0, width: 1136, height: 880 };
+const HERO_COMPACT: Crop = { x: 14, y: 16, width: 350, height: 640 };
 const WASTE: Crop = { x: 16, y: 16, width: 608, height: 474 };
 const WASTE_COMPACT: Crop = { x: 18, y: 12, width: 339, height: 296 };
 /** Campaigns: the summary strip, then the ledger without its tabs, search and group row. */
@@ -58,7 +65,14 @@ export default function LandingPage() {
     previousLabel: insights.previousLabel,
   };
   const audit = auditMailto(CONTACT_EMAIL);
-  const heroFindingLabel = `Ad Analyst Insights, ${zeroConversion.entity.name}: ${zeroConversion.headline} Suggested action: ${zeroConversion.action} Why this was flagged: ${zeroConversion.reason}`;
+  const overviewLabel =
+    "Ad Analyst Overview for Luxe Skin Co.: return on ad spend 2.71x against a 3.50x target, spend £7,420, revenue £20.1k, 276 purchases at £26.88 each, with a daily chart against the previous seven days.";
+  const heroFindingLabel = `Ad Analyst Insights, ${zeroConversion.entity.name}: ${zeroConversion.headline} ${zeroConversion.evidence
+    .map(
+      (item) =>
+        `${item.label} ${formatInsightValue(item.value, item.format, workspace.client.currency)}`,
+    )
+    .join(", ")}. Suggested action: ${zeroConversion.action}`;
   const wasteLabel = `Ad Analyst Insights: ${zeroConversion.headline} Spend £638, purchases 0, clicks 864. Suggested action: ${zeroConversion.action}`;
   const summaryLabel =
     "Ad Analyst Campaigns for Luxe Skin Co.: spend £7,420, 276 purchases, 2 of 8 delivering campaigns over the £28 target, largest movement Autumn Reset Sale with cost per purchase up 132.5%.";
@@ -103,17 +117,42 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* The hero visual is the shipped finding at its own width, server
-          rendered, so it is visible without waiting for hydration (a scaled
-          ProductCrop stays transparent until it has measured its slot). */}
-      <section className={cn(m.container, s.showcase)} aria-label="Example finding">
+      {/* The Overview is the field's background and the zero-conversion
+          finding floats in front of its lower right (below it on phones). The
+          crops scale in CSS and the card renders at its own width, so the
+          server render is final and visible without JavaScript (D-073). */}
+      <section className={cn(m.container, s.showcase)} aria-label="Ad Analyst Overview">
         <div className={s.field}>
           <div className={s.fieldTexture}>
             <SpendField series={series} blurred />
           </div>
-          <div className={s.findingCard} role="img" aria-label={heroFindingLabel}>
-            <div inert aria-hidden className={s.findingSurface}>
-              <FindingExhibit finding={zeroConversion} {...finding} />
+          <div className={s.canvas}>
+            <Wide>
+              <ProductCrop
+                source={1136}
+                crop={HERO}
+                maxScale={1}
+                cssScale
+                label={overviewLabel}
+              >
+                <OverviewCanvas evidence={evidence} />
+              </ProductCrop>
+            </Wide>
+            <Compact>
+              <ProductCrop
+                source={375}
+                crop={HERO_COMPACT}
+                maxScale={1.15}
+                cssScale
+                label={overviewLabel}
+              >
+                <OverviewCanvas evidence={evidence} />
+              </ProductCrop>
+            </Compact>
+          </div>
+          <div className={s.float} role="img" aria-label={heroFindingLabel}>
+            <div inert aria-hidden className={s.floatSurface}>
+              <FindingExhibit finding={zeroConversion} compact {...finding} />
             </div>
           </div>
         </div>

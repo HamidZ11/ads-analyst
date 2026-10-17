@@ -64,7 +64,7 @@
 }
 .field {
   position: relative;
-  padding: clamp(40px, 5vw, 72px) clamp(20px, 4vw, 56px);
+  height: clamp(560px, 55vw, 790px);
   overflow: hidden;
   border-radius: 14px;
   background:
@@ -77,20 +77,38 @@
   inset: -12%;
   opacity: 0.32;
 }
-/* The hero finding: the shipped Insights detail at its own width, whole,
-   from its priority line to "Why this was flagged". */
-.findingCard {
-  position: relative;
-  width: min(760px, 100%);
-  margin-inline: auto;
+.canvas {
+  position: absolute;
+  top: clamp(52px, 5.4vw, 76px);
+  left: 50%;
+  bottom: 0;
+  width: min(1072px, 90%);
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 10px 10px 0 0;
   background: var(--surface);
   box-shadow:
     0 0 0 1px rgb(255 255 255 / 14%),
     0 50px 100px -40px rgb(3 8 30 / 65%);
+  transform: translateX(-50%);
 }
-.findingSurface {
+/* The compact finding, in front of the Overview's lower right: the shipped
+   Insights detail at its own width, with a deeper shadow and a hairline so it
+   reads as a separate layer. */
+.float {
+  position: absolute;
+  z-index: 1;
+  right: 4%;
+  bottom: clamp(40px, 4.4vw, 64px);
+  width: min(520px, 46%);
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1px rgb(11 16 32 / 8%),
+    0 2px 6px rgb(3 8 30 / 12%),
+    0 40px 80px -24px rgb(3 8 30 / 60%);
+}
+.floatSurface {
   pointer-events: none;
   user-select: none;
 }
@@ -241,8 +259,11 @@
   .field {
     animation: fade 400ms ease both;
   }
-  .findingCard {
-    animation: follow 500ms var(--ease) 60ms both;
+  .canvas {
+    animation: rise 500ms var(--ease) 40ms both;
+  }
+  .float {
+    animation: follow 460ms var(--ease) 120ms both;
   }
   .panel[data-armed] {
     clip-path: inset(0 0 0 0 round 12px);
@@ -261,6 +282,12 @@
 @keyframes fade {
   from {
     opacity: 0;
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 40px);
   }
 }
 @keyframes follow {
@@ -299,7 +326,22 @@
     margin-bottom: 40px;
   }
   .field {
+    height: auto;
     padding: 40px 20px;
+  }
+  .canvas,
+  .float {
+    position: relative;
+    inset: auto;
+    width: min(460px, 100%);
+    margin-inline: auto;
+    transform: none;
+  }
+  .canvas {
+    border-radius: 10px;
+  }
+  .float {
+    margin-top: 16px;
   }
   .steps {
     grid-template-columns: 1fr;
@@ -310,6 +352,12 @@
   .widePanel,
   .askPanel {
     padding: 12px;
+  }
+}
+
+@media (max-width: 1023px) and (prefers-reduced-motion: no-preference) {
+  .canvas {
+    animation-name: follow;
   }
 }
 
@@ -329,6 +377,10 @@
     margin-inline: calc(-1 * var(--gutter));
     border-radius: 0;
     padding: 28px 16px;
+  }
+  .canvas,
+  .float {
+    width: 100%;
   }
   .splitPanel,
   .stackPanel,

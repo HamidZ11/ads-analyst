@@ -14,6 +14,7 @@ import { periodPairForPreset, type DatePreset } from "@/domain/periods";
 import type { Dataset } from "@/domain/types";
 import { collectInsightFacts } from "./facts";
 import { FindingChart } from "./finding-chart";
+import { FindingDetail } from "./finding-detail";
 import { InsightsWorkspace } from "./insights-workspace";
 import { PriorityLabel } from "./priority";
 
@@ -363,5 +364,34 @@ describe("priority dots", () => {
     expect(dot("opportunity")).toContain("bg-positive");
     expect(dot("opportunity")).not.toContain("bg-accent");
     expect(dot("watch")).toContain("border-ink-faint");
+  });
+});
+
+describe("compact finding detail", () => {
+  it("keeps the headline, entity, evidence and action, and leaves the rest to the product", () => {
+    const finding = run("cli_luxe").find((f) => f.chart && f.comparison.length > 0)!;
+    const render = (compact: boolean) =>
+      renderToStaticMarkup(
+        createElement(FindingDetail, {
+          finding,
+          currency: "GBP",
+          currentLabel: "This period",
+          previousLabel: "Previous period",
+          compact,
+        }),
+      );
+    const full = render(false);
+    const compact = render(true);
+    for (const shared of [finding.headline, "Suggested action", finding.action])
+      expect(compact, shared).toContain(shared);
+    expect(compact.match(/<dt/g)?.length).toBe(finding.evidence.length);
+    for (const dropped of [
+      "Why this was flagged",
+      "Now against the previous period",
+      finding.chart!.title,
+    ]) {
+      expect(full, dropped).toContain(dropped);
+      expect(compact, dropped).not.toContain(dropped);
+    }
   });
 });

@@ -16,19 +16,22 @@ export function FindingExhibit({
   currency,
   currentLabel,
   previousLabel,
+  compact = false,
 }: {
   finding: Finding;
   currency: CurrencyCode;
   currentLabel: string;
   previousLabel: string;
+  compact?: boolean;
 }) {
   return (
-    <div className="p-6">
+    <div className={compact ? "p-5" : "p-6"}>
       <FindingDetail
         finding={finding}
         currency={currency}
         currentLabel={currentLabel}
         previousLabel={previousLabel}
+        compact={compact}
       />
     </div>
   );

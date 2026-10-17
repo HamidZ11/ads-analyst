@@ -57,16 +57,36 @@ describe("landing hero", () => {
     expect(hero).toMatch(/<a class="[^"]*button[^"]*" href="\/insights">Try the demo<\/a>/);
   });
 
-  it("shows the seeded zero-conversion finding whole, from the real component", async () => {
+  it("shows the Overview behind a compact zero-conversion finding", async () => {
     const hero = await renderLanding();
     const { zeroConversion } = landingEvidence();
+    const card = hero.slice(hero.lastIndexOf('role="img"'));
     expect(hero).toContain(HERO_LEAD);
-    expect(hero).toContain(zeroConversion.headline);
+    expect(hero).toContain('aria-label="Ad Analyst Overview for Luxe Skin Co.');
+    expect(card).toContain(zeroConversion.headline);
     expect(zeroConversion.headline).toContain("£638");
-    expect(hero).toContain("Suggested action");
-    expect(hero).toContain(zeroConversion.action);
-    expect(hero).toContain("Why this was flagged");
-    expect(hero).not.toContain("Ad Analyst Overview");
-    expect(hero.match(/<h1/g)?.length).toBe(1);
+    expect(card).toContain(`title="${zeroConversion.entity.name}"`);
+    expect(card).toContain(">Prospecting · Lookalike 5–10%<");
+    expect(card).toContain(">Overnight Repair Cream<");
+    expect(card.match(/<dt/g)?.length).toBe(3);
+    expect(card).toContain("Suggested action");
+    expect(card).toContain(zeroConversion.action);
+    expect(hero).not.toContain("Why this was flagged");
+    expect(hero).not.toContain("Now against the previous period");
+    // The only other h1s are the Overview page headers inside the inert crops.
+    expect(hero.match(/<h1 id="landing-title"/g)?.length).toBe(1);
+    expect(hero.match(/<h1/g)?.length).toBe(3);
+  });
+
+  it("renders the Overview crops at their final CSS scale, visible without JavaScript", async () => {
+    const hero = await renderLanding();
+    expect(hero.match(/container-type:inline-size/g)?.length).toBe(2);
+    expect(hero).toContain(
+      "transform:scale(tan(atan2(100cqw, 1136px))) translate(0px, 0px);opacity:1",
+    );
+    expect(hero).toContain(
+      "transform:scale(tan(atan2(100cqw, 350px))) translate(-14px, -16px);opacity:1",
+    );
+    expect(hero).not.toMatch(/opacity:0/);
   });
 });

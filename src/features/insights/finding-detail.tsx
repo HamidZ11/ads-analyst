@@ -1,5 +1,6 @@
 import { Dialog } from "radix-ui";
 import { useId, type ReactNode } from "react";
+import { CampaignName } from "@/components/ui/campaign-name";
 import { Delta } from "@/components/ui/delta";
 import {
   DETECTOR_LABELS,
@@ -55,10 +56,21 @@ function Evidence({ item, currency }: { item: EvidenceItem; currency: CurrencyCo
   );
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({
+  title,
+  compact = false,
+  children,
+}: {
+  title: string;
+  compact?: boolean;
+  children: ReactNode;
+}) {
   const id = useId();
   return (
-    <section aria-labelledby={id} className="mt-6 border-t border-border pt-4">
+    <section
+      aria-labelledby={id}
+      className={cn("border-t border-border", compact ? "mt-4 pt-3" : "mt-6 pt-4")}
+    >
       <h3 id={id} className="text-xs font-medium text-ink-secondary">
         {title}
       </h3>
@@ -72,6 +84,11 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
  * the entity, the evidence that proves it, a chart only where a trend is the
  * evidence, now / before / change, the suggested action, and why it was
  * flagged. Used inline on desktop and inside the sheet below 1280px.
+ *
+ * `compact` is the summary the landing hero floats over the Overview: the
+ * headline, the entity (a campaign's name split into label and context), the
+ * evidence and the suggested action. The chart, tables and "Why this was
+ * flagged" stay in the product.
  */
 export function FindingDetail({
   finding,
@@ -80,6 +97,7 @@ export function FindingDetail({
   previousLabel,
   inDialog = false,
   animate = false,
+  compact = false,
 }: {
   finding: Finding;
   currency: CurrencyCode;
@@ -88,6 +106,7 @@ export function FindingDetail({
   /** Inside the sheet the headline and context become the dialog's title and description. */
   inDialog?: boolean;
   animate?: boolean;
+  compact?: boolean;
 }) {
   const titleId = useId();
   const { entity, evidence, chart, breakdown, comparison } = finding;
@@ -117,18 +136,32 @@ export function FindingDetail({
       aria-labelledby={titleId}
       className={cn("min-w-0", animate && "animate-rise-in motion-reduce:animate-none")}
     >
-      {inDialog ? <Dialog.Description asChild>{context}</Dialog.Description> : context}
+      {compact ? null : inDialog ? (
+        <Dialog.Description asChild>{context}</Dialog.Description>
+      ) : (
+        context
+      )}
       {inDialog ? <Dialog.Title asChild>{heading}</Dialog.Title> : heading}
-      <p className="mt-1.5 text-xs leading-5 text-ink-muted">
-        <span className="text-ink-faint">{ENTITY_TYPE_LABELS[entity.type]}</span>
-        <span aria-hidden> · </span>
-        <span className="font-medium break-words text-ink-secondary">{entity.name}</span>
-        {entity.context ? <span> · {entity.context}</span> : null}
-      </p>
+      {compact && entity.type === "campaign" ? (
+        <div className="mt-2">
+          <CampaignName
+            name={entity.name}
+            className="truncate text-sm leading-5 font-medium text-ink-secondary"
+          />
+        </div>
+      ) : (
+        <p className="mt-1.5 text-xs leading-5 text-ink-muted">
+          <span className="text-ink-faint">{ENTITY_TYPE_LABELS[entity.type]}</span>
+          <span aria-hidden> · </span>
+          <span className="font-medium break-words text-ink-secondary">{entity.name}</span>
+          {entity.context ? <span> · {entity.context}</span> : null}
+        </p>
+      )}
 
       <dl
         className={cn(
-          "mt-6 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border pt-4",
+          "grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border",
+          compact ? "mt-4 pt-3" : "mt-6 pt-4",
           EVIDENCE_COLUMNS[Math.min(evidence.length, 4)],
         )}
       >
@@ -137,7 +170,7 @@ export function FindingDetail({
         ))}
       </dl>
 
-      {chart ? (
+      {chart && !compact ? (
         <FindingChart
           chart={chart}
           currency={currency}
@@ -146,7 +179,7 @@ export function FindingDetail({
         />
       ) : null}
 
-      {breakdown ? (
+      {breakdown && !compact ? (
         <Section title={breakdown.title}>
           {finding.detector === "spend_concentration" && finding.key.value !== null ? (
             <div aria-hidden className="mt-3 h-1.5 overflow-hidden rounded-full bg-accent-soft">
@@ -224,7 +257,7 @@ export function FindingDetail({
         </Section>
       ) : null}
 
-      {comparison.length > 0 ? (
+      {comparison.length > 0 && !compact ? (
         <Section title="Now against the previous period">
           <div className="mt-1 overflow-x-auto">
             <table className="w-full min-w-[300px] border-collapse text-sm">
@@ -277,17 +310,19 @@ export function FindingDetail({
         </Section>
       ) : null}
 
-      <Section title="Suggested action">
+      <Section title="Suggested action" compact={compact}>
         <p className="mt-1 text-sm leading-5 text-ink">{finding.action}</p>
       </Section>
 
-      <section
-        aria-label="Why this was flagged"
-        className="mt-5 rounded-md bg-surface-subtle px-4 py-3"
-      >
-        <h3 className="text-xs font-medium text-ink-secondary">Why this was flagged</h3>
-        <p className="mt-1 text-xs leading-5 text-ink-muted">{finding.reason}</p>
-      </section>
+      {compact ? null : (
+        <section
+          aria-label="Why this was flagged"
+          className="mt-5 rounded-md bg-surface-subtle px-4 py-3"
+        >
+          <h3 className="text-xs font-medium text-ink-secondary">Why this was flagged</h3>
+          <p className="mt-1 text-xs leading-5 text-ink-muted">{finding.reason}</p>
+        </section>
+      )}
     </article>
   );
 }

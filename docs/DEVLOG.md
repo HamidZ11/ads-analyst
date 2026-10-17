@@ -1167,3 +1167,18 @@ Owner brief (D-072). Only the hero changed.
 **Checks:** `pnpm check`.
 
 **Stage 2:** the section below the hero repeats the same finding, and the Overview is no longer on the page.
+
+---
+
+## 2026-10-17 — Hero visual revised: Overview behind a compact finding
+
+Owner brief (D-073). Headline, lead, actions and motion limit from D-072 unchanged.
+
+- `product-crop.tsx`: `cssScale` scales the surface with `tan(atan2(100cqw, <crop width>px))` inside an `inline-size` container; no opacity gate, no transition. The measuring effect returns early when `CSS.supports("scale", "tan(atan2(1px, 2px))")`.
+- `finding-detail.tsx`: `compact` drops the priority line, chart, breakdown, comparison table and "Why this was flagged", tightens the spacing, and renders a campaign entity with `CampaignName`. `FindingExhibit` passes it through with 20px padding.
+- Landing: the field again holds the Overview crops (wide and phone) with the compact card floating at the lower right (`.float`, 520px or 46%, z-index above the canvas, deeper shadow); below 1024px the canvas and card stack. Motion: canvas 40 + 500ms, card 120 + 460ms.
+- Measured in the dev server: server HTML carries `scale(tan(atan2(100cqw, 1136px)))` and `opacity:1` on both crops. At 1440px the computed scale is 0.9437 (1072 ÷ 1136) and the 520 × 276px card overlaps the dashboard by 474 × 276px and is the topmost element at three sample points; at 1280px the scale is 0.8894 (1010 ÷ 1136) and the card is not clipped; at 390px the phone crop is 358px wide and the card starts 16px below it, inside the field, with no page overflow. Last hero animation ends at 580ms. A clean reload has no console errors (earlier ones were hot-reload artifacts of the changed effect dependencies).
+- DESIGN.md §28 updated; D-072 marked amended.
+- Tests: `hero.test.ts` checks the compact card's content (label and context, three tiles, action, no reason or table) and the CSS-scaled server render; `insights.test.ts` checks that compact mode keeps headline, evidence and action and drops the reason, comparison and chart.
+
+**Checks:** `pnpm check`.
