@@ -1048,3 +1048,19 @@ Owner brief, item 3 of 4 (D-063).
 - Tests: `auth.test.ts` asserts `APP_HOME` is `/insights` and both are app pages; the import-completion test still expects `/overview`.
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-17 — Draft privacy policy and terms
+
+Owner brief, item 4 of 4 (D-064).
+
+- New `/privacy` and `/terms` in `(marketing)`, added to `MARKETING_PATHS` (public, indexable, in the sitemap) with their own titles and descriptions. Footer links: Pricing, Privacy, Terms, Sign in; the links now wrap on narrow screens.
+- Shared frame in `src/features/marketing/legal.tsx` and `legal.module.css` (one prose column, site type and colours). `ContactUs` renders a mailto to `CONTACT_EMAIL` when set, plain "contact us" otherwise.
+- Content drafted from the schema and code, not from assumptions: the uploaded CSV is parsed in memory and not kept; only the derived rows and an import record are stored. No analytics or third-party cookies exist. Unknowns (legal name, Supabase region, hosting provider, backup periods, VAT, refund rules) are not invented; they are listed in each file's draft comment.
+- Docs: PRODUCT.md, DESIGN.md §28, README search section.
+- Tests: new `legal.test.ts` (public and indexable, one h1, draft comment present, no mailto without an address, privacy covers the required sections, mailto with an address, footer links). `seo.test.ts`: the sitemap lists the four marketing URLs; the public-links check allows external https links (the ICO).
+
+**Checks:** `pnpm check`.
+
+**Needs the owner:** legal review of both pages and the confirmations in D-064.

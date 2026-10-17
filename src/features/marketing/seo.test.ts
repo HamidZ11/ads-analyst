@@ -131,7 +131,7 @@ describe("marketing metadata", () => {
 describe("sitemap and robots", () => {
   it("lists exactly the canonical public URLs", () => {
     const urls = sitemapFor(ORIGIN).map((entry) => entry.url);
-    expect(urls).toEqual([ORIGIN, `${ORIGIN}/pricing`]);
+    expect(urls).toEqual([ORIGIN, `${ORIGIN}/pricing`, `${ORIGIN}/privacy`, `${ORIGIN}/terms`]);
     for (const path of [...APP_PATHS, "/sign-in", "/auth/callback"])
       expect(
         urls.some((url) => url.startsWith(`${ORIGIN}${path}`)),
@@ -200,12 +200,13 @@ describe("public links", () => {
   );
   const landing = readFileSync(join(root, "src/app/(marketing)/page.tsx"), "utf8");
 
-  it("only links to pages that exist, and to anchors on the home page", () => {
+  it("only links to pages that exist, to anchors on the home page, and to https sites", () => {
     expect(hrefs.length).toBeGreaterThan(5);
     const pages = new Set<string>([...MARKETING_PATHS, "/sign-in", APP_HOME]);
     for (const href of hrefs) {
       expect(href, "empty href").not.toBe("");
       expect(href, href).not.toMatch(/-lab\b|mailto:|^#$/);
+      if (href.startsWith("https://")) continue;
       const [path, anchor] = href.split("#");
       if (path) expect(pages.has(path), href).toBe(true);
       if (anchor && anchor !== "content")

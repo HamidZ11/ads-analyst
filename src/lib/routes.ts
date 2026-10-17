@@ -14,7 +14,7 @@ export const OVERVIEW_PATH = "/overview";
 export const APP_HOME = "/insights";
 
 /** Public marketing pages: reachable signed out, rendered without the app shell. */
-export const MARKETING_PATHS = ["/", "/pricing"] as const;
+export const MARKETING_PATHS = ["/", "/pricing", "/privacy", "/terms"] as const;
 
 export type MarketingPath = (typeof MARKETING_PATHS)[number];
 

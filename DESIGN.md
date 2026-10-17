@@ -435,7 +435,7 @@ Authentication is a utility, not a destination (D-049 to D-052). It uses the exi
 
 ## 28. Marketing site
 
-The public pages (`/` and `/pricing`, D-054) share one system in `src/features/marketing/`. It is premium software first, editorial discipline second, and separate from the app's visual language.
+The public pages (`/`, `/pricing`, and the legal pages `/privacy` and `/terms`; D-054, D-064) share one system in `src/features/marketing/`. It is premium software first, editorial discipline second, and separate from the app's visual language.
 
 - Type and colour: Host Grotesk only (600 headlines with tight tracking, 17–19px body), on warm ivory `#f7f6f2` with deep ink `#0b1020`, quiet greys and warm hairlines `#e4e2db`. Cobalt appears in one field per page: a cobalt-to-navy plane with a soft texture drawn from real seeded spend. No other gradients.
 - Controls: 6px-radius buttons, filled in ink with white text. The nav carries a compact 38px filled "Try the demo"; within the page, one filled primary per view, with a text link with an arrow as the secondary. The nav is inline from 1024px and a disclosure menu below that.
@@ -449,3 +449,5 @@ The public pages (`/` and `/pricing`, D-054) share one system in `src/features/m
   - The product they share is listed once, in an "Included in both plans" band beneath both panels (warm white, ink underline title, two columns of hairline rows).
   - Agency's actions are Try the demo and Sign in. Enterprise's action is a filled "Email us for pricing" button, a mailto to `NEXT_PUBLIC_CONTACT_EMAIL` (D-062); without a valid address the action row stays empty, so nothing renders as a dead link and the subgrid still aligns.
   - Below 1024px the panels stack, Agency first, then the band. No tiers beyond these two, no comparison tables, no "Most popular" badges and no invented enterprise features.
+- Legal pages (`/privacy`, `/terms`): one left-aligned prose column of at most 68ch on the ivory, starting where the pricing hero does. A 40–64px 600 title, a quiet "Last updated" line and a 19px lead above a hairline rule, then sections with 22px 600 headings and 17px body at 1.6 line height, disc lists with quiet markers, and links in ink with a `--line-strong` underline that darkens on hover. No cobalt field, no product proof, no buttons. A contact address appears as a mailto only when configured; otherwise the sentence reads "contact us" with no link.
+- Footer links: Pricing, Privacy, Terms, Sign in; they wrap on narrow screens.

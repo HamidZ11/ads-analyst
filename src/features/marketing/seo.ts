@@ -21,6 +21,16 @@ export const MARKETING_PAGES: Record<MarketingPath, { title: string; description
     description:
       "The Agency plan is £99 a month, or £990 a year, for up to 10 client accounts. Agencies managing more than 10 get custom Enterprise pricing.",
   },
+  "/privacy": {
+    title: "Privacy policy — Ad Analyst",
+    description:
+      "What Ad Analyst stores when agencies import Meta Ads data, why, where it is kept, how long for, and how to have it deleted.",
+  },
+  "/terms": {
+    title: "Terms of service — Ad Analyst",
+    description:
+      "The terms for using Ad Analyst: your account, your data, plans and payment, fair use, liability and how the agreement ends.",
+  },
 };
 
 /** Title, description, canonical URL and Open Graph for one marketing page. */

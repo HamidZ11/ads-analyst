@@ -87,8 +87,8 @@ Patterns are expressed only as trajectories of spend, CPM, CTR, CVR and order va
 
 Implemented (D-057, D-058):
 
-- Only `/` and `/pricing` are indexable. The root layout marks every route `noindex, nofollow` and the `(marketing)` layout opts its pages back in, so the app, sign-in and 404 pages stay out of search results, and so does any new page outside `(marketing)`.
-- `NEXT_PUBLIC_SITE_URL` is the single source of the production origin (`src/lib/site.ts`). Set at build time, it gives `/` and `/pricing` canonical and Open Graph URLs, fills `/sitemap.xml` with exactly those two URLs and adds the sitemap to `/robots.txt`. Unset or localhost, all three are left out rather than guessed.
+- Only the marketing pages (`/`, `/pricing`, `/privacy`, `/terms`) are indexable. The root layout marks every route `noindex, nofollow` and the `(marketing)` layout opts its pages back in, so the app, sign-in and 404 pages stay out of search results, and so does any new page outside `(marketing)`.
+- `NEXT_PUBLIC_SITE_URL` is the single source of the production origin (`src/lib/site.ts`). Set at build time, it gives the marketing pages canonical and Open Graph URLs, fills `/sitemap.xml` with exactly those URLs and adds the sitemap to `/robots.txt`. Unset or localhost, all three are left out rather than guessed.
 - `/robots.txt` allows everything except `/api/` and `/auth/`. App pages and sign-in are deliberately not disallowed: the site links to them, and crawlers must fetch them to see their noindex (signed-out crawlers are redirected to sign-in). robots.txt is not access control; the proxy, the data layer and RLS are.
 - Unknown URLs return a real 404 (noindex). App pages still send signed-out visitors to sign-in, and the API still answers 401.
 - The home page has JSON-LD: `WebSite` (the site name, once the origin is set) and `SoftwareApplication` (name, category, "Web" and the hero lead). There are no offers, ratings, reviews, FAQ or breadcrumb schema.

@@ -1,0 +1,77 @@
+/* Legal pages: one readable column of plain prose on the marketing ivory. No
+   cobalt field, no product proof; the type and colours are the site's own. */
+
+.page {
+  padding-top: clamp(48px, 7.2vw, 104px);
+  padding-bottom: clamp(80px, 10vw, 144px);
+}
+.header {
+  max-width: 68ch;
+  padding-bottom: clamp(28px, 3.6vw, 44px);
+  border-bottom: 1px solid var(--line);
+}
+.h1 {
+  color: var(--ink);
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.updated {
+  margin-top: 16px;
+  color: var(--ink-3);
+  font-size: 15px;
+}
+.lead {
+  margin-top: 20px;
+  color: var(--ink-2);
+  font-size: 19px;
+  line-height: 1.5;
+}
+.body {
+  max-width: 68ch;
+}
+.section {
+  padding-top: clamp(32px, 4vw, 48px);
+}
+.section h2 {
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+.section p,
+.section li {
+  color: var(--ink-2);
+  font-size: 17px;
+  line-height: 1.6;
+}
+.section p {
+  margin-top: 12px;
+}
+.section ul {
+  margin-top: 12px;
+  padding-left: 1.25em;
+  list-style: disc;
+}
+.section li + li {
+  margin-top: 6px;
+}
+.section li::marker {
+  color: var(--ink-quiet);
+}
+.section strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.section a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 180ms ease;
+}
+.section a:hover {
+  text-decoration-color: var(--ink);
+}

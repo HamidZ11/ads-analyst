@@ -244,7 +244,8 @@
 }
 .footerLinks {
   display: flex;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 8px 24px;
   margin-left: auto;
 }
 .footerLinks a {
