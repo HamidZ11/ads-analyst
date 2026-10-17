@@ -47,3 +47,21 @@ describe("landing: this week for the client", () => {
     expect(html).not.toContain("Why this was flagged");
   });
 });
+
+describe("landing: what is cut", () => {
+  it("drops the Ask Analyst and Creatives sections", () => {
+    expect(html).not.toContain('id="ask-title"');
+    expect(html).not.toContain('id="creatives-title"');
+    expect(html).not.toContain("Ask the account a question.");
+    expect(html).not.toContain("See which creatives are carrying the account.");
+  });
+
+  it("points to the rest of the product in the demo, under how it works", () => {
+    const steps = html.indexOf('id="how-it-works"');
+    const line = html.indexOf("See Campaigns, Creatives and Ask Analyst in the demo");
+    expect(line).toBeGreaterThan(steps);
+    expect(html.slice(line - 200, line)).toMatch(
+      /<a class="[^"]*textLink[^"]*" href="\/insights">$/,
+    );
+  });
+});

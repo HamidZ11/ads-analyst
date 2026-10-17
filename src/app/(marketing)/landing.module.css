@@ -236,8 +236,7 @@
 /* Sections ---------------------------------------------------------------- */
 
 .split,
-.wide,
-.centered {
+.wide {
   margin-top: var(--section);
   scroll-margin-top: 24px;
 }
@@ -272,8 +271,7 @@
   pointer-events: none;
   user-select: none;
 }
-.stackPanel,
-.widePanel {
+.stackPanel {
   padding: clamp(16px, 1.8vw, 26px) clamp(18px, 2vw, 30px);
 }
 .stackRule {
@@ -333,21 +331,9 @@
   font-weight: 600;
 }
 
-.centered .head {
-  display: block;
-  text-align: center;
-}
-.centered .head .h2 {
-  margin-inline: auto;
-  max-width: 20ch;
-}
-.centered .head .body {
-  margin: 20px auto 0;
-}
-.askPanel {
-  width: min(880px, 100%);
-  margin-inline: auto;
-  padding: clamp(10px, 1.2vw, 18px);
+/* The one route to the rest of the product: a text link under the steps. */
+.demoLine {
+  margin-top: 32px;
 }
 
 /* Motion: the approved grammar. The hero settles in and the finding rises
@@ -455,9 +441,7 @@
     row-gap: 20px;
   }
   .splitPanel,
-  .stackPanel,
-  .widePanel,
-  .askPanel {
+  .stackPanel {
     padding: 12px;
   }
 }
@@ -490,9 +474,7 @@
     width: 100%;
   }
   .splitPanel,
-  .stackPanel,
-  .widePanel,
-  .askPanel {
+  .stackPanel {
     padding: 8px;
   }
 }

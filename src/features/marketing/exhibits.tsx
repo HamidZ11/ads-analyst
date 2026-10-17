@@ -1,9 +1,7 @@
 "use client";
 
-import type { AskAnswer } from "@/domain/ask/model";
 import type { Finding } from "@/domain/insights";
 import type { CurrencyCode } from "@/domain/types";
-import { AnswerView } from "@/features/ask/answer-view";
 import { FindingDetail } from "@/features/insights/finding-detail";
 import { FindingRow, InsightsWorkspace } from "@/features/insights/insights-workspace";
 import type { InsightsModel } from "@/features/insights/insights-model";
@@ -33,22 +31,6 @@ export function FindingExhibit({
         previousLabel={previousLabel}
         compact={compact}
       />
-    </div>
-  );
-}
-
-export function AnswerExhibit({ question, answer }: { question?: string; answer: AskAnswer }) {
-  return (
-    <div className="p-6">
-      {/* The question bubble repeats Ask Analyst's markup; the answer is the shipped view. */}
-      {question ? (
-        <div className="mb-6 flex justify-end">
-          <p className="max-w-[75%] rounded-lg border border-border/60 bg-surface-hover px-3 py-2 text-[13px] leading-5 text-ink">
-            {question}
-          </p>
-        </div>
-      ) : null}
-      <AnswerView answer={answer} />
     </div>
   );
 }

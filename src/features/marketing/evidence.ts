@@ -1,7 +1,5 @@
 import { InMemoryRepository } from "@/data/repository";
 import { buildSeedDataset } from "@/data/seed";
-import { answerQuestion } from "@/domain/ask/answer";
-import type { AskAnswer } from "@/domain/ask/model";
 import { formatDateRange } from "@/domain/format";
 import { conversionVocabulary, tracksRevenue } from "@/domain/labels";
 import { comparisonLabel, eachDay, periodPairForPreset } from "@/domain/periods";
@@ -12,7 +10,6 @@ import {
   type CampaignRow,
   type ClientPeriodSummary,
 } from "@/features/analytics/queries";
-import { collectAskData } from "@/features/ask/facts";
 import { buildInsightsModel, type InsightsModel } from "@/features/insights/insights-model";
 import type { Workspace } from "@/features/workspace/server";
 
@@ -22,7 +19,6 @@ import type { Workspace } from "@/features/workspace/server";
  * showcases always agree. Nothing here is invented.
  */
 export const ANCHOR = "2026-10-03";
-export const CPA_QUESTION = "Why did CPA rise this week?";
 
 export interface DailySeries {
   name: string;
@@ -40,7 +36,6 @@ export interface LandingEvidence {
   zeroConversion: Finding;
   /** The landing's "this week" rows: one issue, two places to scale, one to watch. */
   weekRows: Finding[];
-  answer: AskAnswer;
   /** 60 days, oldest first, one series per campaign. */
   series: DailySeries[];
   days: string[];
@@ -129,7 +124,6 @@ export function landingEvidence(): LandingEvidence {
       only("underfunded_winner"),
       only("creative_fatigue"),
     ],
-    answer: answerQuestion(CPA_QUESTION, collectAskData(workspace)).answer,
     series,
     days,
     periodLabel: formatDateRange(periods.current),

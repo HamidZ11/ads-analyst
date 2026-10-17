@@ -1250,3 +1250,14 @@ Owner brief (D-079).
 - DESIGN.md §28 updated. Tests: `landing.test.ts` (counts line, four real rows with an issue, the scaling winner and a watch item and all three rules, no repeat of the zero-conversion finding or its reason), `insights.test.ts` (`countsPhrase`).
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-17 — Landing stage 2, item 3: cut Ask and Creatives
+
+Owner brief (D-080).
+
+- `page.tsx`: the Ask Analyst and Creatives sections and their crops and labels are removed; a `demoLine` text link sits under how it works. Dead code removed: `CPA_QUESTION` and `answer` in `evidence.ts`, `AnswerExhibit` in `exhibits.tsx`, `CreativesCanvas` in `product-canvases.tsx`, and the `.centered`, `.askPanel` and `.widePanel` styles. Nav anchors (`#product`, `#how-it-works`, `#agencies`) are unaffected.
+- DESIGN.md §28 updated. Tests: `landing.test.ts` (both sections gone; the demo line after the steps, linking to `/insights`); `product-crop.test.ts` now expects at least four crops.
+
+**Checks:** `pnpm check`.

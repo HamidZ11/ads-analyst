@@ -3,8 +3,6 @@ import { PageHeader } from "@/components/ui/page-header";
 import { formatDateRange } from "@/domain/format";
 import { CampaignsSummary } from "@/features/campaigns/campaigns-summary";
 import { CampaignsTable } from "@/features/campaigns/campaigns-table";
-import { buildCreativeBoard } from "@/features/creatives/board-data";
-import { CreativeBoard } from "@/features/creatives/creative-board";
 import { conversionVocabulary } from "@/domain/labels";
 import { OverviewAnalytics } from "@/features/overview/overview-analytics";
 import { campaignsTableProps, type LandingEvidence } from "./evidence";
@@ -72,15 +70,6 @@ export function CampaignsPageCanvas({ evidence }: { evidence: LandingEvidence })
         comparison={comparison}
       />
       <CampaignsTable {...campaignsTableProps(evidence)} />
-    </div>
-  );
-}
-
-/** The Creatives board, as shipped. */
-export function CreativesCanvas({ evidence }: { evidence: LandingEvidence }) {
-  return (
-    <div className="p-6">
-      <CreativeBoard model={buildCreativeBoard(evidence.workspace)} />
     </div>
   );
 }

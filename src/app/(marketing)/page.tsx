@@ -2,20 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
-import { CPA_QUESTION, landingEvidence } from "@/features/marketing/evidence";
+import { landingEvidence } from "@/features/marketing/evidence";
 import { CtaBand } from "@/features/marketing/cta-band";
-import {
-  AnswerExhibit,
-  FindingExhibit,
-  InsightsWeekExhibit,
-} from "@/features/marketing/exhibits";
+import { FindingExhibit, InsightsWeekExhibit } from "@/features/marketing/exhibits";
 import m from "@/features/marketing/marketing.module.css";
 import { auditMailto, HERO_HEADLINE, HERO_LEAD } from "@/features/marketing/hero";
-import {
-  CampaignsPageCanvas,
-  CreativesCanvas,
-  OverviewCanvas,
-} from "@/features/marketing/product-canvases";
+import { CampaignsPageCanvas, OverviewCanvas } from "@/features/marketing/product-canvases";
 import { ProductCrop, type Crop } from "@/features/marketing/product-crop";
 import cropStyles from "@/features/marketing/product-crop.module.css";
 import { homeStructuredData, jsonLd, marketingMetadata } from "@/features/marketing/seo";
@@ -43,11 +35,6 @@ const HERO_COMPACT: Crop = { x: 14, y: 16, width: 350, height: 640 };
 const CAMPAIGN_SUMMARY: Crop = { x: 16, y: 14, width: 1104, height: 84 };
 const CAMPAIGN_LEDGER: Crop = { x: 16, y: 204, width: 1104, height: 292 };
 const CAMPAIGN_SUMMARY_COMPACT: Crop = { x: 18, y: 12, width: 339, height: 166 };
-const ASK: Crop = { x: 0, y: 8, width: 720, height: 568 };
-const ASK_COMPACT: Crop = { x: 18, y: 12, width: 339, height: 428 };
-/** Creatives: the format split and the two creatives leading by spend, without the tab row. */
-const CREATIVES: Crop = { x: 16, y: 72, width: 1104, height: 486 };
-const CREATIVES_COMPACT: Crop = { x: 18, y: 136, width: 339, height: 520 };
 
 function Wide({ children }: { children: ReactNode }) {
   return <div className={s.onlyWide}>{children}</div>;
@@ -67,7 +54,7 @@ function Panel({ className, children }: { className?: string; children: ReactNod
 
 export default function LandingPage() {
   const evidence = landingEvidence();
-  const { workspace, insights, zeroConversion, weekRows, answer, series } = evidence;
+  const { workspace, insights, zeroConversion, weekRows, series } = evidence;
   const finding = {
     currency: workspace.client.currency,
     currentLabel: insights.currentLabel,
@@ -92,9 +79,6 @@ export default function LandingPage() {
     .join(" ")}`;
   const summaryLabel =
     "Ad Analyst Campaigns for Luxe Skin Co.: spend £7,420, 276 purchases, 2 of 8 delivering campaigns over the £28 target, largest movement Autumn Reset Sale with cost per purchase up 132.5%.";
-  const askLabel = `Ad Analyst Ask Analyst. Question: ${CPA_QUESTION} Answer: ${answer.title} ${answer.summary}`;
-  const creativesLabel =
-    "Ad Analyst Creatives for Luxe Skin Co.: video takes 49% of spend at 2.08x return on ad spend; image 26% at 3.35x; carousel 26% at 3.26x. Leading by spend: Autumn Reset – 25% Off – Video 15s, £981, 8 purchases, £122.60 each.";
 
   return (
     <>
@@ -260,59 +244,12 @@ export default function LandingPage() {
             </p>
           </li>
         </ol>
-      </section>
-
-      <section className={cn(m.container, s.centered)} aria-labelledby="ask-title">
-        <div className={s.head}>
-          <h2 id="ask-title" className={s.h2}>
-            Ask the account a question.
-          </h2>
-          <p className={s.body}>
-            Answers start from the data, and say so when the question’s premise doesn’t hold.
-          </p>
-        </div>
-        <Panel className={s.askPanel}>
-          <Wide>
-            <ProductCrop source={720} crop={ASK} label={askLabel}>
-              <AnswerExhibit question={CPA_QUESTION} answer={answer} />
-            </ProductCrop>
-          </Wide>
-          <Compact>
-            <ProductCrop source={375} crop={ASK_COMPACT} maxScale={1.15} label={askLabel}>
-              <AnswerExhibit question={CPA_QUESTION} answer={answer} />
-            </ProductCrop>
-          </Compact>
-        </Panel>
-      </section>
-
-      <section className={cn(m.container, s.wide)} aria-labelledby="creatives-title">
-        <div className={s.head}>
-          <h2 id="creatives-title" className={s.h2}>
-            See which creatives are carrying the account.
-          </h2>
-          <p className={s.body}>
-            Compare formats and individual creatives by spend, purchases and cost against
-            target, side by side with last week.
-          </p>
-        </div>
-        <Panel className={s.widePanel}>
-          <Wide>
-            <ProductCrop source={1136} crop={CREATIVES} label={creativesLabel}>
-              <CreativesCanvas evidence={evidence} />
-            </ProductCrop>
-          </Wide>
-          <Compact>
-            <ProductCrop
-              source={375}
-              crop={CREATIVES_COMPACT}
-              maxScale={1.15}
-              fade="bottom"
-              label={creativesLabel}
-            >
-              <CreativesCanvas evidence={evidence} />
-            </ProductCrop>
-          </Compact>
-        </Panel>
+        <p className={s.demoLine}>
+          <Link href={APP_HOME} className={m.textLink}>
+            See Campaigns, Creatives and Ask Analyst in the demo
+            <ArrowRight aria-hidden size={16} strokeWidth={1.75} />
+          </Link>
+        </p>
       </section>
 
       <CtaBand />

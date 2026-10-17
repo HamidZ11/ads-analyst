@@ -10,7 +10,7 @@ describe("product crops", () => {
   ].map(([, cls]) => cls);
 
   it("mark every crop's product surface with the marketing-only crop class", () => {
-    expect(surfaces.length).toBeGreaterThan(5);
+    expect(surfaces.length).toBeGreaterThanOrEqual(4);
     for (const cls of surfaces) expect(cls).toMatch(/surface/);
   });
 
