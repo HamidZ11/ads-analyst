@@ -1261,3 +1261,16 @@ Owner brief (D-080).
 - DESIGN.md §28 updated. Tests: `landing.test.ts` (both sections gone; the demo line after the steps, linking to `/insights`); `product-crop.test.ts` now expects at least four crops.
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-17 — Landing stage 2, item 4: rhythm
+
+Owner brief (D-081).
+
+- Reviewed what is left for repeats of the hero: the week of Insights (different findings), the multi-client ledger and how it works. None repeats it, so nothing more is cut.
+- `landing.module.css`: `.split` and `.wide` margin `var(--section)` → `clamp(72px, 9vw, 128px)`.
+- Measured in Chromium: hero field to the week section 128px, to the multi-client section 128px, demo line to the band's headline 108px, band to the footer 108px at 1440px; 115, 116, 96 and 96px at 1280px; 72, 72, 64 and 64px at 390px. Page height at 1440px 3,876px. No overflow.
+- Tests: `landing.test.ts` pins the outline to five sections in order.
+
+**Checks:** `pnpm check`, then `pnpm check:browsers http://localhost:3100/`.

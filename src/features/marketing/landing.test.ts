@@ -65,3 +65,21 @@ describe("landing: what is cut", () => {
     );
   });
 });
+
+describe("landing: page outline", () => {
+  it("is the hero, a week of Insights, the multi-client section and the closing band, in order", () => {
+    // Only the page's own sections: the product crops contain the app's sections too.
+    const labels = [
+      ...html.matchAll(
+        /<section[^>]*class="[^"]*container[^"]*"[^>]*aria-label(?:ledby)?="([^"]+)"/g,
+      ),
+    ].map(([, label]) => label);
+    expect(labels).toEqual([
+      "landing-title",
+      "Ad Analyst Overview",
+      "week-title",
+      "agency-title",
+      "cta-title",
+    ]);
+  });
+});

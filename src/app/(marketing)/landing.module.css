@@ -235,9 +235,11 @@
 
 /* Sections ---------------------------------------------------------------- */
 
+/* Landing sections sit closer than the site's --section (D-081): with only
+   two product sections below the hero, 216px gaps read as empty page. */
 .split,
 .wide {
-  margin-top: var(--section);
+  margin-top: clamp(72px, 9vw, 128px);
   scroll-margin-top: 24px;
 }
 .panel {

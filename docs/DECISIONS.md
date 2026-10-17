@@ -503,3 +503,9 @@ Threads live only in the current mounted page. Start fresh clears answers and en
 **Decision:** The landing page no longer has the Ask Analyst section or the full Creatives board section. A single text link under how it works, "See Campaigns, Creatives and Ask Analyst in the demo", goes to the app's entry (`APP_HOME`, the demo in demo deployments). Code that only those sections used is removed: the landing evidence's Ask answer and `CPA_QUESTION`, `AnswerExhibit` and `CreativesCanvas`, and their crop styles.
 **Reason:** Owner brief (2026-10-17, landing stage 2): the page should make one argument, catching waste and showing where to scale, rather than tour every screen. The demo already shows everything else.
 **Consequences:** The page has two product sections below the hero (the week of Insights and the multi-client ledger) and five product crops. Ask Analyst and Creatives remain fully in the product and pricing still lists them.
+
+### D-081 — Landing sections sit closer; nothing below the hero repeats it
+
+**Decision:** The landing page is four parts: the hero, the week of Insights, the multi-client section (with how it works and the demo line) and the closing band. Its sections are `clamp(72px, 9vw, 128px)` apart instead of `--section` (`clamp(112px, 15vw, 216px)`); the band's padding stays the gap before it. Nothing else was found repeating the hero after D-079 and D-080, so no further content is removed; the demo note under the hero field stays because it attributes the figures.
+**Reason:** Owner brief (2026-10-17, landing stage 2): with two product sections left, 216px gaps at 1440px read as empty page, and the old run-in to the closing band had a large blank stretch. The new gaps (128, 128, then 108 to the band's headline at 1440px) give an even rhythm.
+**Consequences:** `--section` still governs the pricing page. A new landing section uses the landing gap.
