@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { CURRENT_LINE, PREVIOUS_LINE, SeriesSwatch } from "@/components/ui/chart-series";
 import { formatCurrency, formatDate, formatNumber } from "@/domain/format";
 import { formatInsightValue, type InsightChart } from "@/domain/insights";
 import type { CurrencyCode } from "@/domain/types";
@@ -22,8 +23,8 @@ function tickLabel(value: number, format: InsightChart["format"], currency: Curr
 }
 
 /**
- * The Overview chart grammar at evidence size: the selected period in blue,
- * the previous period in grey aligned by day number, three or four ticks
+ * The Overview chart grammar at evidence size: the selected period a solid
+ * blue line, the previous period a dashed grey line aligned by day number, three or four ticks
  * from zero, the final value labelled. Static; the text summary carries the
  * same reading for assistive technology.
  */
@@ -57,11 +58,11 @@ export function FindingChart({
         </h3>
         <ul aria-hidden className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
           <li className="flex items-center gap-1.5">
-            <span className="h-0.5 w-3 bg-chart-primary" />
+            <SeriesSwatch series="current" />
             {currentLabel}
           </li>
           <li className="flex items-center gap-1.5">
-            <span className="h-0.5 w-3 bg-chart-muted" />
+            <SeriesSwatch series="previous" />
             {previousLabel}
           </li>
         </ul>
@@ -87,26 +88,20 @@ export function FindingChart({
         >
           <path
             d={geometry.current.area}
-            fill="var(--color-chart-primary)"
+            fill="var(--color-chart-current)"
             fillOpacity="0.04"
           />
           <path
             d={geometry.previous.line}
             fill="none"
-            stroke="var(--color-chart-muted)"
-            strokeWidth="1.75"
+            {...PREVIOUS_LINE}
             vectorEffect="non-scaling-stroke"
-            strokeLinejoin="round"
-            strokeLinecap="round"
           />
           <path
             d={geometry.current.line}
             fill="none"
-            stroke="var(--color-chart-primary)"
-            strokeWidth="2"
+            {...CURRENT_LINE}
             vectorEffect="non-scaling-stroke"
-            strokeLinejoin="round"
-            strokeLinecap="round"
           />
         </svg>
         {[...geometry.previous.isolated, ...geometry.current.isolated].map((p, i) => (
@@ -114,7 +109,7 @@ export function FindingChart({
             key={`${p.x}-${i}`}
             className={cn(
               "absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full",
-              i < geometry.previous.isolated.length ? "bg-chart-muted" : "bg-chart-primary",
+              i < geometry.previous.isolated.length ? "bg-chart-muted" : "bg-chart-current",
             )}
             style={{ left: `${p.x / 10}%`, top: `${(p.y / CHART_HEIGHT) * 100}%` }}
           />
@@ -122,7 +117,7 @@ export function FindingChart({
         {end && end.y !== null && endValue !== null ? (
           <>
             <span
-              className="absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-primary ring-2 ring-surface"
+              className="absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-current ring-2 ring-surface"
               style={{ left: `${end.x / 10}%`, top: `${(end.y / CHART_HEIGHT) * 100}%` }}
             />
             <span

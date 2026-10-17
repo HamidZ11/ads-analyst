@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { CURRENT_LINE, PREVIOUS_LINE, SeriesSwatch } from "@/components/ui/chart-series";
 import { formatDate, formatMetric } from "@/domain/format";
 import { METRIC_DEFINITIONS } from "@/domain/metrics";
 import type { CurrencyCode, MetricKey } from "@/domain/types";
@@ -123,11 +124,11 @@ export function PerformanceChart({
           className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-ink-muted"
         >
           <li className="flex items-center gap-1.5">
-            <span aria-hidden className="h-0.5 w-4 bg-chart-primary" />
+            <SeriesSwatch series="current" />
             {singleDay ? "Selected day" : "This period"}
           </li>
           <li className="flex items-center gap-1.5">
-            <span aria-hidden className="h-0.5 w-4 bg-chart-muted" />
+            <SeriesSwatch series="previous" />
             {singleDay ? "Earlier days" : "Previous period"}
           </li>
           {target !== null && (
@@ -193,26 +194,20 @@ export function PerformanceChart({
             viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
             preserveAspectRatio="none"
           >
-            <path d={current.area} fill="var(--color-chart-primary)" fillOpacity="0.04" />
+            <path d={current.area} fill="var(--color-chart-current)" fillOpacity="0.04" />
             <path
               data-series="previous"
               d={previous.line}
               fill="none"
-              stroke="var(--color-chart-muted)"
-              strokeWidth="1.75"
+              {...PREVIOUS_LINE}
               vectorEffect="non-scaling-stroke"
-              strokeLinejoin="round"
-              strokeLinecap="round"
             />
             <path
               data-series="current"
               d={current.line}
               fill="none"
-              stroke="var(--color-chart-primary)"
-              strokeWidth="2"
+              {...CURRENT_LINE}
               vectorEffect="non-scaling-stroke"
-              strokeLinejoin="round"
-              strokeLinecap="round"
             />
           </svg>
           {previous.isolated.map((p) => (
@@ -227,7 +222,7 @@ export function PerformanceChart({
             <span
               key={p.x}
               aria-hidden
-              className="absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-primary"
+              className="absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-current"
               style={{ left: `${p.x / 10}%`, top: yPercent(p.y) }}
             />
           ))}
@@ -235,7 +230,7 @@ export function PerformanceChart({
             <>
               <span
                 aria-hidden
-                className="absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-primary ring-2 ring-surface"
+                className="absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-current ring-2 ring-surface"
                 style={{ left: `${end.x / 10}%`, top: yPercent(end.y) }}
               />
               <span
@@ -262,7 +257,7 @@ export function PerformanceChart({
               {inspectedCoordinate.y !== null && (
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-primary ring-2 ring-surface"
+                  className="pointer-events-none absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-current ring-2 ring-surface"
                   style={{
                     left: `${inspectedCoordinate.x / 10}%`,
                     top: yPercent(inspectedCoordinate.y),

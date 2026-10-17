@@ -1102,3 +1102,18 @@ Second owner brief, item 2 (D-067).
 - Test: rendering the Luxe Skin workspace, each row has exactly its group's rule, the selected row has the accent, and all three groups occur.
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-17 — Period chart contrast
+
+Second owner brief, item 3 (D-068).
+
+- New `chart-current` token (`#1d4ed8`) and `chart-series.tsx` (`CURRENT_LINE`, `PREVIOUS_LINE`, `SeriesSwatch`). `performance-chart.tsx` and `finding-chart.tsx` use them for the lines, the area wash and every current-period point; both legends draw the strokes instead of solid bars. The target swatch is unchanged.
+- Checked in the dev server: computed strokes on the Overview are `rgb(29, 78, 216)` solid 2px and `rgb(167, 180, 198)` dashed `5px, 4px` 1.75px, both non-scaling; the legend samples match.
+- DESIGN.md §2, §13, §21 and §24 updated.
+- Test: a seeded finding chart renders one solid `chart-current` line and swatch, and one dashed `chart-muted` line and swatch.
+
+**Checks:** `pnpm check`.
+
+**Deferred:** the Creatives inspector chart still uses the earlier solid-line grammar.

@@ -13,6 +13,7 @@ import { percentChange, snapshot } from "@/domain/metrics";
 import { periodPairForPreset, type DatePreset } from "@/domain/periods";
 import type { Dataset } from "@/domain/types";
 import { collectInsightFacts } from "./facts";
+import { FindingChart } from "./finding-chart";
 import { InsightsWorkspace } from "./insights-workspace";
 
 /**
@@ -321,5 +322,34 @@ describe("finding rows", () => {
       for (const other of others) expect(row.cls, findings[index].id).not.toContain(other);
     });
     expect(rows.filter((row) => row.selected)).toHaveLength(1);
+  });
+});
+
+describe("finding charts", () => {
+  const chart = run("cli_luxe").find((finding) => finding.chart)?.chart;
+  const html = chart
+    ? renderToStaticMarkup(
+        createElement(FindingChart, {
+          chart,
+          currency: "GBP",
+          currentLabel: "This period",
+          previousLabel: "Previous period",
+        }),
+      )
+    : "";
+  const lines = [...html.matchAll(/<(?:path|line)[^>]*stroke="([^"]+)"[^>]*>/g)].map(
+    ([tag, stroke]) => ({ stroke, dashed: tag.includes("stroke-dasharray") }),
+  );
+
+  it("draw this period solid in the stronger blue and the previous period dashed grey", () => {
+    expect(chart).toBeDefined();
+    const current = lines.filter((line) => line.stroke === "var(--color-chart-current)");
+    const previous = lines.filter((line) => line.stroke === "var(--color-chart-muted)");
+    // One plotted line and one legend swatch each.
+    expect(current).toHaveLength(2);
+    expect(previous).toHaveLength(2);
+    expect(current.every((line) => !line.dashed)).toBe(true);
+    expect(previous.every((line) => line.dashed)).toBe(true);
+    expect(html).toContain('stroke-dasharray="5 4"');
   });
 });

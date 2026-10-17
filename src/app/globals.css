@@ -55,6 +55,8 @@
   --color-warning-soft: #fff3e0;
 
   --color-chart-primary: #2563eb;
+  /* This period's line in period-over-period charts: accent-strong, for contrast against the dashed previous period. */
+  --color-chart-current: #1d4ed8;
   --color-chart-muted: #a7b4c6;
   --color-chart-grid: #eceff3;
 
