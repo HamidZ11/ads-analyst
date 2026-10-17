@@ -1225,3 +1225,16 @@ Owner brief, item 2 of 2 (D-077).
 - Tests: `marketing-footer.test.ts` (nav order and targets, the credit and LinkedIn, the contact address only when set, the wordmark aria-hidden).
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-17 — Landing stage 2, item 1: crop polish
+
+Owner brief (D-078). First, outside the code: pushed `main` to origin (39d3253..c6ee662, 16 commits; `origin/main` matches), and created a gitignored `.env.local` with `NEXT_PUBLIC_CONTACT_EMAIL` so the audit CTAs show on the dev server (restarted on port 3100).
+
+- Probed every visible crop on `/` in Chromium, WebKit and Firefox at 1440, 1280 and 390px for overflowing scroll containers and for buttons, tabs, links and inputs crossing the crop edge.
+- Found: the phone Overview's date-preset control (332px of content in 309px); the ledger header sort buttons 1px above the crop in Firefox; and the Creatives "Inspect" overlays reaching 4–6px past the frame (invisible stretched hit areas; that section is removed in item 3).
+- Fixed: `product-crop.module.css` (`.surface` hides scrollbars, `.fitControls` tightens segmented controls) wired through `ProductCrop` and the phone Overview crop; `CAMPAIGN_LEDGER` y 206 → 204, height 290 → 292. Re-probe: nothing overflows or is cut in any engine at any width, apart from the Creatives overlays.
+- DESIGN.md §28 updated. Tests: `product-crop.test.ts` (every surface has the crop class; `fitControls` only on the phone Overview).
+
+**Checks:** `pnpm check`.

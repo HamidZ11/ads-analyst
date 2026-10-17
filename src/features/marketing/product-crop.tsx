@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import s from "./product-crop.module.css";
 
 export interface Crop {
   x: number;
@@ -88,6 +89,7 @@ export function ProductCrop({
         aria-hidden
         className={cn(
           "pointer-events-none absolute top-0 left-0 bg-surface font-sans text-ink select-none",
+          s.surface,
           surfaceClassName,
         )}
         style={{

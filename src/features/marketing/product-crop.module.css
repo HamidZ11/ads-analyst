@@ -1,0 +1,17 @@
+/* Marketing-only polish for product crops (D-078). The product UI inside a
+   crop is inert and cannot be scrolled, so its scroll containers never show a
+   scrollbar here; the app itself is unchanged. */
+.surface *,
+.surface {
+  scrollbar-width: none;
+}
+.surface *::-webkit-scrollbar {
+  display: none;
+}
+
+/* For crops of the phone layout: segmented controls (the date presets) take
+   8px side padding instead of 10px, so all six segments fit the 375px canvas
+   instead of the last one being clipped by the control's own scroller. */
+.fitControls [role="group"] > button {
+  padding-inline: 0.5rem;
+}

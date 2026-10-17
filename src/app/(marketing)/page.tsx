@@ -13,6 +13,7 @@ import {
   OverviewCanvas,
 } from "@/features/marketing/product-canvases";
 import { ProductCrop, type Crop } from "@/features/marketing/product-crop";
+import cropStyles from "@/features/marketing/product-crop.module.css";
 import { homeStructuredData, jsonLd, marketingMetadata } from "@/features/marketing/seo";
 import { SpendField } from "@/features/marketing/spend-field";
 import { formatInsightValue } from "@/domain/insights";
@@ -33,7 +34,7 @@ const WASTE: Crop = { x: 16, y: 16, width: 608, height: 474 };
 const WASTE_COMPACT: Crop = { x: 18, y: 12, width: 339, height: 296 };
 /** Campaigns: the summary strip, then the ledger without its tabs, search and group row. */
 const CAMPAIGN_SUMMARY: Crop = { x: 16, y: 14, width: 1104, height: 84 };
-const CAMPAIGN_LEDGER: Crop = { x: 16, y: 206, width: 1104, height: 290 };
+const CAMPAIGN_LEDGER: Crop = { x: 16, y: 204, width: 1104, height: 292 };
 const CAMPAIGN_SUMMARY_COMPACT: Crop = { x: 18, y: 12, width: 339, height: 166 };
 const ASK: Crop = { x: 0, y: 8, width: 720, height: 568 };
 const ASK_COMPACT: Crop = { x: 18, y: 12, width: 339, height: 428 };
@@ -144,6 +145,7 @@ export default function LandingPage() {
                 source={375}
                 crop={HERO_COMPACT}
                 maxScale={1.15}
+                surfaceClassName={cropStyles.fitControls}
 
                 label={overviewLabel}
               >
