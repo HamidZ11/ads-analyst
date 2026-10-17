@@ -1291,4 +1291,3 @@ Owner brief (D-082). Run through the project's Impeccable skill: context loaded,
 **Checks:** `pnpm check` (367 tests), `pnpm check:browsers http://localhost:3100/` (52 crop checks), overflow probe on `/`, `/pricing`, `/privacy`, `/terms` in three engines at three widths.
 
 **Correction (follow-up commit):** `git add -A` in the D-082 commit (8f17a19) also staged four untracked iCloud conflict copies (`scripts/check-crops 2.mjs`, `crop-scale.test 2.ts`, `cta-band 2.tsx`, `cta-band.test 2.ts`), and they were pushed. Three were identical to their originals; `cta-band 2.tsx` was the pre-renumbering copy (D-074 in a comment). Nothing referenced them. They are removed, and `.gitignore` now ignores names with a space before a one- to three-digit number, which no tracked file has.
-
