@@ -6,11 +6,11 @@ import PricingPage from "@/app/(marketing)/pricing/page";
 describe("pricing page", () => {
   const html = renderToStaticMarkup(createElement(PricingPage));
 
-  it("keeps one Agency plan at £29 a month with the annual line", () => {
+  it("keeps one Agency plan at £99 a month with the annual line", () => {
     expect(html).toContain(">Agency<");
-    expect(html).toMatch(/£<\/span>29/);
+    expect(html).toMatch(/£<\/span>99/);
     expect(html).toContain("/ month");
-    expect(html).toContain("£290/year · 2 months free");
+    expect(html).toContain("£990/year · 2 months free");
     expect(html).toContain("Up to 10 client accounts");
     expect(html).toContain("Try the demo");
   });

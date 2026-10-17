@@ -11,7 +11,7 @@ import s from "./pricing.module.css";
 
 export const metadata: Metadata = marketingMetadata("/pricing");
 
-/* Two buying paths on one stage: Agency (self-serve, £29) and Enterprise
+/* Two buying paths on one stage: Agency (self-serve, £99) and Enterprise
    (more than 10 client accounts, custom pricing). They differ in capacity, not
    features, so the product list is shared beneath both. Billing is not built:
    nothing here starts a subscription. */
@@ -82,12 +82,12 @@ export default function PricingPage() {
               <p className={s.price}>
                 <span className={s.priceClip}>
                   <span className={s.priceValue}>
-                    <span className={s.currency}>£</span>29
+                    <span className={s.currency}>£</span>99
                   </span>
                 </span>
                 <span className={s.per}>/ month</span>
               </p>
-              <p className={s.annual}>£290/year · 2 months free</p>
+              <p className={s.annual}>£990/year · 2 months free</p>
               <p className={s.capacity}>
                 <Check aria-hidden size={16} strokeWidth={1.75} />
                 Up to 10 client accounts

@@ -56,10 +56,10 @@ describe("marketing metadata", () => {
     expect(pricingMetadata.description).toBe(MARKETING_PAGES["/pricing"].description);
   });
 
-  it("describes pricing truthfully: £29 Agency and Enterprise beyond 10 clients", () => {
+  it("describes pricing truthfully: £99 Agency and Enterprise beyond 10 clients", () => {
     const { description } = MARKETING_PAGES["/pricing"];
-    expect(description).toContain("£29 a month");
-    expect(description).toContain("£290 a year");
+    expect(description).toContain("£99 a month");
+    expect(description).toContain("£990 a year");
     expect(description).toContain("Enterprise");
   });
 

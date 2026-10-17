@@ -1010,3 +1010,14 @@ DESIGN.md §28 records both.
 **Checks:** `pnpm check` (format, lint, typecheck, 315 tests in 22 files, production build).
 
 **Environmental fix (separate commit):** `pnpm check` failed on four duplicate generated files in the build cache (`.next/types/routes.d 2.ts` and three others, created the same minute; likely iCloud or Finder conflict copies). The earlier `tsconfig.json` exclusion `**/* [0-9].ts` never matched, because TypeScript's include and exclude patterns support only `*`, `?` and `**/`, not character classes. It is now `**/* ?.ts`. A planted copy is loaded under the old pattern and ignored under the new one; the other 924 type-checked files are unchanged, and no tracked file has a space in its name.
+
+---
+
+## 2026-10-17 — Agency price change
+
+Owner brief, item 1 of 4. The Agency plan moves from £29 a month (£290 a year) to £99 a month (£990 a year), still up to 10 client accounts and still two months free annually (D-061, amending D-055).
+
+- Pricing page price, annual line and header comment; the `/pricing` meta description (so search snippets match the page, D-058); PRODUCT.md; DESIGN.md §28.
+- Tests: `pricing.test.ts` and the pricing-description test in `seo.test.ts` now assert £99 and £990.
+
+**Checks:** `pnpm check`.

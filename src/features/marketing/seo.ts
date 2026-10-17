@@ -19,7 +19,7 @@ export const MARKETING_PAGES: Record<MarketingPath, { title: string; description
   "/pricing": {
     title: "Pricing — Ad Analyst",
     description:
-      "The Agency plan is £29 a month, or £290 a year, for up to 10 client accounts. Agencies managing more than 10 get custom Enterprise pricing.",
+      "The Agency plan is £99 a month, or £990 a year, for up to 10 client accounts. Agencies managing more than 10 get custom Enterprise pricing.",
   },
 };
 

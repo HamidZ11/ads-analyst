@@ -444,7 +444,7 @@ The public pages (`/` and `/pricing`, D-054) share one system in `src/features/m
 - Motion: the hero settles; the product rises into its field and the floating finding follows; panels below the fold unveil top-down as they arrive. Hero motion is CSS-only so the server render never flashes. Reduced motion disables all of it.
 - Icon and sharing: the favicon is the marketing mark, an ink `#0b1020` rounded square with the white chart line (`src/app/icon.svg`, with a 16/32/48px `favicon.ico` rendered from it). Share cards are text-only until approved Open Graph artwork exists (D-058).
 - Pricing: two buying paths on one cobalt stage (D-055). Agency and Enterprise are equal white panels side by side from 1024px, with the same radius, padding and shadow. Their rows share a subgrid so name, line, price, sub-line, capacity, action and note align across both.
-  - Agency keeps the 120px £29 with "/ month" and the quiet annual line. Enterprise answers with "Custom" at about 100px and "pricing" in the same position, so it is never small print.
+  - Agency keeps the 120px £99 with "/ month" and the quiet annual line. Enterprise answers with "Custom" at about 100px and "pricing" in the same position, so it is never small print.
   - Each panel's capacity sits in a hairline-ruled row with a check: "Up to 10 client accounts" or "More than 10 client accounts".
   - The product they share is listed once, in an "Included in both plans" band beneath both panels (warm white, ink underline title, two columns of hairline rows).
   - Agency's actions are Try the demo and Sign in. Enterprise's "Email us for pricing" is plain text and never styled as a link or button until a contact address exists.
