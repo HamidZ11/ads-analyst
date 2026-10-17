@@ -1212,3 +1212,16 @@ Owner brief, item 1 of 2 (D-076).
 - Tests: `cta-band.test.ts` (on `/` and `/pricing` once, not on the legal pages, the old close gone; audit and demo with an address; the demo as the primary and no audit wording without one).
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-17 — Marketing footer end-cap
+
+Owner brief, item 2 of 2 (D-077).
+
+- `marketing-footer.tsx`: footer nav and the builder credit (LinkedIn, contact address when set) on one row, then the aria-hidden wordmark. `marketing.module.css`: `.footerMeta`, `.footerWordmark`; the footer clips its overflow.
+- Measured "Ad Analyst" at 100px in Host Grotesk 600 and -0.05em: 444px, so `22cqw` fills about 98% of the container.
+- Checked with Playwright in WebKit, Chromium and Firefox at 1440, 1280 and 390px on `/`, `/pricing`, `/privacy` and `/terms` (36 page loads): no horizontal overflow anywhere; wordmark 282px, 250px and 76px, filling 97.6–97.7% of the content width; the footer ends the page; nav on one row with the credit to its right on desktop, nav on two rows with the credit beneath it at 390px; the CTA band on `/` and `/pricing` only. At 1440px the crop sits 47px above the baseline, showing 76% of the capitals.
+- Tests: `marketing-footer.test.ts` (nav order and targets, the credit and LinkedIn, the contact address only when set, the wordmark aria-hidden).
+
+**Checks:** `pnpm check`.

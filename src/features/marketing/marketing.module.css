@@ -252,34 +252,72 @@
 /* Footer ------------------------------------------------------------------ */
 
 .footer {
+  overflow: hidden;
   border-top: 1px solid var(--line);
 }
 .footerInner {
   display: flex;
-  align-items: center;
-  gap: 32px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px 48px;
   width: min(var(--max), calc(100% - 2 * var(--gutter)));
   margin-inline: auto;
-  padding: 28px 0 44px;
+  padding-top: 32px;
   color: var(--ink-3);
-  font-size: 13.5px;
+  font-size: 14px;
 }
-.footerInner .wordmark {
-  color: var(--ink);
-  font-size: 15px;
-}
-.footerLinks {
+.footerLinks,
+.footerMeta {
   display: flex;
   flex-wrap: wrap;
+  align-items: baseline;
   gap: 8px 24px;
-  margin-left: auto;
 }
 .footerLinks a {
   color: var(--ink-2);
   transition: color 180ms ease;
 }
-.footerLinks a:hover {
+.footerMeta a {
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+  transition:
+    color 180ms ease,
+    text-decoration-color 180ms ease;
+}
+.footerLinks a:hover,
+.footerMeta a:hover {
   color: var(--ink);
+  text-decoration-color: var(--ink);
+}
+/* The wordmark spans the content width (4.44em wide at -0.05em tracking, so
+   22cqw of its container fills about 98%) and the page edge cuts off the
+   bottom of the letters. Decorative and aria-hidden, in the hairline tone.
+   The span carries the size and the crop; 19vw is the fallback without
+   container units. */
+.footerWordmark {
+  width: min(var(--max), calc(100% - 2 * var(--gutter)));
+  margin: clamp(40px, 6vw, 88px) auto 0;
+  container-type: inline-size;
+}
+.footerWordmark span {
+  display: block;
+  height: 0.58em;
+  overflow: hidden;
+  color: var(--line-strong);
+  font-size: 19vw;
+  font-weight: 600;
+  line-height: 0.8;
+  letter-spacing: -0.05em;
+  white-space: nowrap;
+  user-select: none;
+}
+@supports (width: 1cqw) {
+  .footerWordmark span {
+    font-size: 22cqw;
+  }
 }
 
 /* Below 1024px: the nav collapses into a menu. ------------------------- */
@@ -297,11 +335,7 @@
     display: grid;
   }
   .footerInner {
-    flex-wrap: wrap;
-    gap: 12px 24px;
-  }
-  .footerLinks {
-    margin-left: 0;
+    gap: 16px 24px;
   }
 }
 @media (min-width: 1024px) {
