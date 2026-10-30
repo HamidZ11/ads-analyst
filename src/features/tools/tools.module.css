@@ -1,0 +1,361 @@
+/* The free calculators (D-NEW-tools-1): the legal pages' column and type on
+   the marketing ivory, with one white calculator panel. Colours and type come
+   from the marketing tokens on `.site`; nothing here adds a hue. */
+
+.page {
+  padding-top: clamp(48px, 7.2vw, 104px);
+}
+.header {
+  max-width: 68ch;
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-bottom: 8px;
+  color: var(--ink-2);
+  font-size: 15px;
+  transition: color 180ms ease;
+}
+.back:hover {
+  color: var(--ink);
+}
+.h1 {
+  color: var(--ink);
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+.lead {
+  margin-top: 20px;
+  color: var(--ink-2);
+  font-size: 19px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+.h2 {
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Calculator and explanation: side by side from 1024px, stacked below. */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(48px, 5vw, 72px);
+  align-items: start;
+  margin-top: clamp(32px, 4vw, 56px);
+}
+@media (min-width: 1024px) {
+  .split {
+    grid-template-columns: minmax(0, 34rem) minmax(0, 1fr);
+  }
+}
+
+/* The calculator panel ------------------------------------------------------ */
+
+.panel {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.currency {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.legend {
+  margin-bottom: 8px;
+  color: var(--ink-2);
+  font-size: 15px;
+  font-weight: 500;
+}
+.segments {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+}
+.segment {
+  position: relative;
+  cursor: pointer;
+}
+.segment input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.segment > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 4px;
+  color: var(--ink-2);
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+.segment:hover > span {
+  color: var(--ink);
+}
+.segment input:checked + span {
+  background: var(--ink);
+  color: #fff;
+}
+.segment input:focus-visible + span {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 2px;
+}
+
+.fields {
+  display: grid;
+  gap: 22px;
+  margin-top: 24px;
+}
+.label {
+  display: block;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+}
+.optional {
+  color: var(--ink-3);
+  font-weight: 400;
+}
+.inputWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 52px;
+  margin-top: 8px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  transition: border-color 180ms ease;
+}
+.inputWrap:hover {
+  border-color: var(--ink-quiet);
+}
+.inputWrap:focus-within {
+  border-color: var(--cobalt);
+  outline: 1px solid var(--cobalt);
+}
+.inputWrap[data-invalid] {
+  border-color: #b42318;
+}
+.inputWrap[data-invalid]:focus-within {
+  outline-color: #b42318;
+}
+.affix {
+  color: var(--ink-3);
+  font-size: 17px;
+}
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+.input::placeholder {
+  color: var(--ink-quiet);
+}
+.hint,
+.error {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.hint {
+  color: var(--ink-3);
+}
+.error {
+  color: #b42318;
+}
+
+.result {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.reading + .reading {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.resultLabel {
+  color: var(--ink-2);
+  font-size: 15px;
+  font-weight: 500;
+}
+.resultValue {
+  margin-top: 4px;
+  color: var(--ink);
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.reading[data-lead] .resultValue {
+  font-size: clamp(44px, 5vw, 56px);
+  line-height: 1.05;
+}
+.resultEmpty {
+  margin-top: 4px;
+  color: var(--ink-3);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.resultDetail {
+  margin-top: 8px;
+  color: var(--ink-2);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.worked {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.resultWaiting {
+  color: var(--ink-3);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* The explanation beside the calculator ------------------------------------ */
+
+.explain {
+  max-width: 68ch;
+}
+.formula {
+  margin-top: 12px;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.section {
+  margin-top: 36px;
+}
+.section p {
+  margin-top: 12px;
+  color: var(--ink-2);
+  font-size: 17px;
+  line-height: 1.6;
+}
+.section a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 180ms ease;
+}
+.section a:hover {
+  text-decoration-color: var(--ink);
+}
+
+/* Tool rows (the index and "Other free tools") ----------------------------- */
+
+.others {
+  margin-top: clamp(64px, 8vw, 112px);
+}
+.list {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+.header + .list {
+  margin-top: clamp(32px, 4vw, 56px);
+}
+.list li {
+  border-bottom: 1px solid var(--line);
+}
+.row {
+  display: grid;
+  gap: 6px 32px;
+  padding: 22px 0;
+}
+@media (min-width: 768px) {
+  .row {
+    grid-template-columns: minmax(0, 18rem) minmax(0, 1fr) minmax(0, 20rem);
+    align-items: baseline;
+  }
+}
+.rowName {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.rowName svg {
+  flex: none;
+  color: var(--ink-3);
+  transition:
+    transform 260ms var(--ease),
+    color 200ms ease;
+}
+.row:hover .rowName svg {
+  color: var(--ink);
+  transform: translateX(3px);
+}
+.rowSummary {
+  color: var(--ink-2);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.rowFormula {
+  color: var(--ink-3);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+@media (max-width: 639px) {
+  .panel {
+    padding: 20px;
+  }
+}

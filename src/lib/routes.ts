@@ -13,10 +13,25 @@ export const OVERVIEW_PATH = "/overview";
  */
 export const APP_HOME = "/insights";
 
-/** Public marketing pages: reachable signed out, rendered without the app shell. */
-export const MARKETING_PATHS = ["/", "/audit", "/pricing", "/privacy", "/terms"] as const;
+/** The free calculators (D-NEW-tools-1): an index and one page per tool. */
+export const TOOL_PATHS = [
+  "/tools",
+  "/tools/roas-calculator",
+  "/tools/cpa-calculator",
+  "/tools/break-even-roas-calculator",
+] as const;
 
-/** The self-serve wasted-spend audit (D-083). */
+/** Public marketing pages: reachable signed out, rendered without the app shell. */
+export const MARKETING_PATHS = [
+  "/",
+  "/audit",
+  "/pricing",
+  "/privacy",
+  "/terms",
+  ...TOOL_PATHS,
+] as const;
+
+/** The self-serve wasted-spend audit (D-083), where the calculators send people. */
 export const AUDIT_PATH = "/audit";
 
 export type MarketingPath = (typeof MARKETING_PATHS)[number];

@@ -18,6 +18,7 @@ describe("marketing footer", () => {
       "How it works /#how-it-works",
       "Free audit /audit",
       "Pricing /pricing",
+      "Free tools /tools",
       "Privacy /privacy",
       "Terms /terms",
       "Sign in /sign-in",
