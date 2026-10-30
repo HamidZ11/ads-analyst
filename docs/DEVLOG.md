@@ -1291,3 +1291,16 @@ Owner brief (D-082). Run through the project's Impeccable skill: context loaded,
 **Checks:** `pnpm check` (367 tests), `pnpm check:browsers http://localhost:3100/` (52 crop checks), overflow probe on `/`, `/pricing`, `/privacy`, `/terms` in three engines at three widths.
 
 **Correction (follow-up commit):** `git add -A` in the D-082 commit (8f17a19) also staged four untracked iCloud conflict copies (`scripts/check-crops 2.mjs`, `crop-scale.test 2.ts`, `cta-band 2.tsx`, `cta-band.test 2.ts`), and they were pushed. Three were identical to their originals; `cta-band 2.tsx` was the pre-renumbering copy (D-074 in a comment). Nothing referenced them. They are removed, and `.gitignore` now ignores names with a space before a one- to three-digit number, which no tracked file has.
+
+---
+
+## 2026-10-30 — Free tools: ROAS, CPA and break-even ROAS calculators
+
+Owner brief (D-NEW-tools-1). Branch `feat/free-tools`.
+
+- `src/lib/routes.ts`: `TOOL_PATHS` (joined to `MARKETING_PATHS`, so access, sitemap and metadata pick them up) and `AUDIT_PATH`. `src/features/tools/`: `formulas.ts` (`parseAmount`, `roas`, `cpa`, `breakEvenRoas`, `breakEvenCpa`, ratios through `safeRatio`), `results.ts` (fields, field messages, the result with the formula worked through), `catalog.ts`, `calculator.tsx` (client: currency radio group, inputs, polite live result), `tool-page.tsx` (frame, tool rows, `ToolsCta` to `/audit`), `tools.module.css`. Pages under `src/app/(marketing)/tools/`. `seo.ts`: four `MARKETING_PAGES` entries, `toolStructuredData` (WebApplication), `toolsIndexStructuredData` (ItemList). Footer: "Free tools".
+- Found in review at 360px: the currency symbol's nested span inherited the segment's padding and fill, widening the control so the panel ran past the viewport; the page's `overflow-x: clip` hid it from a scroll-width probe. Fixed with child selectors, a `minmax(0, 1fr)` column and a flex gap; the probe now also measures element edges.
+- Verified with Playwright Chromium at 1440, 390 and 360px on all four pages, empty and filled (ROAS valid, CPA with zero conversions in USD, break-even with order value), plus invalid input at 390px: no element past the viewport; arrow keys switch currency, Tab reaches the first input, typing updates the result ("$500 ÷ $100 = 5.00x").
+- DESIGN.md §28 and PRODUCT.md updated. Tests: `formulas.test.ts` (every formula, parsing, zero denominators, negatives, NaN and Infinity, margin bounds, currency formatting, result states), `tools.test.ts` (index and each page: formula, labelled inputs, three currencies, live region, links to the audit and the other tools, no benchmark language, metadata, canonical, WebApplication data, signed-out access, footer link); `seo.test.ts` and `marketing-footer.test.ts` extended.
+
+**Checks:** `pnpm check`, then `pnpm check:browsers http://localhost:3217/` (52 crop checks). No `check:audit` script on this branch.
