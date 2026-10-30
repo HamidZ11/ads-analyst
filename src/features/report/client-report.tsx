@@ -207,14 +207,32 @@ function shownOf(shown: number, total: number, noun: string) {
     : `${total} ${total === 1 ? noun.replace(/s$/, "") : noun} spent this period`;
 }
 
+/** The note as the client reads it on a share link: text only, and no section when empty. */
+function SharedNote({ body }: { body: string }) {
+  return (
+    <section
+      aria-labelledby="report-next"
+      className="break-inside-avoid border-t border-border pt-6 pb-8 print:pt-5 print:pb-6"
+    >
+      <h2 id="report-next" className="mb-3 text-base font-semibold tracking-[-0.01em] text-ink">
+        What we&apos;re doing next
+      </h2>
+      <p className="text-sm leading-6 whitespace-pre-wrap text-ink-secondary">{body}</p>
+    </section>
+  );
+}
+
 export function ClientReport({
   model,
   note,
   canSave,
+  shared = false,
 }: {
   model: ClientReportModel;
   note: ReportNote | null;
   canSave: boolean;
+  /** Read only, for a share link (D-NEW-share-1): the note is text, never a form. */
+  shared?: boolean;
 }) {
   return (
     <article
@@ -326,15 +344,21 @@ export function ClientReport({
         )}
       </Section>
 
-      <NotesEditor
-        key={`${model.clientId}-${model.current.start}-${model.current.end}`}
-        clientId={model.clientId}
-        periodStart={model.current.start}
-        periodEnd={model.current.end}
-        initial={note?.body ?? ""}
-        suggestion={suggestedNextSteps(model.findings)}
-        canSave={canSave}
-      />
+      {shared ? (
+        note && note.body.trim() !== "" ? (
+          <SharedNote body={note.body.trim()} />
+        ) : null
+      ) : (
+        <NotesEditor
+          key={`${model.clientId}-${model.current.start}-${model.current.end}`}
+          clientId={model.clientId}
+          periodStart={model.current.start}
+          periodEnd={model.current.end}
+          initial={note?.body ?? ""}
+          suggestion={suggestedNextSteps(model.findings)}
+          canSave={canSave}
+        />
+      )}
 
       <footer className="border-t border-border pt-4 text-xs text-ink-muted">
         {model.demo

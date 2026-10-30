@@ -51,3 +51,6 @@ export const APP_PATHS = [
   "/clients",
   "/settings",
 ] as const;
+
+/** Read-only client reports opened by a share link: `/r/<token>` (D-NEW-share-1). */
+export const SHARED_REPORT_PATH = "/r";

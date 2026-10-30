@@ -25,10 +25,23 @@ const securityHeaders = [
     : [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" }]),
 ];
 
+/**
+ * A shared report's address is its key (D-NEW-share-1): it is never sent on
+ * as a referrer, and the page is never indexed, even if a link is posted
+ * somewhere public. Later rules override earlier ones for the same header.
+ */
+const sharedReportHeaders = [
+  { key: "Referrer-Policy", value: "no-referrer" },
+  { key: "X-Robots-Tag", value: "noindex, nofollow" },
+];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      { source: "/r/:token*", headers: sharedReportHeaders },
+    ];
   },
 };
 

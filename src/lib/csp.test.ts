@@ -79,6 +79,38 @@ describe("proxy", () => {
   });
 });
 
+describe("shared reports", () => {
+  afterEach(() => vi.unstubAllEnvs());
+  const path = "/r/hZ0aT8m3Qx1v2Kc9LwP4yB7nR5sD6eF0gH1iJ2kL3mN";
+
+  it("get the same nonce-based policy, signed out, with no redirect to sign-in", async () => {
+    vi.stubEnv("AD_ANALYST_DEMO_MODE", "");
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+    const response = await proxy(new NextRequest(`http://localhost${path}`));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    const policy = response.headers.get("Content-Security-Policy")!;
+    expect(policy).toMatch(/script-src 'nonce-[A-Za-z0-9+/=]+' 'strict-dynamic'/);
+    expect(policy).toContain("frame-ancestors 'none'");
+    expect(policy).not.toContain("'unsafe-inline' 'nonce");
+    expect(response.headers.get("x-middleware-request-content-security-policy")).toBe(policy);
+  });
+
+  it("send no referrer and ask not to be indexed, on top of the site's headers", async () => {
+    const rules = await nextConfig.headers!();
+    const shared = rules.find((rule) => rule.source === "/r/:token*");
+    const headers = Object.fromEntries(shared!.headers.map((h) => [h.key, h.value]));
+    expect(headers["Referrer-Policy"]).toBe("no-referrer");
+    expect(headers["X-Robots-Tag"]).toBe("noindex, nofollow");
+    expect(headers).not.toHaveProperty("Content-Security-Policy");
+    // Later rules win for the same header, so this one must come after the site's.
+    expect(rules.indexOf(shared!)).toBeGreaterThan(
+      rules.findIndex((rule) => rule.source === "/:path*"),
+    );
+  });
+});
+
 describe("static security headers", () => {
   it("set HSTS, framing, referrer and permissions policies, and leave the CSP to the proxy", async () => {
     const [rule] = await nextConfig.headers!();

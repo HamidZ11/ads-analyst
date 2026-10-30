@@ -40,6 +40,9 @@ const PAGES = [
   "/clients",
   "/clients/import",
   "/settings",
+  // A shared report link (D-NEW-share-1). No such link exists here, so it
+  // renders the share page's own not-found frame, which is the public part.
+  "/r/hZ0aT8m3Qx1v2Kc9LwP4yB7nR5sD6eF0gH1iJ2kL3mN",
   "/no-such-page",
 ];
 

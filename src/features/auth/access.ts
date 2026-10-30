@@ -4,11 +4,18 @@
  * again next to the data, and Postgres RLS is the final authority.
  */
 
-import { APP_PATHS, MARKETING_PATHS } from "@/lib/routes";
+import { APP_PATHS, MARKETING_PATHS, SHARED_REPORT_PATH } from "@/lib/routes";
 
 /** Routes reachable without a session (besides the marketing pages). Stripe's
-    webhook has no session; its signature authenticates it (D-088). */
-const PUBLIC_PATHS = ["/sign-in", "/auth/callback", "/api/billing/webhook", "/api/health"];
+    webhook has no session; its signature authenticates it (D-088). A shared
+    report's token is its only key (D-NEW-share-1). */
+const PUBLIC_PATHS = [
+  "/sign-in",
+  "/auth/callback",
+  "/api/billing/webhook",
+  "/api/health",
+  SHARED_REPORT_PATH,
+];
 
 /** `redirect_app` sends a signed-in visitor to the app (`APP_HOME`). */
 export type AccessDecision = "allow" | "redirect_to_sign_in" | "unauthorized" | "redirect_app";
