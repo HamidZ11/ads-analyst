@@ -1,6 +1,7 @@
 import type { Metadata, MetadataRoute } from "next";
 import { MARKETING_PATHS, type MarketingPath } from "@/lib/routes";
 import { absoluteUrl, publicOrigin } from "@/lib/site";
+import { TOOLS, toolById, type Tool, type ToolId } from "@/features/tools/catalog";
 import { HERO_LEAD } from "./hero";
 
 /* Search and sharing for the public site. Only the marketing pages are
@@ -31,6 +32,26 @@ export const MARKETING_PAGES: Record<MarketingPath, { title: string; description
     title: "Terms of service — Ad Analyst",
     description:
       "The terms for using Ad Analyst: your account, your data, plans and payment, fair use, liability and how the agreement ends.",
+  },
+  "/tools": {
+    title: "Free ad calculators: ROAS, CPA and break-even ROAS — Ad Analyst",
+    description:
+      "Free calculators for agencies running paid social: return on ad spend, cost per acquisition and break-even ROAS, each with its formula explained.",
+  },
+  "/tools/roas-calculator": {
+    title: "ROAS calculator — Ad Analyst",
+    description:
+      "Work out return on ad spend from ad revenue and spend, in pounds, dollars or euros. Free, instant, with the formula and what ROAS does and doesn't tell you.",
+  },
+  "/tools/cpa-calculator": {
+    title: "CPA calculator — Ad Analyst",
+    description:
+      "Work out cost per acquisition from ad spend and conversions, in pounds, dollars or euros. Free and instant, with the formula and how to read the result.",
+  },
+  "/tools/break-even-roas-calculator": {
+    title: "Break-even ROAS calculator — Ad Analyst",
+    description:
+      "Work out the lowest ROAS that still pays for your ads from your profit margin, and the most a conversion can cost. Free, with the formula explained.",
   },
 };
 
@@ -96,6 +117,45 @@ export function homeStructuredData(origin: string | null = publicOrigin()) {
   return {
     "@context": "https://schema.org",
     "@graph": url ? [{ "@type": "WebSite", name: SITE_NAME, url }, product] : [product],
+  };
+}
+
+/**
+ * One calculator as a WebApplication (the SoftwareApplication subtype for
+ * software that runs in the browser), described by its catalog summary as
+ * shown on the page. Free to use; no offers, ratings or reviews, because the
+ * home page's rules apply here too.
+ */
+function toolApplication(tool: Tool, origin: string | null) {
+  return {
+    "@type": "WebApplication",
+    name: tool.name,
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    browserRequirements: "Requires JavaScript",
+    isAccessibleForFree: true,
+    description: tool.summary,
+    ...(origin ? { url: absoluteUrl(origin, tool.path) } : {}),
+  };
+}
+
+/** A calculator page's structured data. */
+export function toolStructuredData(id: ToolId, origin: string | null = publicOrigin()) {
+  return { "@context": "https://schema.org", ...toolApplication(toolById(id), origin) };
+}
+
+/** The tools index: a list of the three calculators, in page order. */
+export function toolsIndexStructuredData(origin: string | null = publicOrigin()) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Free ad calculators",
+    ...(origin ? { url: absoluteUrl(origin, "/tools") } : {}),
+    itemListElement: TOOLS.map((tool, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: toolApplication(tool, origin),
+    })),
   };
 }
 

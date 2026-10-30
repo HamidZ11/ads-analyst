@@ -13,8 +13,19 @@ export const OVERVIEW_PATH = "/overview";
  */
 export const APP_HOME = "/insights";
 
+/** The free calculators (D-NEW-tools-1): an index and one page per tool. */
+export const TOOL_PATHS = [
+  "/tools",
+  "/tools/roas-calculator",
+  "/tools/cpa-calculator",
+  "/tools/break-even-roas-calculator",
+] as const;
+
+/** The free wasted-spend audit request page, where the calculators send people. */
+export const AUDIT_PATH = "/audit";
+
 /** Public marketing pages: reachable signed out, rendered without the app shell. */
-export const MARKETING_PATHS = ["/", "/pricing", "/privacy", "/terms"] as const;
+export const MARKETING_PATHS = ["/", "/pricing", "/privacy", "/terms", ...TOOL_PATHS] as const;
 
 export type MarketingPath = (typeof MARKETING_PATHS)[number];
 
