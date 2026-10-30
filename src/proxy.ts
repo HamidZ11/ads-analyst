@@ -2,19 +2,34 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { accessDecision } from "@/features/auth/access";
 import { safeReturnPath } from "@/features/auth/return-path";
+import { contentSecurityPolicy, createNonce } from "@/lib/csp";
 import { APP_HOME } from "@/lib/routes";
 import { appMode, sessionCookieOptions } from "@/lib/supabase/config";
 
 /**
- * Runs before every page and API route: refreshes the Supabase session cookie
- * and turns away signed-out requests (pages go to /sign-in, APIs get 401).
- * An optimistic check only; the data access layer and RLS decide access.
+ * Runs before every page and API route: sets this request's Content Security
+ * Policy and nonce, refreshes the Supabase session cookie and turns away
+ * signed-out requests (pages go to /sign-in, APIs get 401). An optimistic
+ * check only; the data access layer and RLS decide access.
  */
 export async function proxy(request: NextRequest) {
-  const mode = appMode();
-  if (mode.kind === "demo") return NextResponse.next();
+  const csp = contentSecurityPolicy(createNonce(), process.env.NODE_ENV === "development");
+  // Next.js reads the nonce from the policy on the request and adds it to
+  // its scripts; the browser enforces the policy on the response.
+  const forward = () => {
+    const headers = new Headers(request.headers);
+    headers.set("Content-Security-Policy", csp);
+    return NextResponse.next({ request: { headers } });
+  };
+  const secured = (response: NextResponse) => {
+    response.headers.set("Content-Security-Policy", csp);
+    return response;
+  };
 
-  let response = NextResponse.next({ request });
+  const mode = appMode();
+  if (mode.kind === "demo") return secured(forward());
+
+  let response = forward();
   let signedIn = false;
   if (mode.kind === "supabase") {
     const db = createServerClient(mode.url, mode.publishableKey, {
@@ -23,7 +38,7 @@ export async function proxy(request: NextRequest) {
         getAll: () => request.cookies.getAll(),
         setAll: (list, headers) => {
           for (const { name, value } of list) request.cookies.set(name, value);
-          response = NextResponse.next({ request });
+          response = forward();
           for (const { name, value, options } of list)
             response.cookies.set(name, value, options);
           for (const [key, value] of Object.entries(headers ?? {}))
@@ -36,11 +51,11 @@ export async function proxy(request: NextRequest) {
   }
 
   const decision = accessDecision(request.nextUrl.pathname, signedIn);
-  if (decision === "allow") return response;
+  if (decision === "allow") return secured(response);
   const carryCookies = (next: NextResponse) => {
     for (const cookie of response.cookies.getAll()) next.cookies.set(cookie);
     next.headers.set("Cache-Control", "private, no-store");
-    return next;
+    return secured(next);
   };
   if (decision === "unauthorized")
     return carryCookies(

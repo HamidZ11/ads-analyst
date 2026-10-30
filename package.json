@@ -13,7 +13,9 @@
     "test": "vitest run",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "check:browsers": "node scripts/check-crops.mjs",
-    "check:audit": "node scripts/check-audit.mjs"
+    "check:audit": "node scripts/check-audit.mjs",
+    "check:csp": "node scripts/check-csp.mjs",
+    "check:deploy": "node scripts/check-deploy.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
@@ -42,5 +44,8 @@
     "typescript": "^5",
     "vitest": "^5.0.3"
   },
-  "packageManager": "pnpm@11.24.0"
+  "packageManager": "pnpm@11.24.0",
+  "engines": {
+    "node": ">=22"
+  }
 }

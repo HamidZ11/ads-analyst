@@ -27,18 +27,20 @@ Set `NEXT_PUBLIC_SITE_URL` to the production origin: sign-in emails, canonical U
 
 ## Scripts
 
-| Script                      | What it does                                                                                                                           |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm dev`                  | Start the development server                                                                                                           |
-| `pnpm build`                | Production build                                                                                                                       |
-| `pnpm lint`                 | ESLint                                                                                                                                 |
-| `pnpm typecheck`            | TypeScript                                                                                                                             |
-| `pnpm test`                 | Vitest unit tests                                                                                                                      |
-| `pnpm format`               | Prettier (write)                                                                                                                       |
-| `pnpm format:check`         | Prettier (check)                                                                                                                       |
-| `pnpm check`                | Format check, lint, typecheck, test, build in one                                                                                      |
-| `pnpm check:browsers [url]` | Product crops in WebKit, Chromium and Firefox against a running server (needs `pnpm exec playwright install webkit chromium firefox`)  |
-| `pnpm check:audit [origin]` | The `/audit` page in the same three engines at 1440, 390 and 360px: report, refusals, print view, and that no request carries the file |
+| Script                                        | What it does                                                                                                                           |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                                    | Start the development server                                                                                                           |
+| `pnpm build`                                  | Production build                                                                                                                       |
+| `pnpm lint`                                   | ESLint                                                                                                                                 |
+| `pnpm typecheck`                              | TypeScript                                                                                                                             |
+| `pnpm test`                                   | Vitest unit tests                                                                                                                      |
+| `pnpm format`                                 | Prettier (write)                                                                                                                       |
+| `pnpm format:check`                           | Prettier (check)                                                                                                                       |
+| `pnpm check`                                  | Format check, lint, typecheck, test, build in one                                                                                      |
+| `pnpm check:browsers [url]`                   | Product crops in WebKit, Chromium and Firefox against a running server (needs `pnpm exec playwright install webkit chromium firefox`)  |
+| `pnpm check:csp [origin]`                     | Every page under the Content Security Policy in WebKit, Chromium and Firefox: no violations, every page hydrates (running server)      |
+| `pnpm check:deploy <origin> <supabase\|demo>` | Smoke check of a deployment: health and mode, security headers, gating, robots and sitemap (plain HTTP, no browser)                    |
+| `pnpm check:audit [origin]`                   | The `/audit` page in the same three engines at 1440, 390 and 360px: report, refusals, print view, and that no request carries the file |
 
 ## Design and engineering records
 
@@ -114,8 +116,9 @@ Implemented (D-051, D-059, D-060):
 - One write boundary. Signed-in users can only read tables directly, through RLS (`workspace_members` not at all). Every write goes through a Postgres function that checks the caller, their membership and the input: `import_meta_csv` (imports), `update_client_targets` (targets), `ensure_default_workspace` (first sign-in) and `consume_rate_limit`. The two data writers run with owner rights and an empty `search_path`, so they check membership themselves; no table is directly writable. RLS policies stay in place as defence in depth.
 - The proxy and the data access layer both verify the session (`auth.getClaims()`); route handlers and server actions re-check it next to the data. Supabase session cookies are HTTP-only, `SameSite=Lax`, and `Secure` in production.
 - Imports are validated twice. The server re-parses the CSV (16 MB request, 10 MB CSV, 100,000 rows, 200 columns, 2,000 characters per cell), then `import_meta_csv` checks the payload's shape and sizes before writing, so a direct call cannot skip it. Limits per user and hour: 30 import attempts (spent by `/api/import` before it reads a file) and 30 written imports (counted in the import's own transaction). Import records name the caller.
-- Every response carries a same-origin Content Security Policy (no nonces, so inline scripts are allowed), `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`, a referrer policy, a permissions policy and, in production, HSTS. `X-Powered-By` is off.
+- Every page and API response carries a nonce-based Content Security Policy from the proxy: scripts run only with the request's nonce or when a nonced script loads them, everything else is same-origin apart from billing's form redirects to Stripe (D-088), `frame-ancestors 'none'` (D-NEW-launch-csp). `next.config.ts` adds `X-Frame-Options: DENY`, `nosniff`, a referrer policy, `Cross-Origin-Opener-Policy`, a permissions policy and, in production, HSTS with `includeSubDomains`. `X-Powered-By` is off.
 - Billing (D-088): the Stripe webhook verifies Stripe's signature over the raw body and writes only through `apply_billing_event`. That function is executable by `anon` but refuses any caller without `BILLING_WEBHOOK_DB_SECRET`, whose SHA-256 hash is stored in a table nobody can read. Members read `workspace_subscriptions` through RLS, and nobody writes it directly. Stripe keys must be `sk_test_` unless the build is production and `BILLING_LIVE=true`.
+- `src/data/supabase/rls.test.ts` proves, on every table in `public`, that one workspace cannot read or write another's rows, with and without the write boundary; what an in-process Postgres cannot prove is listed in [docs/DEPLOY.md](docs/DEPLOY.md) §7.
 - Sign-in links only return to `NEXT_PUBLIC_SITE_URL` in production, never to an origin taken from request headers. The callback redirects to a fixed path; there are no user-supplied redirect targets.
 
 Known limit (live configuration, see D-059): sign-in links are requested from the server, so Supabase's per-IP auth limits see the server's address, not the visitor's, and act as one shared bucket. It is handled at deployment, not in code: CAPTCHA, host rate limiting and tuned Supabase limits (items 7, 8 and 11 below).
@@ -139,7 +142,7 @@ Live validation before launch (none of this can be checked from the repository):
 
 ## Before Launch
 
-Ad Analyst is currently parked. Before a production launch:
+Ad Analyst is currently parked. Before a production launch (step by step, with every variable and a go-live checklist: [docs/DEPLOY.md](docs/DEPLOY.md)):
 
 1. Create or attach a production Supabase project.
 2. Validate authentication, RLS and two-user workspace isolation against the real database.
