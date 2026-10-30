@@ -324,6 +324,8 @@ Threads live only in the current mounted page. Start fresh clears answers and en
 
 **Amended** by D-060: users no longer write tables directly; imports and targets are written by `security definer` functions with explicit membership checks. RLS still governs every read.
 
+**Amended** by D-088: `anon` may execute one function, `apply_billing_event`, which refuses any caller without the Stripe webhook's database secret. There is still no service-role key.
+
 ### D-052 — Demo data is a deployment mode, never stored in or mixed with a workspace
 
 **Decision:** The seeded dataset (D-001) is generated in code and served only in demo mode: `AD_ANALYST_DEMO_MODE=true`, or `pnpm dev` without Supabase variables. Demo mode has no sign-in, no database and no writes; imports answer "Imports need a connected database" and demo clients stay read-only. With Supabase configured, workspaces contain only data their members imported. A production build without configuration shows "Not connected yet" rather than demo data.
@@ -415,6 +417,8 @@ Threads live only in the current mounted page. Start fresh clears answers and en
 **Decision:** When `STRIPE_PAYMENT_LINK` is set (and valid, D-062), the Agency panel's actions are a filled "Subscribe" linking to it and "Try the demo" as the text link with an arrow. Unset or invalid, the actions stay Try the demo and Sign in. Sign-in remains in the site nav either way. `.claude/` is ignored by git; files already tracked there (the Impeccable skill and agents) stay tracked.
 **Reason:** Owner brief (2026-10-17). One filled primary per panel (DESIGN.md §28): paying is the primary action once it is possible, and the demo stays one click away.
 **Consequences:** A Payment Link takes payment on Stripe's page only. The app does not know whether a workspace has paid, so nothing is gated, and subscription management and the >10-client mechanism remain unbuilt (D-055).
+
+**Amended** by D-088: when Stripe Checkout is configured, "Subscribe" leads to Settings → Billing instead. The payment link is the fallback.
 
 ### D-066 — Pipe-separated campaign names show the last segment as the label
 
@@ -549,3 +553,50 @@ Threads live only in the current mounted page. Start fresh clears answers and en
 **Decision:** The marketing nav (inline and the phone menu) carries "Free audit" to `/audit` between the section links and Pricing, marked `aria-current="page"` on `/audit`; the footer nav lists it after How it works. From 1024 to 1279px the inline links sit 24px apart (36px from 1280px) and the bar keeps a 28px column gap, so Pricing never crowds Sign in. The closing band stays on `/audit` (D-084 confirmed) and the audit keeps accepting GBP, USD and EUR only (D-083 confirmed).
 **Reason:** Owner answers (2026-10-30) to the audit's open questions 1, 3 and 6. At 1024px five links with 36px gaps left Pricing 14px from Sign in (seen in Chromium).
 **Consequences:** Every marketing page links to the audit twice (nav and footer).
+
+### D-088 — Stripe subscription billing: the webhook writes through a secret-guarded database function, not a service-role key
+
+**Decision:** (Open questions answered in D-NEW-billing-answers-1.) Billing uses Stripe Checkout (subscription mode), Stripe's customer portal and one webhook. All three are built and tested in test mode only.
+
+- **Write path.** The webhook has no user session. Two ways were considered for it to write subscription state: (a) a `security definer` Postgres function that only works with a webhook-held secret, or (b) a server-only service-role key. **(a) was chosen.** `public.apply_billing_event(secret, event_id, event_type, state)` is executable only by `anon`, which is what the webhook uses with the publishable key and no session. It does nothing unless the SHA-256 of the secret matches the one row in `billing_webhook_secret`, which nobody can read. The owner stores that hash once in the SQL editor. The function validates every value (event id and type, Stripe id shapes, plan, interval, status, timestamp format, UUID) before writing.
+- **Idempotency and safety.** In one transaction the function claims the event id in `billing_events` (a redelivery returns `duplicate`), finds the workspace and upserts `workspace_subscriptions`. The workspace comes from our own Checkout's `metadata.workspace_id`, or else from the row already holding the subscription or customer. Three cases are recorded but write nothing: `unlinked` (no workspace found), `conflict` (the customer or subscription belongs to another workspace) and `stale` (an ended older subscription would replace a live newer one).
+- **Stripe is the source.** The webhook verifies the signature over the raw body, refuses events from the other Stripe mode, and fetches the subscription from Stripe before writing, so the stored state does not depend on the order events arrive in. Failures answer 500 and Stripe retries.
+- **Reads.** `workspace_subscriptions` (customer, subscription, plan `agency`|`custom`, interval, status, current period end, cancel at period end) has RLS with a member-read policy and only `SELECT` for `authenticated`. Members read it with their own session, like every other table, so RLS governs every user-facing read.
+- **Keys.** `STRIPE_SECRET_KEY` is honoured only when it starts with `sk_test_`, or with `sk_live_` in a production build with `BILLING_LIVE=true`. Anything else switches billing off and logs why. Checkout and the webhook read the same guard.
+- **Surfaces.** Settings gains a Billing section with the plan and status. It shows Subscribe for each configured price, and Manage billing once a Stripe customer exists. The pricing page's Agency Subscribe goes to that section when Checkout is configured, otherwise to the payment link (D-065), otherwise it is hidden (D-062). Amounts are not repeated in Settings; Stripe's page shows the configured price.
+- **Gating.** `importDecision` (`src/features/billing/policy.ts`) is the single gating policy. It is off unless `BILLING_ENFORCE=true`, and it only applies when Checkout is configured. Under it, a workspace without an `active` or `trialing` subscription keeps read access but cannot import: 402, or 503 when the subscription can't be read (fail closed).
+- **Other changes.** `form-action` in the CSP adds `https://checkout.stripe.com` and `https://billing.stripe.com`, because browsers apply it to the redirect after a form post. `/api/billing/webhook` is public in the proxy.
+
+**Reason:** A service-role key bypasses RLS for every table. Any bug or leak in server code holding it would expose every tenant, and it would reverse D-051's "no service-role key anywhere". The secret-guarded function confines the webhook to exactly one operation on billing tables, with the same validate-then-write pattern as D-060. The price of that is a second secret to manage and one SQL step at setup. Fetching from Stripe costs one API call per event, and in return out-of-order or duplicated events can never leave a stale status.
+
+**Consequences:**
+
+- D-051 is amended: `anon` now has execute on one function, which refuses without the secret. There is still no service-role key.
+- D-065 is amended: Subscribe prefers Checkout.
+- D-055's ">10-client mechanism" is still not built: no client limit is enforced, because none was specified beyond the plan description.
+- A leaked `BILLING_WEBHOOK_DB_SECRET` would let its holder set any workspace's subscription state, though no other data. Rotate it by storing a new hash.
+- Purchases through the Payment Link carry no workspace and are recorded as `unlinked`.
+- The privacy policy lists the stored subscription details.
+- The migration, the hash and the Stripe dashboard steps are in `docs/BILLING.md`. `.env.example` is not updated in this pass (see the DEVLOG).
+- **Open questions for the owner:**
+  1. May any member start or manage billing, or only the workspace owner? (Currently any member.)
+  2. Should interval switches in the portal prorate? The draft terms say part periods aren't refunded.
+  3. Link Payment Link purchases to workspaces, or retire the link once Checkout is live?
+  4. Should signed-out visitors who press Subscribe return to billing after sign-in? (They currently land on Insights.)
+  5. Turn on gating, and when?
+  6. Should a workspace with `past_due` keep importing for a grace period? (Currently no, under enforcement.)
+
+### D-NEW-billing-answers-1 — Billing answers: members manage billing, Stripe's proration, Checkout retires the payment link, return to Billing after sign-in, a 7-day grace period, a soft client notice
+
+**Decision:** Amends D-088 with the owner's answers to its open questions.
+
+1. **Who manages billing:** any member of the workspace can subscribe and open Manage billing. Kept as built; no role check.
+2. **Proration:** interval switches in the customer portal use Stripe's default proration. The code sets no proration behaviour.
+3. **Payment link:** when Checkout is configured, the pricing page's Subscribe never shows the payment link (`agencySubscribeTarget`, tested with either price alone); `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` is only the fallback when Checkout isn't configured. Purchases made through the link stay `unlinked` and are linked by hand if any happen.
+4. **Return after sign-in:** with Checkout configured, Subscribe links to `/sign-in?next=%2Fsettings%23billing`. `safeReturnPath` (`src/features/auth/return-path.ts`) accepts only a single-slash path to an app page (`isAppPath`) after URL resolution against a fixed base, at most 200 characters, with no backslash, control character or space; anything else, including `//host`, `/\host`, schemes, encoded slashes and dot segments that leave the app, falls back to the app home. The proxy and the sign-in page send a signed-in visitor straight to it; for a signed-out one the sign-in action stores it in an httpOnly, `SameSite=Lax`, one-hour cookie (`aa_return_to`), and `/auth/callback` validates it again, redirects there and deletes it. A cookie rather than a query on the email link because PKCE already requires the same browser and Supabase's redirect allow-list stays unchanged.
+5. **Gating:** still off by default (`BILLING_ENFORCE`). When on, a `past_due` or `unpaid` subscription keeps imports open for `GRACE_DAYS` (7) after the first `invoice.payment_failed` of the episode. Migration `20261030130000_billing_grace_period.sql` adds `workspace_subscriptions.payment_failed_at` and re-creates `apply_billing_event` to set it on that event (when the subscription isn't active or trialing), keep it through retries and status updates, reset it for a different subscription and clear it on `active` or `trialing`. The decision is `{ allowed: true, reason: "grace", graceEndsAt }`, and Settings → Billing says "Imports continue until …".
+6. **Gating needs Checkout:** kept. Enforcement is ignored while Checkout isn't configured, so nobody is blocked without a way to pay.
+7. **Client accounts:** the 10-account limit is not enforced. On a live Agency subscription with 10 or more clients, Settings → Billing shows a soft notice ("This workspace has 10 client accounts, the most the Agency plan includes." or "… 14 client accounts; the Agency plan includes up to 10.", then "Nothing is blocked." and Enterprise on the pricing page). Client accounts are counted as the workspace's clients (D-055).
+
+**Reason:** Owner answers (2026-10-30).
+**Consequences:** The billing variables are listed in `.env.example` as commented placeholders matching `docs/BILLING.md`. The grace period starts when the webhook processes the event, not at Stripe's event time; a failure that Stripe reports while the subscription is still `active` starts no grace, because the subscription is still entitled.

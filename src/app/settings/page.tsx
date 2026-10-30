@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { buttonClasses } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { BillingSection, parseNotice } from "@/features/billing/billing-section";
+import { checkoutIntervals } from "@/features/billing/config";
+import { loadBilling } from "@/features/billing/server";
 import {
   AccountSection,
   ClientSettings,
@@ -11,8 +14,23 @@ import { getWorkspaceContext } from "@/features/workspace/server";
 
 export const metadata: Metadata = { title: "Settings" };
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const context = await getWorkspaceContext();
+  const billing = await loadBilling();
+  const billingSection = billing ? (
+    <BillingSection
+      subscription={billing.subscription}
+      intervals={checkoutIntervals(billing.checkout)}
+      portalConfigured={billing.checkout !== null}
+      imports={billing.imports}
+      notice={parseNotice((await searchParams).billing)}
+      clientCount={context.clients.length}
+    />
+  ) : null;
   const { client, dataSource } = context;
   const workspaceName =
     context.mode === "supabase" ? context.workspace.name : context.agency.name;
@@ -36,6 +54,7 @@ export default async function SettingsPage() {
             email={context.user?.email ?? null}
             workspaceName={workspaceName}
           />
+          {billingSection}
           <SettingsSection
             id="settings-client"
             title="Client"
@@ -50,7 +69,7 @@ export default async function SettingsPage() {
   return (
     <>
       <PageHeader title="Settings" description={`${client.name} · ${workspaceName}`} />
-      <ClientSettings workspace={{ ...context, client, dataSource }} />
+      <ClientSettings workspace={{ ...context, client, dataSource }} billing={billingSection} />
     </>
   );
 }

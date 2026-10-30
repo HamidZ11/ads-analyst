@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ProductMark } from "@/components/shell/product-mark";
 import { SignInForm } from "@/features/auth/sign-in-form";
+import { safeReturnPath } from "@/features/auth/return-path";
 import { loadSession } from "@/features/workspace/server";
 import { APP_HOME } from "@/lib/routes";
 
@@ -12,9 +13,11 @@ export default async function SignInPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const params = await searchParams;
+  const next = safeReturnPath(params.next);
   const session = await loadSession();
-  if (session.kind === "app") redirect(APP_HOME);
-  const linkError = (await searchParams).error === "link";
+  if (session.kind === "app") redirect(next ?? APP_HOME);
+  const linkError = params.error === "link";
   return (
     <main
       id="main"
@@ -49,7 +52,7 @@ export default async function SignInPage({
                 Your workspace couldn&apos;t be loaded. Try signing in again.
               </p>
             ) : null}
-            <SignInForm linkError={linkError} />
+            <SignInForm linkError={linkError} next={next} />
           </section>
         )}
       </div>

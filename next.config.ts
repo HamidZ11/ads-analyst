@@ -9,6 +9,9 @@ const isDev = process.env.NODE_ENV === "development";
  * has no nonces, so inline scripts stay allowed; it still blocks scripts and
  * connections to other origins, framing, plugins, <base> hijacking and form
  * posts to other sites. React needs 'unsafe-eval' in development only.
+ * Billing's forms post to this app, which answers with a redirect to Stripe
+ * Checkout or the customer portal; browsers apply form-action to that
+ * redirect, so those two Stripe origins are allowed too (D-088).
  */
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -19,7 +22,7 @@ const contentSecurityPolicy = [
   "connect-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",
-  "form-action 'self'",
+  "form-action 'self' https://checkout.stripe.com https://billing.stripe.com",
   "frame-ancestors 'none'",
 ].join("; ");
 

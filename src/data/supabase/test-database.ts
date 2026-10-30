@@ -2,6 +2,13 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PGlite } from "@electric-sql/pglite";
 import {
+  billingOutcome,
+  SUBSCRIPTION_COLUMNS,
+  subscriptionFromRow,
+  type BillingWriter,
+  type SubscriptionRow,
+} from "./billing";
+import {
   gatewayError,
   importWriteResult,
   type WorkspaceGateway,
@@ -104,5 +111,41 @@ export function sqlGateway(db: PGlite, userId: string): WorkspaceGateway {
       ]),
     consumeRateLimit: (action) =>
       run<boolean>("select public.consume_rate_limit($1) as r", [action]),
+    subscription: async (workspaceId) =>
+      as(db, userId, async () => {
+        const result = await db.query<SubscriptionRow>(
+          `select ${SUBSCRIPTION_COLUMNS} from public.workspace_subscriptions where workspace_id = $1`,
+          [workspaceId],
+        );
+        return subscriptionFromRow(result.rows[0] ?? null);
+      }),
+  };
+}
+
+/** Stores the hash of the webhook's database secret, as the owner does once in the SQL editor. */
+export async function setBillingSecret(db: PGlite, secret: string) {
+  await db.query(
+    `insert into public.billing_webhook_secret (secret_hash)
+     values (sha256(convert_to($1, 'UTF8')))
+     on conflict (id) do update set secret_hash = excluded.secret_hash`,
+    [secret],
+  );
+}
+
+/** The webhook's writer over PGlite: anon, no session, the given secret. Test-only. */
+export function sqlBillingWriter(db: PGlite, secret: string): BillingWriter {
+  return {
+    applyEvent: (eventId, type, state) =>
+      as(db, null, async () => {
+        try {
+          const result = await db.query<{ r: unknown }>(
+            "select public.apply_billing_event($1, $2, $3, $4::jsonb) as r",
+            [secret, eventId, type, state === null ? null : JSON.stringify(state)],
+          );
+          return billingOutcome(result.rows[0]?.r);
+        } catch (error) {
+          throw gatewayError(error);
+        }
+      }),
   };
 }

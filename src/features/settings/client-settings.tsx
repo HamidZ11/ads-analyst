@@ -85,7 +85,14 @@ export function AccountSection({
   );
 }
 
-export function ClientSettings({ workspace }: { workspace: Workspace }) {
+export function ClientSettings({
+  workspace,
+  billing,
+}: {
+  workspace: Workspace;
+  /** The Billing section, in a signed-in deployment (D-088). */
+  billing?: ReactNode;
+}) {
   const { client, adAccount, coverage, dataSource, canImport } = workspace;
   const vocab = conversionVocabulary(client.type);
   const imported = dataSource.kind === "meta_csv";
@@ -101,6 +108,7 @@ export function ClientSettings({ workspace }: { workspace: Workspace }) {
           workspace.mode === "supabase" ? workspace.workspace.name : workspace.agency.name
         }
       />
+      {billing}
 
       <SettingsSection
         id="settings-client"

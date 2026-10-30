@@ -1294,6 +1294,47 @@ Owner brief (D-082). Run through the project's Impeccable skill: context loaded,
 
 ---
 
+## 2026-10-30 — Stripe subscription billing, test mode (D-088)
+
+Owner brief: subscription billing with Stripe, built and tested entirely in test mode, so the product is one configuration step from charging. Read first: D-051, D-055, D-060 to D-065, all three migrations, Next.js 16 route handler docs (`request.text()` for webhooks).
+
+- **Write path decided (D-088):** a `security definer` function guarded by a webhook-held secret, not a service-role key. Migration `20261030120000_workspace_billing.sql` adds:
+  - `workspace_subscriptions`: RLS member read, `SELECT` only.
+  - `billing_events`: processed event ids and outcomes.
+  - `billing_webhook_secret`: one SHA-256 hash, unreadable.
+  - `apply_billing_event`: anon-only, refuses without the secret, validates, then claims the event id and upserts in one transaction. Outcomes `duplicate`, `ignored`, `applied`, `unlinked`, `stale`, `conflict`.
+- **Data layer:** `src/data/supabase/billing.ts` (types, `supabaseBillingWriter` with the publishable key and no session) and `WorkspaceGateway.subscription` (RLS read). `test-database.ts` gains `setBillingSecret` and `sqlBillingWriter`.
+- **Billing feature** (`src/features/billing/`):
+  - `config.ts`: key guard (`sk_test_`, or `sk_live_` only with `NODE_ENV=production` and `BILLING_LIVE=true`), prices, origin, webhook configuration and `BILLING_ENFORCE`.
+  - `status.ts`: labels and entitlement.
+  - `policy.ts`: `importDecision`, the single gating policy.
+  - `stripe.ts`: a narrow client interface; `stripe` 23.0.1, pinned.
+  - `webhook.ts`: verify, ignore unhandled types, fetch the subscription from Stripe, write.
+  - `checkout.ts`, `server.ts`, `billing-section.tsx`, `links.ts`.
+- **Routes:** `/api/billing/checkout` and `/api/billing/portal` (form posts, origin check, 303 to Stripe or back to `/settings?billing=…#billing`) and `/api/billing/webhook` (public in the proxy, raw body). CSP `form-action` adds the Checkout and portal origins.
+- **Surfaces:**
+  - Settings: a Billing section after Account, in signed-in deployments only.
+  - Pricing: Agency Subscribe goes to Checkout via Settings, else the payment link, else is hidden.
+  - Import page and `/api/import`: gated by the policy (402, or 503 fail closed), only with `BILLING_ENFORCE=true` and Checkout configured.
+  - Privacy policy: lists the subscription details stored (updated 30 October 2026).
+- **Docs:** new `docs/BILLING.md` (dashboard setup, database secret, environment, Stripe CLI testing, going-live checklist). D-088 added; D-051 and D-065 marked amended. DESIGN.md §26 and §28, PRODUCT.md and README updated.
+- **Tests** (no network: fake Stripe client, Stripe's offline signature helper, PGlite):
+  - `src/data/supabase/billing.test.ts`: RLS reads, direct writes refused, secret required, idempotency, unlinked, stale, conflict, validation.
+  - `webhook.test.ts`: signature failures, replay, mode mismatch, each event type, retries, status mapping, end to end over SQL.
+  - `billing.test.ts`: key guard, configuration, policy on and off, wording, Checkout and portal, dead-link rules, pricing.
+  - `stripe.test.ts`: exact Checkout params, no trial or discount.
+  - `routes.test.ts`: the three routes, including public access to the webhook.
+  - `route.test.ts` for `/api/import`: gating.
+- **Smoke test** on a dev server (demo mode, port 3217): `/`, `/pricing`, `/settings` and `/clients/import` return 200; pricing shows no Subscribe without configuration; Settings has no Billing section in demo mode; the webhook answers 503 unconfigured. Server stopped afterwards.
+- **Not done in this pass:**
+  - `.env.example` is outside what this session may read or edit, so it isn't updated. The variable block to add is in `docs/BILLING.md` → Environment.
+  - `pnpm check:browsers`: Playwright browsers aren't installed on this machine, so it didn't run.
+  - Visual review of the Billing section: it needs a signed-in Supabase deployment.
+
+**Checks:** `pnpm check` (451 tests, build green). `pnpm check:browsers` not run: no Playwright browsers installed.
+
+---
+
 ## 2026-10-30 — Instant wasted-spend audit at /audit
 
 Owner brief (D-083, D-084, D-085). Branch `feat/instant-audit`.
@@ -1312,6 +1353,8 @@ Owner brief (D-083, D-084, D-085). Branch `feat/instant-audit`.
 
 **Deferred:** optional targets on the audit; currencies beyond GBP, USD and EUR; a nav or footer link to `/audit`; moving the analysis to a Web Worker for very large files.
 
+---
+
 ## 2026-10-30 — Audit follow-ups: optional targets, Free audit in the nav, first browser run
 
 Owner answers to the audit's open questions (D-NEW-audit-targets-1, D-NEW-audit-nav-1). Branch `feat/instant-audit`.
@@ -1325,3 +1368,20 @@ Owner answers to the audit's open questions (D-NEW-audit-targets-1, D-NEW-audit-
 **Checks:** `pnpm check` (417 tests). `pnpm check:audit` (45 checks across WebKit, Chromium and Firefox at 1440/390/360, no request carries the file) and `pnpm check:browsers` (52 crop checks) pass against a production server.
 
 **Not verified:** still no real Ads Manager export through the parser.
+
+---
+
+## 2026-10-30 — Billing answers (D-NEW-billing-answers-1)
+
+Owner answers to D-088's open questions. Branch `feat/billing`.
+
+- **Recorded as built:** any workspace member manages billing; Stripe's default proration (the code sets none; BILLING.md's portal step updated); gating only with Checkout configured.
+- **Payment link retired under Checkout.** `agencySubscribeTarget` already preferred Checkout; a pricing render test now checks that the link never appears with Checkout configured by either price alone. `.env.example` describes it as the fallback.
+- **Return to Billing after sign-in.** `src/features/auth/return-path.ts`: `safeReturnPath` (single-slash app paths only after URL resolution, at most 200 characters, no backslash, control character or space), `signInHref`, `BILLING_RETURN_PATH`, `RETURN_COOKIE`. Subscribe links to `/sign-in?next=%2Fsettings%23billing`. The proxy and the sign-in page send signed-in visitors to the validated `next`; `SignInForm` carries it as a hidden field; `requestSignInLink` stores it in an httpOnly one-hour cookie; `/auth/callback` validates it again, redirects and deletes the cookie. `return-path.test.ts` covers 16 open-redirect shapes (schemes, `//`, `/\`, encoded slashes, whitespace and newlines), non-app paths, dot segments out of the app and non-string input.
+- **Grace period.** Migration `20261030130000_billing_grace_period.sql`: `payment_failed_at`, and `apply_billing_event` re-created to set it on `invoice.payment_failed` (not while active or trialing), keep it through retries, reset it for a new subscription and clear it on active or trialing. `WorkspaceSubscription.paymentFailedAt`; `importDecision` takes `now` and returns `grace` with `graceEndsAt` for `past_due`/`unpaid` within `GRACE_DAYS` (7). Tests: PGlite (first failure kept through a retry and an update, cleared when active; nothing recorded while active or on a status change alone), policy boundaries (one millisecond before and exactly at 7 days, no timestamp, other statuses, enforcement off, Checkout unconfigured), and the Settings sentence.
+- **Client accounts.** `AGENCY_CLIENT_LIMIT` (10); Settings passes the workspace's client count; a live Agency subscription at 10 or more shows a soft notice with a pricing link. Nothing is enforced. Tests for 9, 10 and 14, custom plan, cancelled and no subscription.
+- **Env.** The seven billing variables are in `.env.example` as commented placeholders matching `docs/BILLING.md`.
+
+**Checks:** `pnpm check` (464 tests). `pnpm check:browsers` (52 crop checks) against a production server in demo mode with placeholder Checkout values; `/pricing` at 1440, 390 and 360 shows Subscribe linking to `/sign-in?next=%2Fsettings%23billing` and no payment link; following it lands on `/settings#billing`; `/sign-in?next=%2F%2Fevil.example` redirects to `/insights`.
+
+**Not verified:** the Billing section's grace and client notices only render in a signed-in Supabase deployment, so they are covered by render tests but have not been seen in a browser; the email-link round trip of the return cookie needs a Supabase test project.
