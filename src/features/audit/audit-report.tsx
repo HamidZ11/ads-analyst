@@ -260,7 +260,8 @@ export function AuditReportView({
         title="Campaigns"
         description={`${periods.currentLabel}, with the change against ${periods.previousLabel}.`}
       >
-        <div className="mt-3 overflow-x-auto">
+        {/* Positioned, so the deltas' absolutely placed screen-reader text is clipped with the table. */}
+        <div className="relative mt-3 overflow-x-auto">
           <table className="w-full min-w-[760px] border-collapse text-sm">
             <caption className="sr-only">
               Campaigns, {periods.currentLabel} against {periods.previousLabel}

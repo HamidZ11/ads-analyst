@@ -100,7 +100,9 @@ export function AuditTargetsForm({
           className={INPUT}
         />
       </div>
-      <Button type="submit">{set ? "Update targets" : "Apply targets"}</Button>
+      <Button type="submit" className="justify-self-start">
+        {set ? "Update targets" : "Apply targets"}
+      </Button>
       <p
         id={`${id}-message`}
         role="status"

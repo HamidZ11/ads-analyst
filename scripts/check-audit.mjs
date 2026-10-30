@@ -109,7 +109,8 @@ for (const [name, engine] of Object.entries(engines)) {
       mimeType: "text/csv",
       buffer: Buffer.from(campaignLevel),
     });
-    const alert = page.getByRole("alert");
+    // Next's route announcer is also an alert; the refusal is the focusable one.
+    const alert = page.locator('[role="alert"][tabindex="-1"]');
     await alert.waitFor({ timeout: 10_000 });
     const text = await alert.innerText();
     if (!/campaign level/.test(text) || !/Ads tab/.test(text))
