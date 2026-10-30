@@ -22,6 +22,11 @@ const demo = health.mode === "demo";
 console.log(`mode: ${health.mode}${demo ? "" : " (demo-only steps skipped)"}`);
 const PAGES = [
   "/",
+  "/audit",
+  "/tools",
+  "/tools/roas-calculator",
+  "/tools/cpa-calculator",
+  "/tools/break-even-roas-calculator",
   "/pricing",
   "/privacy",
   "/terms",
@@ -31,7 +36,9 @@ const PAGES = [
   "/creatives",
   "/insights",
   "/ask",
+  "/report",
   "/clients",
+  "/clients/import",
   "/settings",
   "/no-such-page",
 ];
