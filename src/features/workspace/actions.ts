@@ -2,7 +2,12 @@
 
 import { cookies } from "next/headers";
 import { parseDatePreset } from "@/domain/periods";
-import { CLIENT_COOKIE, COOKIE_MAX_AGE_SECONDS, RANGE_COOKIE } from "./cookies";
+import {
+  CLIENT_COOKIE,
+  COOKIE_MAX_AGE_SECONDS,
+  RANGE_COOKIE,
+  REPORT_RANGE_COOKIE,
+} from "./cookies";
 import { loadSession } from "./server";
 
 const cookieOptions = {
@@ -24,4 +29,10 @@ export async function selectClient(clientId: string): Promise<void> {
 export async function selectDatePreset(preset: string): Promise<void> {
   const store = await cookies();
   store.set(RANGE_COOKIE, parseDatePreset(preset), cookieOptions);
+}
+
+/** Switch the client report's period, which is kept apart from the app's. */
+export async function selectReportDatePreset(preset: string): Promise<void> {
+  const store = await cookies();
+  store.set(REPORT_RANGE_COOKIE, parseDatePreset(preset), cookieOptions);
 }

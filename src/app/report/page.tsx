@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { DatePresetControl } from "@/components/shell/date-preset-control";
 import { Note } from "@/components/ui/note";
 import { PageHeader } from "@/components/ui/page-header";
@@ -7,12 +8,18 @@ import { PrintButton } from "@/features/report/print-button";
 import { buildClientReport } from "@/features/report/report-model";
 import { EmptyWorkspace } from "@/features/onboarding/empty-workspace";
 import { workspaceProgress } from "@/features/onboarding/progress";
+import { parseDatePreset } from "@/domain/periods";
+import { selectReportDatePreset } from "@/features/workspace/actions";
+import { withPreset } from "@/features/workspace/context";
+import { REPORT_RANGE_COOKIE } from "@/features/workspace/cookies";
 import { getWorkspaceContext, loadSession, readyWorkspace } from "@/features/workspace/server";
 
 export const metadata: Metadata = { title: "Client report" };
 
 export default async function ClientReportPage() {
-  const context = await getWorkspaceContext();
+  // The report keeps its own period, 7D unless chosen here (D-NEW-fixes-report-1).
+  const preset = parseDatePreset((await cookies()).get(REPORT_RANGE_COOKIE)?.value);
+  const context = withPreset(await getWorkspaceContext(), preset);
   const workspace = readyWorkspace(context);
   // An empty workspace shows what the report will hold, like every page (D-090).
   if (!workspace)
@@ -45,7 +52,7 @@ export default async function ClientReportPage() {
               <span className="block font-medium text-ink-secondary">{model.currentLabel}</span>
               <span className="mt-0.5 block">vs {model.comparison}</span>
             </span>
-            <DatePresetControl value={workspace.preset} />
+            <DatePresetControl value={workspace.preset} select={selectReportDatePreset} />
             <PrintButton />
           </>
         }

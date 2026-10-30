@@ -88,6 +88,19 @@ export function buildContext(input: {
   };
 }
 
+/**
+ * The same context for another date preset: the periods and their comparison
+ * are recomputed from the same "today" and data coverage, nothing else changes.
+ */
+export function withPreset(context: WorkspaceContext, preset: DatePreset): WorkspaceContext {
+  if (preset === context.preset) return context;
+  const periods = periodPairForPreset(
+    preset,
+    periodAnchor(context.today, context.coverage?.lastDate ?? null),
+  );
+  return { ...context, preset, periods, comparison: comparisonLabel(periods) };
+}
+
 /** "ana@agency.test" → "Ana's workspace"; no email → "My workspace". */
 export function defaultWorkspaceName(email: string | null): string {
   const local = email
