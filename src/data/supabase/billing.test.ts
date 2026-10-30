@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { GRACE_DAYS, graceEndsAt } from "@/features/billing/policy";
 import type { SubscriptionState } from "./billing";
 import {
   addUser,
@@ -347,18 +348,61 @@ describe("when a payment first failed (grace period)", () => {
     expect(await failedAt(db)).toBeNull();
   });
 
-  it("ignores a failure while the subscription is still active, and a status change alone starts nothing", async () => {
-    const { db, anaWs, writer } = await seeded();
+  it("starts the grace when past_due arrives after a failure that was read while still active", async () => {
+    const { db, ana, anaWs, writer } = await seeded();
     await writer.applyEvent(
       "evt_h1",
       "invoice.payment_failed",
       state({ workspace_id: anaWs.id }),
     );
+    // Still active when read: entitled, so no grace is running yet.
     expect(await failedAt(db)).toBeNull();
     await writer.applyEvent(
       "evt_h2",
       "customer.subscription.updated",
       state({ status: "past_due" }),
+    );
+    const started = await failedAt(db);
+    expect(started).toBeInstanceOf(Date);
+    const read = await ana.subscription(anaWs.id);
+    expect(read?.paymentFailedAt).toBe(started!.toISOString());
+    expect(graceEndsAt(read!)?.getTime()).toBe(started!.getTime() + GRACE_DAYS * 86_400_000);
+
+    // The failure event delivered late, or a later move to unpaid, keeps the start.
+    await db.query(
+      "update public.workspace_subscriptions set payment_failed_at = payment_failed_at - interval '1 day'",
+    );
+    const moved = await failedAt(db);
+    await writer.applyEvent("evt_h3", "invoice.payment_failed", state({ status: "past_due" }));
+    await writer.applyEvent(
+      "evt_h4",
+      "customer.subscription.updated",
+      state({ status: "unpaid" }),
+    );
+    expect(await failedAt(db)).toEqual(moved);
+  });
+
+  it("starts the grace on the first row when it already reads past_due", async () => {
+    const { db, anaWs, writer } = await seeded();
+    await writer.applyEvent(
+      "evt_i1",
+      "customer.subscription.updated",
+      state({ workspace_id: anaWs.id, status: "past_due" }),
+    );
+    expect(await failedAt(db)).toBeInstanceOf(Date);
+  });
+
+  it("starts nothing for statuses that aren't a failed payment", async () => {
+    const { db, anaWs, writer } = await seeded();
+    await writer.applyEvent(
+      "evt_j1",
+      "customer.subscription.updated",
+      state({ workspace_id: anaWs.id, status: "paused" }),
+    );
+    await writer.applyEvent(
+      "evt_j2",
+      "customer.subscription.deleted",
+      state({ status: "canceled" }),
     );
     expect(await failedAt(db)).toBeNull();
   });
