@@ -74,7 +74,9 @@ check(
 const robots = await (await get("/robots.txt")).text();
 const sitemap = await (await get("/sitemap.xml")).text();
 if (/^(localhost|127\.0\.0\.1|\[::1\])$|\.localhost$/.test(new URL(origin).hostname))
-  console.log("  - robots.txt and sitemap origin skipped: loopback origins are left out of both");
+  console.log(
+    "  - robots.txt and sitemap origin skipped: loopback origins are left out of both",
+  );
 else {
   check(robots.includes(`${origin}/sitemap.xml`), "robots.txt names this origin's sitemap");
   check(sitemap.includes(`<loc>${origin}`), "sitemap uses this origin");
