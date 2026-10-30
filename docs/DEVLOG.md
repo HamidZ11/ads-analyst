@@ -1291,3 +1291,37 @@ Owner brief (D-082). Run through the project's Impeccable skill: context loaded,
 **Checks:** `pnpm check` (367 tests), `pnpm check:browsers http://localhost:3100/` (52 crop checks), overflow probe on `/`, `/pricing`, `/privacy`, `/terms` in three engines at three widths.
 
 **Correction (follow-up commit):** `git add -A` in the D-082 commit (8f17a19) also staged four untracked iCloud conflict copies (`scripts/check-crops 2.mjs`, `crop-scale.test 2.ts`, `cta-band 2.tsx`, `cta-band.test 2.ts`), and they were pushed. Three were identical to their originals; `cta-band 2.tsx` was the pre-renumbering copy (D-074 in a comment). Nothing referenced them. They are removed, and `.gitignore` now ignores names with a space before a one- to three-digit number, which no tracked file has.
+
+---
+
+## 2026-10-30 — Instant wasted-spend audit at /audit
+
+Owner brief (D-083, D-084, D-085). Branch `feat/instant-audit`.
+
+- **Research.** Meta's Help Centre pages render client-side and could not be fetched; search surfaced Meta's wording "Select Reports, and then select Export table data", and consistent third-party guides (Ours Privacy, AdsUploader, Google Analytics' cost-data help) for the Ads tab, Breakdown › By time › Day, CSV/XLSX formats, "Reporting starts"/"Reporting ends" and "Amount spent (GBP)"-style headers. Whether a Day-broken export carries the day or the whole report range in Reporting starts/ends could not be confirmed, so both are accepted (D-085). The how-to block says only these steps and notes that menu names may differ.
+- **Parser (D-085).** `validate.ts`: `DecimalMark` and `detectDecimalMark`, `parseNumber`/`parseMoney` with a decimal mark, space grouping and trailing symbols, `symbolCurrency`, `DateOrder`, `parseDate(cell, order)` and `detectDateOrder`, an `ambiguous_date` blocker, Day inside the reporting range, labelled totals rows. `meta.ts`: `outcomeFromIndicator`. `setup.ts` uses the detected date order. Fixtures: `__fixtures__/meta-variants.ts`. Tests: `variants.test.ts`, one updated case in `import.test.ts` (a DD/MM date is now read; a Day outside its range is still `multi_day`), and a service-level plan test for a semicolon, decimal-comma, day-first file with a BOM and totals row.
+- **Audit (D-083).** `src/features/audit/`: `audit.ts` (`auditExport`, `outcomeOptions`, shape and currency checks), `audit-tool.tsx` (File API, drop area, sample, result and next steps), `audit-report.tsx`, `export-guide.tsx`, `audit.module.css` (layout and print), `sample.ts`/`sample-path.ts` and `public/audit-sample.csv`. Route `src/app/(marketing)/audit/page.tsx`; `/audit` added to `MARKETING_PATHS` (sitemap, indexing) with its own title and description. Marketing print rules hide the nav, footer and skip link.
+- **Landing (D-084).** Hero and closing band link "Get a free wasted-spend audit" to `/audit`; tests updated. The email audit moved to a line after the report on `/audit`, shown only with `CONTACT_EMAIL`.
+- **Tests.** `audit.test.ts` (report figures, flagged spend equals the rules' `spendInvolved`, European file equals the clean one, Results with indicator or type, lead and USD/EUR files, outcome choice, twelve unsupported shapes each with its fix, file issues with line samples, Excel), `sample.test.ts` (committed file equals the generator; audits cleanly), `audit-page.test.ts` (page and report render), `no-network.test.ts` (spies on fetch, XHR, WebSocket, EventSource, sendBeacon and storage while auditing; the browser import graph has no network, storage or server code and its only fetch is the sample GET; nothing beside `page.tsx`).
+- **Sample result.** The Luxe Skin sample (17–30 Sep 2026) gives 3 issues, 4 opportunities and 2 things to watch for 24–30 Sep against 17–23 Sep, £3,686 of £7,404 on campaigns that need attention, £638 on the one campaign with no purchases.
+- **Fixed in review.** The period fact overflowed a half-width cell at 360px (now spans the row on phones); the next-steps band was double-padded; refusals now scroll into view; the result container was an `aria-live` region that would have read the whole report (now a one-line status, with focus on the report heading or the refusal).
+
+**Checks:** `pnpm check` (412 tests). `pnpm check:audit` and `pnpm check:browsers` could not run: Playwright's browsers are not installed and installing them writes outside the worktree. The production server answered `/audit`, `/audit-sample.csv` and `/` (hero links to `/audit`) with 200.
+
+**Not verified:** the page has not been seen in a browser at any width; layout at 1440, 390 and 360px was reviewed in code only. No real Ads Manager export has been through the parser.
+
+**Deferred:** optional targets on the audit; currencies beyond GBP, USD and EUR; a nav or footer link to `/audit`; moving the analysis to a Web Worker for very large files.
+
+## 2026-10-30 — Audit follow-ups: optional targets, Free audit in the nav, first browser run
+
+Owner answers to the audit's open questions (D-NEW-audit-targets-1, D-NEW-audit-nav-1). Branch `feat/instant-audit`.
+
+- **Answers.** Closing band stays on `/audit` (D-084 confirmed). Currencies stay GBP, USD and EUR (D-083 confirmed). Optional target CPA and ROAS on the audit. "Free audit" in the nav and footer.
+- **Targets.** `readTargets`, `positiveOrNull` and the target limits moved to `src/features/import/targets.ts` (pure; `service.ts` re-exports `readTargets` for Settings). `auditExport` takes `targets`, validates them with `readTargets` (ROAS dropped when the conversions carry no value) and puts them on the in-memory client; the report carries `targets`. `audit-targets.tsx`: the "Targets" section, hidden in print; "What the rules found" names the targets used. Tests: empty targets give an identical report; targets reach the rules (findings change, a target appears in them, flagged spend is still `spendInvolved`); invalid values refused with Settings' messages; a ROAS target dropped on a lead file; the report renders the inputs and the targets sentence.
+- **Nav.** "Free audit" in the inline nav, the phone menu (`aria-current="page"` on `/audit`) and the footer (test updated). At 1024px Pricing sat 14px from Sign in; links are 24px apart and the bar has a 28px column gap from 1024 to 1279px.
+- **First browser run.** Playwright's browsers are now installed. `pnpm check:audit` found two things: its refusal locator also matched Next's route announcer (`role="alert"`; now scoped to the focusable refusal), and `/audit` scrolled sideways by 22px at 390 and 50px at 360 in Chromium with a report. Cause: `Delta`'s `sr-only` text is absolutely positioned, and the ledger's scroller wasn't positioned, so those spans escaped its clipping. The scroller is now `relative`. Other app tables use the same pattern inside unpositioned scrollers and weren't checked in this pass. The targets button no longer stretches across the free grid column.
+- **Screens seen.** Chromium, `/audit` with the sample at 1440, 390 and 360 (top, report, targets before, applied and with an error, findings, ledger, closing section and footer, phone menu), and the nav at 1024 and 1280.
+
+**Checks:** `pnpm check` (417 tests). `pnpm check:audit` (45 checks across WebKit, Chromium and Firefox at 1440/390/360, no request carries the file) and `pnpm check:browsers` (52 crop checks) pass against a production server.
+
+**Not verified:** still no real Ads Manager export through the parser.

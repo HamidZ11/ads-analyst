@@ -27,17 +27,18 @@ Set `NEXT_PUBLIC_SITE_URL` to the production origin: sign-in emails, canonical U
 
 ## Scripts
 
-| Script                      | What it does                                                                                                                          |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm dev`                  | Start the development server                                                                                                          |
-| `pnpm build`                | Production build                                                                                                                      |
-| `pnpm lint`                 | ESLint                                                                                                                                |
-| `pnpm typecheck`            | TypeScript                                                                                                                            |
-| `pnpm test`                 | Vitest unit tests                                                                                                                     |
-| `pnpm format`               | Prettier (write)                                                                                                                      |
-| `pnpm format:check`         | Prettier (check)                                                                                                                      |
-| `pnpm check`                | Format check, lint, typecheck, test, build in one                                                                                     |
-| `pnpm check:browsers [url]` | Product crops in WebKit, Chromium and Firefox against a running server (needs `pnpm exec playwright install webkit chromium firefox`) |
+| Script                      | What it does                                                                                                                           |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                  | Start the development server                                                                                                           |
+| `pnpm build`                | Production build                                                                                                                       |
+| `pnpm lint`                 | ESLint                                                                                                                                 |
+| `pnpm typecheck`            | TypeScript                                                                                                                             |
+| `pnpm test`                 | Vitest unit tests                                                                                                                      |
+| `pnpm format`               | Prettier (write)                                                                                                                       |
+| `pnpm format:check`         | Prettier (check)                                                                                                                       |
+| `pnpm check`                | Format check, lint, typecheck, test, build in one                                                                                      |
+| `pnpm check:browsers [url]` | Product crops in WebKit, Chromium and Firefox against a running server (needs `pnpm exec playwright install webkit chromium firefox`)  |
+| `pnpm check:audit [origin]` | The `/audit` page in the same three engines at 1440, 390 and 360px: report, refusals, print view, and that no request carries the file |
 
 ## Design and engineering records
 
@@ -143,5 +144,5 @@ Ad Analyst is currently parked. Before a production launch:
 4. Add billing and subscription handling.
 5. Set a real sales/support contact email in `NEXT_PUBLIC_CONTACT_EMAIL` (and the Agency Stripe Payment Link in `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` once billing exists).
 6. Deploy the production application.
-7. Validate imports with a real Meta Ads export.
+7. Validate imports and the `/audit` page with real Meta Ads exports (only synthetic variants have been tested, D-085).
 8. Get the product in front of real users before building additional features.

@@ -38,23 +38,24 @@ describe("audit request", () => {
 });
 
 describe("landing hero", () => {
-  it("leads with the audit, then the demo as a text link, when an address is set", async () => {
-    const hero = await renderLanding("hello@ad-analyst.example");
+  it("leads with the self-serve audit at /audit, then the demo as a text link", async () => {
+    const hero = await renderLanding();
     const audit = hero.indexOf("Get a free wasted-spend audit");
     const demo = hero.indexOf("Try the demo");
     expect(audit).toBeGreaterThan(-1);
     expect(demo).toBeGreaterThan(audit);
     expect(hero).toMatch(
-      /<a href="mailto:hello@ad-analyst\.example\?subject=Wasted-spend%20audit%20request&amp;body=[^"]+" class="[^"]*button[^"]*">Get a free wasted-spend audit<\/a>/,
+      /<a class="[^"]*button[^"]*" href="\/audit">Get a free wasted-spend audit<\/a>/,
     );
     expect(hero).toMatch(/<a class="[^"]*textLink[^"]*" href="\/insights">Try the demo/);
   });
 
-  it("hides the audit without an address and keeps the demo as the primary", async () => {
-    const hero = await renderLanding("");
-    expect(hero).not.toContain("audit");
-    expect(hero).not.toContain("mailto:");
-    expect(hero).toMatch(/<a class="[^"]*button[^"]*" href="\/insights">Try the demo<\/a>/);
+  it("keeps the audit as the primary whether or not a contact address is set", async () => {
+    for (const email of ["", "hello@ad-analyst.example"]) {
+      const hero = await renderLanding(email);
+      expect(hero).not.toContain("mailto:");
+      expect(hero).toMatch(/href="\/audit">Get a free wasted-spend audit</);
+    }
   });
 
   it("shows the Overview behind a compact zero-conversion finding", async () => {

@@ -17,6 +17,11 @@ export const MARKETING_PAGES: Record<MarketingPath, { title: string; description
     description:
       "Ad Analyst shows agencies which Meta Ads campaigns and creatives changed, how each client compares with its targets, and where spend is being wasted.",
   },
+  "/audit": {
+    title: "Free wasted-spend audit for Meta Ads — Ad Analyst",
+    description:
+      "Drop in a Meta Ads Manager CSV export and see which campaigns spend without results and what is worth scaling. Read in your browser; nothing is uploaded.",
+  },
   "/pricing": {
     title: "Pricing — Ad Analyst",
     description:

@@ -14,7 +14,10 @@ export const OVERVIEW_PATH = "/overview";
 export const APP_HOME = "/insights";
 
 /** Public marketing pages: reachable signed out, rendered without the app shell. */
-export const MARKETING_PATHS = ["/", "/pricing", "/privacy", "/terms"] as const;
+export const MARKETING_PATHS = ["/", "/audit", "/pricing", "/privacy", "/terms"] as const;
+
+/** The self-serve wasted-spend audit (D-083). */
+export const AUDIT_PATH = "/audit";
 
 export type MarketingPath = (typeof MARKETING_PATHS)[number];
 

@@ -63,6 +63,7 @@ export function MarketingNav() {
   // The menu must be gone from the layout before a section scroll is measured.
   const closeNow = () => flushSync(() => setOpen(false));
   const pricing = pathname === "/pricing" ? "page" : undefined;
+  const audit = pathname === "/audit" ? "page" : undefined;
 
   return (
     <header className={s.navBar} data-scrolled={scrolled && !open ? "" : undefined}>
@@ -81,6 +82,9 @@ export function MarketingNav() {
               {link.label}
             </SectionLink>
           ))}
+          <Link href="/audit" aria-current={audit}>
+            Free audit
+          </Link>
           <Link href="/pricing" aria-current={pricing}>
             Pricing
           </Link>
@@ -119,6 +123,11 @@ export function MarketingNav() {
                 </SectionLink>
               </li>
             ))}
+            <li>
+              <Link href="/audit" aria-current={audit} onClick={close}>
+                Free audit
+              </Link>
+            </li>
             <li>
               <Link href="/pricing" aria-current={pricing} onClick={close}>
                 Pricing

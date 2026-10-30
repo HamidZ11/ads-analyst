@@ -6,6 +6,7 @@ import { SectionLink } from "./section-nav";
 export const LINKEDIN_URL = "https://www.linkedin.com/in/hamid-aziz-05858a33b/";
 
 const FOOTER_LINKS = [
+  { href: "/audit", label: "Free audit" },
   { href: "/pricing", label: "Pricing" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
