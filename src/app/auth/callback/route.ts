@@ -1,5 +1,7 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { RETURN_COOKIE, safeReturnPath } from "@/features/auth/return-path";
 import { appMode } from "@/lib/supabase/config";
 import { supabaseServerClient } from "@/lib/supabase/server";
 import { APP_HOME } from "@/lib/routes";
@@ -9,7 +11,8 @@ const OTP_TYPES: readonly EmailOtpType[] = ["magiclink", "email", "signup", "inv
 /**
  * Where the emailed sign-in link lands. Accepts the PKCE code (default email
  * template) or a token hash (custom template), sets the session cookie, then
- * opens the app. A used or expired link returns to sign-in with a message.
+ * opens the app, or the validated page the sign-in form was asked to return
+ * to. A used or expired link returns to sign-in with a message.
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -25,7 +28,10 @@ export async function GET(request: Request) {
   else if (tokenHash && type && OTP_TYPES.includes(type))
     ok = !(await db.auth.verifyOtp({ token_hash: tokenHash, type })).error;
   if (!ok) return fail;
-  const response = NextResponse.redirect(new URL(APP_HOME, url.origin));
+  const store = await cookies();
+  const next = safeReturnPath(store.get(RETURN_COOKIE)?.value);
+  const response = NextResponse.redirect(new URL(next ?? APP_HOME, url.origin));
+  response.cookies.delete(RETURN_COOKIE);
   response.headers.set("Cache-Control", "private, no-store");
   return response;
 }

@@ -56,6 +56,15 @@ describe("route access", () => {
     expect(accessDecision("/api/ask", false)).toBe("unauthorized");
   });
 
+  it("opens shared reports to anyone, signed in or not, and never sends them to sign-in", () => {
+    const path = "/r/hZ0aT8m3Qx1v2Kc9LwP4yB7nR5sD6eF0gH1iJ2kL3mN";
+    expect(isPublicPath(path)).toBe(true);
+    expect(accessDecision(path, false)).toBe("allow");
+    expect(accessDecision(path, true)).toBe("allow");
+    // A path that only starts with the letter is not a shared report.
+    expect(isPublicPath("/reports")).toBe(false);
+  });
+
   it("allows signed-in sessions everywhere and sends them to the app from sign-in and the site root", () => {
     for (const path of ["/overview", "/campaigns", "/api/import", "/auth/callback", "/pricing"])
       expect(accessDecision(path, true), path).toBe("allow");

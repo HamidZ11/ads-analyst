@@ -1,0 +1,216 @@
+/* The instant audit page (D-083): the marketing type for the page's own words,
+   white panels in the app's type for the tool and the report, and a print
+   stylesheet so the browser's "Save as PDF" gives the report alone. */
+
+.page {
+  padding-top: clamp(40px, 4.8vw, 72px);
+}
+.header {
+  max-width: 62ch;
+}
+.h1 {
+  color: var(--ink);
+  font-size: clamp(36px, 4.6vw, 64px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+.lead {
+  margin-top: 20px;
+  color: var(--ink-2);
+  font-size: 19px;
+  line-height: 1.5;
+}
+
+/* Copy left and, from 1024px, a finding from the sample export on the right
+   (the intake's 7/5 columns); the finding is left out below 1024px. */
+.preview {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    column-gap: clamp(32px, 4vw, 64px);
+    align-items: start;
+  }
+  .preview {
+    display: block;
+    margin: 0;
+  }
+}
+.previewCard {
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 2px 4px rgb(11 16 32 / 4%),
+    0 24px 48px -28px rgb(11 16 32 / 24%);
+}
+.previewCaption {
+  margin-bottom: 10px;
+  color: var(--ink-3);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.panel {
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 1px 2px rgb(11 16 32 / 4%),
+    0 28px 56px -36px rgb(11 16 32 / 22%);
+}
+
+/* Upload beside the export guide from 1024px; stacked below. */
+.intake {
+  display: grid;
+  gap: 32px;
+  margin-top: clamp(32px, 4vw, 56px);
+}
+.uploadPanel {
+  padding: clamp(16px, 1.8vw, 26px);
+  align-self: start;
+}
+@media (min-width: 1024px) {
+  .intake {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: var(--col-gap);
+    column-gap: clamp(32px, 4vw, 64px);
+  }
+}
+
+.guide {
+  padding-top: 4px;
+}
+.guideTitle {
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+.steps {
+  margin-top: 16px;
+  counter-reset: step;
+}
+.steps li {
+  position: relative;
+  padding: 12px 0 12px 36px;
+  border-top: 1px solid var(--line);
+  counter-increment: step;
+}
+.steps li::before {
+  content: counter(step);
+  position: absolute;
+  top: 12px;
+  left: 0;
+  color: var(--ink-3);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.stepTitle {
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.stepBody {
+  margin-top: 2px;
+  color: var(--ink-2);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.guideNote {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: 14px;
+}
+
+/* The result lands under the intake; it takes focus when it appears. */
+.result {
+  scroll-margin-top: calc(var(--nav-height) + 24px);
+  outline: none;
+}
+.reading {
+  margin-top: 32px;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+.problemPanel,
+.report {
+  margin-top: clamp(32px, 4vw, 56px);
+  padding: clamp(18px, 2vw, 32px);
+}
+
+/* Findings: one column, two from 1280px, each a block of its own. */
+.findings {
+  display: grid;
+  gap: 0 40px;
+  margin-top: 4px;
+}
+.finding {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+}
+@media (min-width: 1280px) {
+  .findings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.emailAudit {
+  margin-top: 24px;
+  color: var(--ink-2);
+  font-size: 15px;
+}
+.emailAudit a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+}
+.emailAudit a:hover {
+  text-decoration-color: var(--ink);
+}
+
+/* Print: the report alone, on white, without the page around it. The site's
+   nav and footer are hidden by the marketing stylesheet. */
+@media print {
+  .page {
+    width: 100%;
+    padding: 0;
+  }
+  .header,
+  .intake,
+  .next,
+  .reading,
+  .noPrint {
+    display: none !important;
+  }
+  .report,
+  .problemPanel {
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+  .findings {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .finding {
+    break-inside: avoid;
+  }
+  .report table {
+    min-width: 0;
+  }
+  .report tr,
+  .report h3,
+  .report h4 {
+    break-inside: avoid;
+    break-after: avoid;
+  }
+}

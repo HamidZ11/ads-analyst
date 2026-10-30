@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import LandingPage, { metadata as landingMetadata } from "@/app/(marketing)/page";
 import { metadata as pricingMetadata } from "@/app/(marketing)/pricing/page";
-import { APP_HOME, APP_PATHS, MARKETING_PATHS } from "@/lib/routes";
+import { APP_HOME, APP_PATHS, AUDIT_PATH, MARKETING_PATHS } from "@/lib/routes";
 import {
   contactEmail,
   INDEXED,
@@ -131,7 +131,17 @@ describe("marketing metadata", () => {
 describe("sitemap and robots", () => {
   it("lists exactly the canonical public URLs", () => {
     const urls = sitemapFor(ORIGIN).map((entry) => entry.url);
-    expect(urls).toEqual([ORIGIN, `${ORIGIN}/pricing`, `${ORIGIN}/privacy`, `${ORIGIN}/terms`]);
+    expect(urls).toEqual([
+      ORIGIN,
+      `${ORIGIN}/audit`,
+      `${ORIGIN}/pricing`,
+      `${ORIGIN}/privacy`,
+      `${ORIGIN}/terms`,
+      `${ORIGIN}/tools`,
+      `${ORIGIN}/tools/roas-calculator`,
+      `${ORIGIN}/tools/cpa-calculator`,
+      `${ORIGIN}/tools/break-even-roas-calculator`,
+    ]);
     for (const path of [...APP_PATHS, "/sign-in", "/auth/callback"])
       expect(
         urls.some((url) => url.startsWith(`${ORIGIN}${path}`)),
@@ -194,6 +204,9 @@ describe("public links", () => {
     ...readdirSync(join(root, "src/features/marketing"))
       .filter((file) => file.endsWith(".tsx"))
       .map((file) => join(root, "src/features/marketing", file)),
+    ...readdirSync(join(root, "src/features/tools"))
+      .filter((file) => file.endsWith(".tsx"))
+      .map((file) => join(root, "src/features/tools", file)),
   ].map((file) => readFileSync(file, "utf8"));
   const hrefs = sources.flatMap((source) =>
     [...source.matchAll(/href[=:]\s*"([^"]*)"/g)].map((match) => match[1]),
@@ -202,7 +215,8 @@ describe("public links", () => {
 
   it("only links to pages that exist, to anchors on the home page, and to https sites", () => {
     expect(hrefs.length).toBeGreaterThan(5);
-    const pages = new Set<string>([...MARKETING_PATHS, "/sign-in", APP_HOME]);
+    // The audit page is built on another branch and joins at integration.
+    const pages = new Set<string>([...MARKETING_PATHS, "/sign-in", APP_HOME, AUDIT_PATH]);
     for (const href of hrefs) {
       expect(href, "empty href").not.toBe("");
       expect(href, href).not.toMatch(/-lab\b|mailto:|^#$/);

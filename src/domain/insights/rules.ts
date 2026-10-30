@@ -976,6 +976,14 @@ export function detectorEnvironment(facts: InsightFacts): DetectorEnv {
   };
 }
 
+/** A daily account chart in the Insights grammar (null for short periods or no readings). */
+export function accountChart(
+  facts: InsightFacts,
+  key: "conversions" | "spend",
+): InsightChart | null {
+  return chartFor(facts.account, key, detectorEnvironment(facts));
+}
+
 function rank(f: Finding): [number, number] {
   return [PRIORITY_ORDER.indexOf(f.priority), DETECTOR_PRECEDENCE.indexOf(f.detector)];
 }

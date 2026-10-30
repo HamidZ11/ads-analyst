@@ -30,6 +30,15 @@ import { collectInsightFacts } from "@/features/insights/facts";
 import { buildContext } from "@/features/workspace/context";
 import type { Workspace } from "@/features/workspace/server";
 import {
+  commaDecimal,
+  dayFirst,
+  mapAmounts,
+  mapDates,
+  toDelimited,
+  withTotalsRow,
+} from "@/data/import/__fixtures__/meta-variants";
+import {
+  planImport,
   readImportRequest,
   readTargets,
   runImport,
@@ -516,4 +525,24 @@ describe("imported data from Postgres flows through the existing analytics uncha
 
 it("fixture days are the 14 days ending 30 September", () => {
   expect([DAYS_14[0], DAYS_14.at(-1)]).toEqual(["2026-09-17", "2026-09-30"]);
+});
+
+describe("signed-in import of real-world export shapes", () => {
+  it("plans the same rows for a semicolon, decimal-comma, day-first export with a BOM and a totals row", () => {
+    const context = { now: NOW, clients: [], accountIdFor: () => null };
+    const clean = planImport(
+      request(ecommerceCsv(), { kind: "new", client: newClient() }),
+      context,
+    );
+    const european = toDelimited(
+      ECOM_HEADERS,
+      mapDates(mapAmounts(withTotalsRow(ecommerceRows()), commaDecimal), dayFirst),
+      ";",
+      { bom: true, eol: "\r\n" },
+    );
+    const plan = planImport(request(european, { kind: "new", client: newClient() }), context);
+    if (!clean.ok || !plan.ok) throw new Error("expected both plans to succeed");
+    expect(plan.summary).toEqual(clean.summary);
+    expect(plan.payload.metrics).toEqual(clean.payload.metrics);
+  });
 });

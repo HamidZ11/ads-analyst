@@ -97,49 +97,144 @@ export interface ValidationResult {
  * Value parsing
  * ------------------------------------------------------------------------ */
 
+/**
+ * How a file writes decimals. Ads Manager writes `1234.56`; a spreadsheet saved
+ * in a European locale writes `1.234,56` (usually with `;` between fields).
+ */
+export type DecimalMark = "point" | "comma";
+
 const PLAIN_NUMBER = /^-?\d+(\.\d+)?$/;
 const GROUPED_NUMBER = /^-?\d{1,3}(,\d{3})+(\.\d+)?$/;
+const PLAIN_COMMA_NUMBER = /^-?\d+(,\d+)?$/;
+const GROUPED_COMMA_NUMBER = /^-?\d{1,3}(\.\d{3})+(,\d+)?$/;
+/** Thousands grouped with a space, a no-break space or a narrow no-break space. */
+const SPACE_GROUPED = /^-?\d{1,3}([ \u00a0\u202f]\d{3})+([.,]\d+)?$/;
 
-/** Plain or thousands-grouped decimals only; no symbols, percentages or exponents. */
-export function parseNumber(cell: string): number | null | "invalid" {
+/**
+ * Plain or thousands-grouped decimals only; no symbols, percentages or
+ * exponents. With `comma`, the comma is the decimal mark and dots group.
+ */
+export function parseNumber(
+  cell: string,
+  decimal: DecimalMark = "point",
+): number | null | "invalid" {
   const v = cell.trim();
   if (v === "" || v === "-" || v === "—") return null;
+  if (SPACE_GROUPED.test(v)) {
+    const digits = v.replace(/[ \u00a0\u202f]/g, "");
+    const mark = digits.includes(",") ? "," : digits.includes(".") ? "." : null;
+    if (mark && mark !== (decimal === "comma" ? "," : ".")) return "invalid";
+    return Number(digits.replace(",", "."));
+  }
+  if (decimal === "comma") {
+    if (PLAIN_COMMA_NUMBER.test(v)) return Number(v.replace(",", "."));
+    if (GROUPED_COMMA_NUMBER.test(v)) return Number(v.replace(/\./g, "").replace(",", "."));
+    return "invalid";
+  }
   if (PLAIN_NUMBER.test(v)) return Number(v);
   if (GROUPED_NUMBER.test(v)) return Number(v.replace(/,/g, ""));
   return "invalid";
 }
 
-const SYMBOL_CURRENCY: Record<string, CurrencyCode> = { "£": "GBP", $: "USD", "€": "EUR" };
+/** A comma decimal that cannot be a thousands separator: `12,5`, `12,50`, `1.234,56`. */
+const COMMA_DECIMAL_EVIDENCE = /^-?(\d+,\d{1,2}|\d{1,3}(\.\d{3})+,\d+)$/;
+/** A point decimal that cannot be a thousands separator: `12.5`, `12.50`, `1,234.56`. */
+const POINT_DECIMAL_EVIDENCE = /^-?(\d+\.\d{1,2}|\d{1,3}(,\d{3})+\.\d+)$/;
 
 /**
- * An amount, allowing a leading currency symbol (as a spreadsheet may add).
- * The symbol is only removed when it names the import's currency; a different
- * symbol is reported, never converted.
+ * The decimal mark of the given columns. Comma only when some value can only
+ * be read with a decimal comma and none can only be read with a decimal point;
+ * otherwise the Ads Manager default, point.
+ */
+export function detectDecimalMark(table: CsvTable, columns: readonly number[]): DecimalMark {
+  let comma = false;
+  let point = false;
+  for (const row of table.rows) {
+    for (const index of columns) {
+      const v = stripSymbol((row[index] ?? "").trim());
+      if (COMMA_DECIMAL_EVIDENCE.test(v)) comma = true;
+      else if (POINT_DECIMAL_EVIDENCE.test(v)) point = true;
+    }
+    if (comma && point) break;
+  }
+  return comma && !point ? "comma" : "point";
+}
+
+const SYMBOL_CURRENCY: Record<string, CurrencyCode> = { "£": "GBP", $: "USD", "€": "EUR" };
+
+/** The currency symbol before or after an amount: `£1,234.56`, `-£5`, `12,50 €`. */
+function splitSymbol(v: string): { sign: string; symbol: string; amount: string } | null {
+  const leading = /^(-?)([£$€])\s?(.*)$/.exec(v);
+  if (leading) return { sign: leading[1], symbol: leading[2], amount: leading[3] };
+  const trailing = /^(-?)(.*?)\s?([£$€])$/.exec(v);
+  if (trailing) return { sign: trailing[1], symbol: trailing[3], amount: trailing[2] };
+  return null;
+}
+
+function stripSymbol(v: string): string {
+  const parts = splitSymbol(v);
+  return parts ? `${parts.sign}${parts.amount}` : v;
+}
+
+/** The currency named by a symbol on any of the cells, when they agree on one. */
+export function symbolCurrency(cells: Iterable<string>): CurrencyCode | null | "mixed" {
+  let found: CurrencyCode | null = null;
+  for (const cell of cells) {
+    const parts = splitSymbol(cell.trim());
+    if (!parts) continue;
+    const currency = SYMBOL_CURRENCY[parts.symbol];
+    if (found && found !== currency) return "mixed";
+    found = currency;
+  }
+  return found;
+}
+
+/**
+ * An amount, allowing a currency symbol before or after it (as a spreadsheet
+ * may add). The symbol is only removed when it names the import's currency; a
+ * different symbol is reported, never converted.
  */
 export function parseMoney(
   cell: string,
   currency: CurrencyCode,
+  decimal: DecimalMark = "point",
 ): number | null | "invalid" | { symbol: string } {
   const v = cell.trim();
-  const match = /^(-?)([£$€])\s?(.*)$/.exec(v);
-  if (!match) return parseNumber(v);
-  if (SYMBOL_CURRENCY[match[2]] !== currency) return { symbol: match[2] };
-  return parseNumber(`${match[1]}${match[3]}`);
+  const parts = splitSymbol(v);
+  if (!parts) return parseNumber(v, decimal);
+  if (SYMBOL_CURRENCY[parts.symbol] !== currency) return { symbol: parts.symbol };
+  return parseNumber(`${parts.sign}${parts.amount}`, decimal);
 }
 
 /**
- * ISO calendar dates: YYYY-MM-DD (or with slashes), optionally followed by a
- * time, which is ignored. The date is taken exactly as written: no Date
- * parsing of the string and no timezone conversion, so it cannot drift by a
- * day. Day-first and month-first forms are ambiguous and are rejected.
+ * How a file writes its dates: ISO year first (Ads Manager's own format), or
+ * day-first or month-first with slashes, dots or dashes, as a spreadsheet
+ * saved in a British or American locale writes them.
  */
-export function parseDate(cell: string): IsoDate | null {
-  const match =
-    /^(\d{4})[-/](\d{2})[-/](\d{2})(?:[ T]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/.exec(
-      cell.trim(),
-    );
-  if (!match) return null;
-  const iso = `${match[1]}-${match[2]}-${match[3]}`;
+export type DateOrder = "ymd" | "dmy" | "mdy";
+
+const ISO_DATE =
+  /^(\d{4})[-/](\d{2})[-/](\d{2})(?:[ T]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/;
+const LOCAL_DATE = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?$/;
+
+/**
+ * Calendar dates, optionally followed by a time, which is ignored. With the
+ * default `ymd`, only ISO dates: YYYY-MM-DD (or with slashes). With `dmy` or
+ * `mdy`, also 17/09/2026 or 09/17/2026 read in that order. The date is taken
+ * exactly as written: no Date parsing of the string and no timezone
+ * conversion, so it cannot drift by a day.
+ */
+export function parseDate(cell: string, order: DateOrder = "ymd"): IsoDate | null {
+  const v = cell.trim();
+  let iso: string;
+  const match = ISO_DATE.exec(v);
+  if (match) iso = `${match[1]}-${match[2]}-${match[3]}`;
+  else {
+    const local = order === "ymd" ? null : LOCAL_DATE.exec(v);
+    if (!local) return null;
+    const [day, month] = order === "dmy" ? [local[1], local[2]] : [local[2], local[1]];
+    iso = `${local[3]}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
   if (!isIsoDate(iso)) return null;
   // Reject days the calendar does not have (2026-02-30 would otherwise roll over).
   const [y, m, d] = iso.split("-").map(Number);
@@ -149,6 +244,37 @@ export function parseDate(cell: string): IsoDate | null {
     check.getUTCDate() === d
     ? iso
     : null;
+}
+
+/**
+ * The order a file writes its dates in, from every value in the given
+ * columns. ISO when every date is ISO. For slashed dates, a first part over
+ * 12 means day first and a second part over 12 means month first. When every
+ * date could be read either way, the reading that keeps the dates closest
+ * together wins: a daily export covers consecutive days, so 01/10 to 14/10
+ * is 1 to 14 October, not ten months. Null when the order can't be decided.
+ */
+export function detectDateOrder(values: Iterable<string>): DateOrder | null {
+  const local: string[] = [];
+  for (const raw of values) {
+    const v = raw.trim();
+    if (!v || ISO_DATE.test(v)) continue;
+    if (LOCAL_DATE.test(v)) local.push(v);
+  }
+  if (local.length === 0) return "ymd";
+  const fits = (order: DateOrder) => local.every((v) => parseDate(v, order) !== null);
+  const dmy = fits("dmy");
+  const mdy = fits("mdy");
+  if (dmy !== mdy) return dmy ? "dmy" : "mdy";
+  if (!dmy) return null;
+  const span = (order: DateOrder) => {
+    const dates = local.map((v) => parseDate(v, order)!).sort();
+    return Date.parse(dates.at(-1)!) - Date.parse(dates[0]);
+  };
+  const [d, m] = [span("dmy"), span("mdy")];
+  if (d !== m) return d < m ? "dmy" : "mdy";
+  // Same span either way: only safe when every date reads the same (05/05/2026).
+  return local.every((v) => parseDate(v, "dmy") === parseDate(v, "mdy")) ? "dmy" : null;
 }
 
 /** Strips control and bidirectional-override characters, collapses spaces, caps length. */
@@ -171,10 +297,11 @@ export function columnKind(table: CsvTable, index: number): ColumnKind {
     const value = (row[index] ?? "").trim();
     if (!value || value === "-" || value === "—") continue;
     seen += 1;
-    if (parseDate(value)) dates += 1;
+    if (parseDate(value) || parseDate(value, "dmy") || parseDate(value, "mdy")) dates += 1;
     else {
-      const n = parseNumber(value.replace(/^(-?)[£$€]\s?/, "$1").replace(/%$/, ""));
-      if (n !== "invalid") numbers += 1;
+      const bare = stripSymbol(value).replace(/%$/, "");
+      if (parseNumber(bare) !== "invalid" || parseNumber(bare, "comma") !== "invalid")
+        numbers += 1;
     }
     if (seen >= 200) break;
   }
@@ -394,9 +521,31 @@ export function validateImport(
       `This file contains more than one currency (${headerCurrencies.join(" and ")}), so it can't be imported as one account.`,
     );
 
+  // 3. How the file writes dates and decimals, decided once for the whole file.
+  const dateColumns = (["date", "reportingEnd"] as const)
+    .map((f) => col(f))
+    .filter((i): i is number => i !== undefined);
+  const dateOrder = detectDateOrder(
+    table.rows.flatMap((row) => dateColumns.map((i) => row[i] ?? "")),
+  );
+  if (dateOrder === null) {
+    const sample = table.rows.map((row) => (row[col("date")!] ?? "").trim()).find(Boolean);
+    issues.add(
+      "error",
+      "ambiguous_date",
+      `We can't tell whether dates such as “${sample}” put the day or the month first. Upload the file exactly as Ads Manager exported it, without opening and saving it in a spreadsheet.`,
+      undefined,
+      "date",
+    );
+  }
+  const decimal = detectDecimalMark(
+    table,
+    numericFields.map((f) => col(f)!),
+  );
+
   if (issues.hasErrors()) return summarise(issues, [], null, null, null, table.rows.length);
 
-  // 3. Rows.
+  // 4. Rows.
   const outcomeColumn = inspection.columns[col("conversions")!];
   const resultsLike =
     outcomeColumn?.role.kind === "outcome" &&
@@ -460,6 +609,20 @@ export function validateImport(
       (f) => cleanText(cell(row, f)) === "",
     );
 
+  // A Total or "Results from 12 ads" row names no campaign, ad set or ad by ID.
+  const totalLike = (row: string[]) =>
+    (["campaignId", "adSetId", "adId"] as const).every((f) => cleanText(cell(row, f)) === "") &&
+    (["campaignName", "adSetName", "adName"] as const).some((f) =>
+      /^(totals?|grand total|results from \d)/i.test(cleanText(cell(row, f))),
+    );
+  // With a Day column, Day is the row's date and the reporting range only has to
+  // contain it (Ads Manager may write the whole report range there). Without
+  // one, the reporting range itself must be a single day.
+  const dateColumn = inspection.columns[col("date") ?? -1];
+  const dayColumn = dateColumn?.role.kind === "field" && dateColumn.role.field === "date";
+  const startsIndex = inspection.columns.find((c) => c.key === "reporting starts")?.index;
+  const order = dateOrder ?? "ymd";
+
   const fileLast = { date: "" };
   table.rows.forEach((row, r) => {
     const line = table.lines[r] ?? r + 2;
@@ -474,19 +637,19 @@ export function validateImport(
       return;
     }
     const dateCell = cell(row, "date");
-    // Exports can end with a total row that names no day, campaign, ad set or ad.
-    if (!dateCell.trim() && identityBlank(row)) {
+    // Exports can end with a total row that names no campaign, ad set or ad.
+    if (identityBlank(row) || totalLike(row)) {
       issues.add(
         "warning",
         "summary_row",
         (n) =>
-          `${rowsWord(n)} without a date or campaign (a total row) ${n === 1 ? "was" : "were"} skipped.`,
+          `${rowsWord(n)} that name no campaign, ad set or ad (a total row) ${n === 1 ? "was" : "were"} skipped.`,
         { line },
       );
       return;
     }
     let ok = true;
-    const date = parseDate(dateCell);
+    const date = parseDate(dateCell, order);
     if (!date) {
       issues.add(
         "error",
@@ -498,8 +661,15 @@ export function validateImport(
       ok = false;
     }
     if (date && col("reportingEnd") !== undefined) {
-      const end = parseDate(cell(row, "reportingEnd"));
-      if (end !== date) {
+      const end = parseDate(cell(row, "reportingEnd"), order);
+      const start =
+        dayColumn && startsIndex !== undefined
+          ? parseDate(row[startsIndex] ?? "", order)
+          : null;
+      const oneDay = dayColumn
+        ? end !== null && date <= end && (start === null || start <= date)
+        : end === date;
+      if (!oneDay) {
         issues.add(
           "error",
           "multi_day",
@@ -529,7 +699,9 @@ export function validateImport(
     for (const field of METRICS) {
       if (col(field) === undefined || (field === "revenue" && !importRevenue)) continue;
       const raw = cell(row, field);
-      const parsedValue = MONEY.has(field) ? parseMoney(raw, moneyCurrency) : parseNumber(raw);
+      const parsedValue = MONEY.has(field)
+        ? parseMoney(raw, moneyCurrency, decimal)
+        : parseNumber(raw, decimal);
       const label = fieldName(field);
       if (typeof parsedValue === "object" && parsedValue !== null) {
         issues.add(

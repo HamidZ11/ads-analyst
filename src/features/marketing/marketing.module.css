@@ -235,6 +235,22 @@
 .button:hover {
   background: #1e2539;
 }
+/* The nav's "Try the demo" on a page whose own primary must lead (the audit's
+   drop zone): outlined in ink instead of filled, same size and radius. */
+.navCta.secondary,
+.button.secondary {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--ink-quiet);
+  color: var(--ink);
+  transition:
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+.navCta.secondary:hover,
+.button.secondary:hover {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
 .textLink {
   display: inline-flex;
   align-items: center;
@@ -385,5 +401,30 @@
 @media (min-width: 1024px) {
   .menuPanel {
     display: none;
+  }
+}
+/* Five links since Free audit: closer together until the bar has room, with a
+   gap that keeps Pricing clear of Sign in. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .nav {
+    column-gap: 28px;
+  }
+  .links {
+    gap: 24px;
+  }
+}
+
+/* Print: a page's content alone, on white. The audit report is the reason
+   (D-083); the other pages print the same way. --------------------------- */
+
+@media print {
+  .site {
+    min-height: 0;
+    background: #fff;
+  }
+  .skip,
+  .navBar,
+  .footer {
+    display: none !important;
   }
 }

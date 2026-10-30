@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { WorkspaceGateway } from "@/data/supabase/gateway";
 import { loadSession, type SessionState } from "@/features/workspace/server";
 import { POST } from "./route";
@@ -11,7 +11,14 @@ const gateway = {
   snapshot: vi.fn(),
   importMetaCsv: vi.fn(),
   updateTargets: vi.fn(),
+  renameWorkspace: vi.fn(),
+  reportNote: vi.fn(),
+  saveReportNote: vi.fn(),
   consumeRateLimit: vi.fn(),
+  subscription: vi.fn(),
+  createShareLink: vi.fn(),
+  shareLinks: vi.fn(),
+  revokeShareLink: vi.fn(),
 } satisfies WorkspaceGateway;
 
 const session = {
@@ -65,5 +72,59 @@ describe("import endpoint limits", () => {
     expect((await POST(request(JSON.stringify({ csv: 1 })))).status).toBe(400);
     expect(gateway.consumeRateLimit).toHaveBeenCalledTimes(2);
     expect(gateway.importMetaCsv).not.toHaveBeenCalled();
+  });
+});
+
+describe("import endpoint billing gate (D-088)", () => {
+  const billed = {
+    ...(session as { context: object }),
+    context: { ...(session as { context: object }).context, mode: "supabase" },
+  } as unknown as SessionState;
+  const configure = (enforce: boolean) => {
+    vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_51Abc");
+    vi.stubEnv("STRIPE_PRICE_AGENCY_MONTHLY", "price_M");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://adanalyst.example");
+    vi.stubEnv("BILLING_ENFORCE", enforce ? "true" : "");
+  };
+
+  beforeEach(() => vi.mocked(loadSession).mockResolvedValue(billed));
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("lets a workspace without a subscription import while enforcement is off", async () => {
+    configure(false);
+    gateway.subscription.mockResolvedValue(null);
+    gateway.consumeRateLimit.mockResolvedValue(false);
+    expect((await POST(request("{}"))).status).toBe(429);
+    expect(gateway.consumeRateLimit).toHaveBeenCalled();
+  });
+
+  it("refuses a workspace without an active subscription when enforcement is on, before spending anything", async () => {
+    configure(true);
+    for (const value of [null, { status: "past_due" }, { status: "canceled" }]) {
+      gateway.subscription.mockResolvedValue(value);
+      const response = await POST(request("{}"));
+      expect(response.status).toBe(402);
+      expect((await response.json()).message).toMatch(/stays readable/);
+    }
+    expect(gateway.consumeRateLimit).not.toHaveBeenCalled();
+    expect(gateway.importMetaCsv).not.toHaveBeenCalled();
+  });
+
+  it("lets an active or trialing workspace through when enforcement is on", async () => {
+    configure(true);
+    gateway.consumeRateLimit.mockResolvedValue(false);
+    for (const status of ["active", "trialing"]) {
+      gateway.subscription.mockResolvedValue({ status });
+      expect((await POST(request("{}"))).status).toBe(429);
+    }
+  });
+
+  it("fails closed when the subscription can't be read under enforcement", async () => {
+    configure(true);
+    gateway.subscription.mockRejectedValue(new Error("down"));
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect((await POST(request("{}"))).status).toBe(503);
+    quiet.mockRestore();
+    expect(gateway.consumeRateLimit).not.toHaveBeenCalled();
   });
 });

@@ -219,6 +219,21 @@ export function inspectHeaders(headers: readonly string[]): Inspection {
   };
 }
 
+/**
+ * What a "Result indicator" or "Result type" value counts, when it names one
+ * of the outcomes Ad Analyst models: `actions:offsite_conversion.fb_pixel_purchase`
+ * or "Website purchases" → purchase, "Leads (form)" → lead. Null otherwise.
+ */
+export function outcomeFromIndicator(value: string): OutcomeKind | null {
+  const v = value.trim().toLowerCase();
+  if (/purchase/.test(v)) return "purchase";
+  if (/lead/.test(v)) return "lead";
+  if (/trial/.test(v)) return "trial";
+  if (/registration/.test(v)) return "registration";
+  if (/subscri/.test(v)) return "subscription";
+  return null;
+}
+
 const OUTCOME_PREFERENCE: Record<ClientType, readonly OutcomeKind[]> = {
   ecommerce: ["purchase"],
   lead_generation: ["lead"],

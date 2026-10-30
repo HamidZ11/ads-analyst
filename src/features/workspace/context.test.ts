@@ -2,9 +2,35 @@ import { describe, expect, it } from "vitest";
 import { InMemoryRepository } from "@/data/repository";
 import { buildSeedDataset } from "@/data/seed";
 import type { Dataset } from "@/domain/types";
-import { buildContext, chooseActive, defaultWorkspaceName } from "./context";
+import { buildContext, chooseActive, defaultWorkspaceName, withPreset } from "./context";
 
 const seed = buildSeedDataset({ anchorDate: "2026-10-03" });
+
+describe("another preset for the same context", () => {
+  it("recomputes only the periods and their comparison", () => {
+    const today = buildContext({
+      mode: "demo",
+      user: null,
+      workspace: { id: "w", name: "W" },
+      repository: new InMemoryRepository(seed),
+      requestedClientId: "cli_luxe",
+      preset: "today",
+      canImport: false,
+      now: new Date("2026-10-03T10:00:00Z"),
+    });
+    const week = withPreset(today, "7d");
+    expect(week.preset).toBe("7d");
+    expect(week.periods.current).toEqual({ start: "2026-09-27", end: "2026-10-03" });
+    expect(week.comparison).toBe("previous 7 days");
+    expect({
+      ...week,
+      preset: today.preset,
+      periods: today.periods,
+      comparison: today.comparison,
+    }).toEqual(today);
+    expect(withPreset(today, "today")).toBe(today);
+  });
+});
 
 describe("selection", () => {
   it("lets a cookie choose only among accessible items", () => {

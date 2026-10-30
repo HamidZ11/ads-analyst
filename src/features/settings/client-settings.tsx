@@ -8,6 +8,7 @@ import { signOut } from "@/features/auth/actions";
 import type { Workspace } from "@/features/workspace/server";
 import type { WorkspaceContext } from "@/features/workspace/context";
 import { TargetForm } from "./target-form";
+import { WorkspaceNameForm } from "./workspace-name-form";
 
 /* Settings reads as one page of sections separated by hairlines: a heading
    and one line of context on the left, the settings on the right. Only what
@@ -64,10 +65,7 @@ export function AccountSection({
       <DefinitionList
         items={
           signedIn
-            ? [
-                { label: "Signed in as", value: email ?? "Signed in" },
-                { label: "Workspace", value: workspaceName },
-              ]
+            ? [{ label: "Signed in as", value: email ?? "Signed in" }]
             : [
                 { label: "Agency", value: workspaceName },
                 { label: "Mode", value: "Demo", detail: "Read-only. Nothing is stored." },
@@ -75,7 +73,12 @@ export function AccountSection({
         }
       />
       {signedIn ? (
-        <form action={signOut} className="mt-4">
+        <div className="mt-4">
+          <WorkspaceNameForm name={workspaceName} />
+        </div>
+      ) : null}
+      {signedIn ? (
+        <form action={signOut} className="mt-2">
           <button type="submit" className={buttonClasses("secondary")}>
             Sign out
           </button>
@@ -85,7 +88,17 @@ export function AccountSection({
   );
 }
 
-export function ClientSettings({ workspace }: { workspace: Workspace }) {
+export function ClientSettings({
+  workspace,
+  billing,
+  shareLinks,
+}: {
+  workspace: Workspace;
+  /** The Billing section, in a signed-in deployment (D-088). */
+  billing?: ReactNode;
+  /** The Shared report links section, in a signed-in deployment (D-NEW-share-1). */
+  shareLinks?: ReactNode;
+}) {
   const { client, adAccount, coverage, dataSource, canImport } = workspace;
   const vocab = conversionVocabulary(client.type);
   const imported = dataSource.kind === "meta_csv";
@@ -101,6 +114,8 @@ export function ClientSettings({ workspace }: { workspace: Workspace }) {
           workspace.mode === "supabase" ? workspace.workspace.name : workspace.agency.name
         }
       />
+      {billing}
+      {shareLinks}
 
       <SettingsSection
         id="settings-client"

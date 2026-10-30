@@ -2,7 +2,11 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDemoRepository } from "@/data";
-import { supabaseGateway, type WorkspaceGateway } from "@/data/supabase/gateway";
+import {
+  supabaseGateway,
+  type WorkspaceGateway,
+  type WorkspaceMembership,
+} from "@/data/supabase/gateway";
 import { snapshotRepository } from "@/data/supabase/snapshot";
 import { parseDatePreset } from "@/domain/periods";
 import type { Client, ClientDataSource } from "@/domain/types";
@@ -28,7 +32,13 @@ export type SessionState =
   | { kind: "unconfigured" }
   | { kind: "signed_out" }
   | { kind: "unavailable" }
-  | { kind: "app"; context: WorkspaceContext; gateway: WorkspaceGateway | null };
+  | {
+      kind: "app";
+      context: WorkspaceContext;
+      gateway: WorkspaceGateway | null;
+      /** The user's role in the active workspace; null in demo mode, which has no members. */
+      role: WorkspaceMembership["role"] | null;
+    };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -52,6 +62,7 @@ export const loadSession = cache(async (): Promise<SessionState> => {
     return {
       kind: "app",
       gateway: null,
+      role: null,
       context: buildContext({
         mode: "demo",
         user: null,
@@ -81,6 +92,7 @@ export const loadSession = cache(async (): Promise<SessionState> => {
     return {
       kind: "app",
       gateway,
+      role: workspace.role,
       context: buildContext({
         mode: "supabase",
         user: { id: sub, email },
@@ -113,9 +125,18 @@ export const getWorkspaceContext = cache(async (): Promise<WorkspaceContext> => 
   redirect("/sign-in");
 });
 
-/** For analysis pages: the selected client; an empty workspace goes to its first import. */
-export const getWorkspace = cache(async (): Promise<Workspace> => {
-  const context = await getWorkspaceContext();
-  if (!context.client || !context.dataSource) redirect("/clients/import?client=new");
+/**
+ * The workspace with its selected client, or null while it has no clients;
+ * pages then render their first-run state (D-090).
+ */
+export function readyWorkspace(context: WorkspaceContext): Workspace | null {
+  if (!context.client || !context.dataSource) return null;
   return { ...context, client: context.client, dataSource: context.dataSource };
+}
+
+/** For routes that need a client: the selected one; an empty workspace goes to its first import. */
+export const getWorkspace = cache(async (): Promise<Workspace> => {
+  const workspace = readyWorkspace(await getWorkspaceContext());
+  if (!workspace) redirect("/clients/import?client=new");
+  return workspace;
 });

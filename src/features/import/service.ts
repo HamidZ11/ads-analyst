@@ -13,6 +13,7 @@ import {
 } from "@/data/import";
 import { GatewayError, type ImportWriteResult } from "@/data/supabase/gateway";
 import { tracksRevenue } from "@/domain/labels";
+import { MAX_TARGET_CPA, MAX_TARGET_ROAS, positiveOrNull } from "./targets";
 import { todayInTimezone } from "@/domain/periods";
 import type { Client, ClientType, CurrencyCode, IsoDate } from "@/domain/types";
 
@@ -60,8 +61,6 @@ export type ImportResponse =
   | { ok: false; status: number; message: string; issues?: ImportIssue[] };
 
 const CLIENT_TYPES: readonly ClientType[] = ["ecommerce", "lead_generation", "saas"];
-export const MAX_TARGET_CPA = 1_000_000;
-export const MAX_TARGET_ROAS = 1_000;
 
 export function isValidTimezone(zone: string): boolean {
   if (!zone || zone.length > 64) return false;
@@ -72,13 +71,6 @@ export function isValidTimezone(zone: string): boolean {
     return false;
   }
 }
-
-const positiveOrNull = (value: unknown, max: number): number | null | "invalid" => {
-  if (value === null || value === undefined || value === "") return null;
-  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0 || value > max)
-    return "invalid";
-  return value;
-};
 
 /** Validates the shape of a request body; returns a message for anything malformed. */
 export function readImportRequest(body: unknown): ImportRequest | string {
@@ -334,24 +326,4 @@ export async function runImport(
   };
 }
 
-/** Optional targets from a form: positive numbers or blank; ROAS needs conversion value. */
-export function readTargets(
-  input: { targetCpa: unknown; targetRoas: unknown },
-  revenueTracked: boolean,
-):
-  | { ok: true; targetCpa: number | null; targetRoas: number | null }
-  | { ok: false; message: string } {
-  const targetCpa = positiveOrNull(input.targetCpa, MAX_TARGET_CPA);
-  const targetRoas = positiveOrNull(input.targetRoas, MAX_TARGET_ROAS);
-  if (targetCpa === "invalid")
-    return { ok: false, message: "Target CPA must be a positive amount." };
-  if (targetRoas === "invalid")
-    return { ok: false, message: "Target ROAS must be a positive multiple." };
-  if (targetRoas !== null && !revenueTracked)
-    return {
-      ok: false,
-      message:
-        "A ROAS target needs conversion value, which this client's imports do not include.",
-    };
-  return { ok: true, targetCpa, targetRoas };
-}
+export { readTargets } from "./targets";

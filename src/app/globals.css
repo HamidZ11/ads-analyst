@@ -250,3 +250,46 @@
 @utility duration-deliberate {
   transition-duration: var(--duration-deliberate);
 }
+
+/* Printing (the client report's "Save as PDF"): A4 pages, exact colours so
+   chart lines and delta tints survive, no entrance animation. The app shell
+   hides itself with print: utilities. */
+@page {
+  size: A4;
+  margin: 16mm 14mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  /* Seven-column report tables fit A4's printable width (about 688px). */
+  th,
+  td {
+    padding-inline: 6px !important;
+  }
+
+  th {
+    white-space: normal !important;
+  }
+
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+}

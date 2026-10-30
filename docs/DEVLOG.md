@@ -1291,3 +1291,204 @@ Owner brief (D-082). Run through the project's Impeccable skill: context loaded,
 **Checks:** `pnpm check` (367 tests), `pnpm check:browsers http://localhost:3100/` (52 crop checks), overflow probe on `/`, `/pricing`, `/privacy`, `/terms` in three engines at three widths.
 
 **Correction (follow-up commit):** `git add -A` in the D-082 commit (8f17a19) also staged four untracked iCloud conflict copies (`scripts/check-crops 2.mjs`, `crop-scale.test 2.ts`, `cta-band 2.tsx`, `cta-band.test 2.ts`), and they were pushed. Three were identical to their originals; `cta-band 2.tsx` was the pre-renumbering copy (D-074 in a comment). Nothing referenced them. They are removed, and `.gitignore` now ignores names with a space before a one- to three-digit number, which no tracked file has.
+
+---
+
+## 2026-10-30 — Stripe subscription billing, test mode (D-088)
+
+Owner brief: subscription billing with Stripe, built and tested entirely in test mode, so the product is one configuration step from charging. Read first: D-051, D-055, D-060 to D-065, all three migrations, Next.js 16 route handler docs (`request.text()` for webhooks).
+
+- **Write path decided (D-088):** a `security definer` function guarded by a webhook-held secret, not a service-role key. Migration `20261030120000_workspace_billing.sql` adds:
+  - `workspace_subscriptions`: RLS member read, `SELECT` only.
+  - `billing_events`: processed event ids and outcomes.
+  - `billing_webhook_secret`: one SHA-256 hash, unreadable.
+  - `apply_billing_event`: anon-only, refuses without the secret, validates, then claims the event id and upserts in one transaction. Outcomes `duplicate`, `ignored`, `applied`, `unlinked`, `stale`, `conflict`.
+- **Data layer:** `src/data/supabase/billing.ts` (types, `supabaseBillingWriter` with the publishable key and no session) and `WorkspaceGateway.subscription` (RLS read). `test-database.ts` gains `setBillingSecret` and `sqlBillingWriter`.
+- **Billing feature** (`src/features/billing/`):
+  - `config.ts`: key guard (`sk_test_`, or `sk_live_` only with `NODE_ENV=production` and `BILLING_LIVE=true`), prices, origin, webhook configuration and `BILLING_ENFORCE`.
+  - `status.ts`: labels and entitlement.
+  - `policy.ts`: `importDecision`, the single gating policy.
+  - `stripe.ts`: a narrow client interface; `stripe` 23.0.1, pinned.
+  - `webhook.ts`: verify, ignore unhandled types, fetch the subscription from Stripe, write.
+  - `checkout.ts`, `server.ts`, `billing-section.tsx`, `links.ts`.
+- **Routes:** `/api/billing/checkout` and `/api/billing/portal` (form posts, origin check, 303 to Stripe or back to `/settings?billing=…#billing`) and `/api/billing/webhook` (public in the proxy, raw body). CSP `form-action` adds the Checkout and portal origins.
+- **Surfaces:**
+  - Settings: a Billing section after Account, in signed-in deployments only.
+  - Pricing: Agency Subscribe goes to Checkout via Settings, else the payment link, else is hidden.
+  - Import page and `/api/import`: gated by the policy (402, or 503 fail closed), only with `BILLING_ENFORCE=true` and Checkout configured.
+  - Privacy policy: lists the subscription details stored (updated 30 October 2026).
+- **Docs:** new `docs/BILLING.md` (dashboard setup, database secret, environment, Stripe CLI testing, going-live checklist). D-088 added; D-051 and D-065 marked amended. DESIGN.md §26 and §28, PRODUCT.md and README updated.
+- **Tests** (no network: fake Stripe client, Stripe's offline signature helper, PGlite):
+  - `src/data/supabase/billing.test.ts`: RLS reads, direct writes refused, secret required, idempotency, unlinked, stale, conflict, validation.
+  - `webhook.test.ts`: signature failures, replay, mode mismatch, each event type, retries, status mapping, end to end over SQL.
+  - `billing.test.ts`: key guard, configuration, policy on and off, wording, Checkout and portal, dead-link rules, pricing.
+  - `stripe.test.ts`: exact Checkout params, no trial or discount.
+  - `routes.test.ts`: the three routes, including public access to the webhook.
+  - `route.test.ts` for `/api/import`: gating.
+- **Smoke test** on a dev server (demo mode, port 3217): `/`, `/pricing`, `/settings` and `/clients/import` return 200; pricing shows no Subscribe without configuration; Settings has no Billing section in demo mode; the webhook answers 503 unconfigured. Server stopped afterwards.
+- **Not done in this pass:**
+  - `.env.example` is outside what this session may read or edit, so it isn't updated. The variable block to add is in `docs/BILLING.md` → Environment.
+  - `pnpm check:browsers`: Playwright browsers aren't installed on this machine, so it didn't run.
+  - Visual review of the Billing section: it needs a signed-in Supabase deployment.
+
+**Checks:** `pnpm check` (451 tests, build green). `pnpm check:browsers` not run: no Playwright browsers installed.
+
+---
+
+## 2026-10-30 — Instant wasted-spend audit at /audit
+
+Owner brief (D-083, D-084, D-085). Branch `feat/instant-audit`.
+
+- **Research.** Meta's Help Centre pages render client-side and could not be fetched; search surfaced Meta's wording "Select Reports, and then select Export table data", and consistent third-party guides (Ours Privacy, AdsUploader, Google Analytics' cost-data help) for the Ads tab, Breakdown › By time › Day, CSV/XLSX formats, "Reporting starts"/"Reporting ends" and "Amount spent (GBP)"-style headers. Whether a Day-broken export carries the day or the whole report range in Reporting starts/ends could not be confirmed, so both are accepted (D-085). The how-to block says only these steps and notes that menu names may differ.
+- **Parser (D-085).** `validate.ts`: `DecimalMark` and `detectDecimalMark`, `parseNumber`/`parseMoney` with a decimal mark, space grouping and trailing symbols, `symbolCurrency`, `DateOrder`, `parseDate(cell, order)` and `detectDateOrder`, an `ambiguous_date` blocker, Day inside the reporting range, labelled totals rows. `meta.ts`: `outcomeFromIndicator`. `setup.ts` uses the detected date order. Fixtures: `__fixtures__/meta-variants.ts`. Tests: `variants.test.ts`, one updated case in `import.test.ts` (a DD/MM date is now read; a Day outside its range is still `multi_day`), and a service-level plan test for a semicolon, decimal-comma, day-first file with a BOM and totals row.
+- **Audit (D-083).** `src/features/audit/`: `audit.ts` (`auditExport`, `outcomeOptions`, shape and currency checks), `audit-tool.tsx` (File API, drop area, sample, result and next steps), `audit-report.tsx`, `export-guide.tsx`, `audit.module.css` (layout and print), `sample.ts`/`sample-path.ts` and `public/audit-sample.csv`. Route `src/app/(marketing)/audit/page.tsx`; `/audit` added to `MARKETING_PATHS` (sitemap, indexing) with its own title and description. Marketing print rules hide the nav, footer and skip link.
+- **Landing (D-084).** Hero and closing band link "Get a free wasted-spend audit" to `/audit`; tests updated. The email audit moved to a line after the report on `/audit`, shown only with `CONTACT_EMAIL`.
+- **Tests.** `audit.test.ts` (report figures, flagged spend equals the rules' `spendInvolved`, European file equals the clean one, Results with indicator or type, lead and USD/EUR files, outcome choice, twelve unsupported shapes each with its fix, file issues with line samples, Excel), `sample.test.ts` (committed file equals the generator; audits cleanly), `audit-page.test.ts` (page and report render), `no-network.test.ts` (spies on fetch, XHR, WebSocket, EventSource, sendBeacon and storage while auditing; the browser import graph has no network, storage or server code and its only fetch is the sample GET; nothing beside `page.tsx`).
+- **Sample result.** The Luxe Skin sample (17–30 Sep 2026) gives 3 issues, 4 opportunities and 2 things to watch for 24–30 Sep against 17–23 Sep, £3,686 of £7,404 on campaigns that need attention, £638 on the one campaign with no purchases.
+- **Fixed in review.** The period fact overflowed a half-width cell at 360px (now spans the row on phones); the next-steps band was double-padded; refusals now scroll into view; the result container was an `aria-live` region that would have read the whole report (now a one-line status, with focus on the report heading or the refusal).
+
+**Checks:** `pnpm check` (412 tests). `pnpm check:audit` and `pnpm check:browsers` could not run: Playwright's browsers are not installed and installing them writes outside the worktree. The production server answered `/audit`, `/audit-sample.csv` and `/` (hero links to `/audit`) with 200.
+
+**Not verified:** the page has not been seen in a browser at any width; layout at 1440, 390 and 360px was reviewed in code only. No real Ads Manager export has been through the parser.
+
+**Deferred:** optional targets on the audit; currencies beyond GBP, USD and EUR; a nav or footer link to `/audit`; moving the analysis to a Web Worker for very large files.
+
+---
+
+## 2026-10-30 — Audit follow-ups: optional targets, Free audit in the nav, first browser run
+
+Owner answers to the audit's open questions (D-086, D-087). Branch `feat/instant-audit`.
+
+- **Answers.** Closing band stays on `/audit` (D-084 confirmed). Currencies stay GBP, USD and EUR (D-083 confirmed). Optional target CPA and ROAS on the audit. "Free audit" in the nav and footer.
+- **Targets.** `readTargets`, `positiveOrNull` and the target limits moved to `src/features/import/targets.ts` (pure; `service.ts` re-exports `readTargets` for Settings). `auditExport` takes `targets`, validates them with `readTargets` (ROAS dropped when the conversions carry no value) and puts them on the in-memory client; the report carries `targets`. `audit-targets.tsx`: the "Targets" section, hidden in print; "What the rules found" names the targets used. Tests: empty targets give an identical report; targets reach the rules (findings change, a target appears in them, flagged spend is still `spendInvolved`); invalid values refused with Settings' messages; a ROAS target dropped on a lead file; the report renders the inputs and the targets sentence.
+- **Nav.** "Free audit" in the inline nav, the phone menu (`aria-current="page"` on `/audit`) and the footer (test updated). At 1024px Pricing sat 14px from Sign in; links are 24px apart and the bar has a 28px column gap from 1024 to 1279px.
+- **First browser run.** Playwright's browsers are now installed. `pnpm check:audit` found two things: its refusal locator also matched Next's route announcer (`role="alert"`; now scoped to the focusable refusal), and `/audit` scrolled sideways by 22px at 390 and 50px at 360 in Chromium with a report. Cause: `Delta`'s `sr-only` text is absolutely positioned, and the ledger's scroller wasn't positioned, so those spans escaped its clipping. The scroller is now `relative`. Other app tables use the same pattern inside unpositioned scrollers and weren't checked in this pass. The targets button no longer stretches across the free grid column.
+- **Screens seen.** Chromium, `/audit` with the sample at 1440, 390 and 360 (top, report, targets before, applied and with an error, findings, ledger, closing section and footer, phone menu), and the nav at 1024 and 1280.
+
+**Checks:** `pnpm check` (417 tests). `pnpm check:audit` (45 checks across WebKit, Chromium and Firefox at 1440/390/360, no request carries the file) and `pnpm check:browsers` (52 crop checks) pass against a production server.
+
+**Not verified:** still no real Ads Manager export through the parser.
+
+---
+
+## 2026-10-30 — Billing answers (D-089)
+
+Owner answers to D-088's open questions. Branch `feat/billing`.
+
+- **Recorded as built:** any workspace member manages billing; Stripe's default proration (the code sets none; BILLING.md's portal step updated); gating only with Checkout configured.
+- **Payment link retired under Checkout.** `agencySubscribeTarget` already preferred Checkout; a pricing render test now checks that the link never appears with Checkout configured by either price alone. `.env.example` describes it as the fallback.
+- **Return to Billing after sign-in.** `src/features/auth/return-path.ts`: `safeReturnPath` (single-slash app paths only after URL resolution, at most 200 characters, no backslash, control character or space), `signInHref`, `BILLING_RETURN_PATH`, `RETURN_COOKIE`. Subscribe links to `/sign-in?next=%2Fsettings%23billing`. The proxy and the sign-in page send signed-in visitors to the validated `next`; `SignInForm` carries it as a hidden field; `requestSignInLink` stores it in an httpOnly one-hour cookie; `/auth/callback` validates it again, redirects and deletes the cookie. `return-path.test.ts` covers 16 open-redirect shapes (schemes, `//`, `/\`, encoded slashes, whitespace and newlines), non-app paths, dot segments out of the app and non-string input.
+- **Grace period.** Migration `20261030130000_billing_grace_period.sql`: `payment_failed_at`, and `apply_billing_event` re-created to set it on `invoice.payment_failed` (not while active or trialing), keep it through retries, reset it for a new subscription and clear it on active or trialing. `WorkspaceSubscription.paymentFailedAt`; `importDecision` takes `now` and returns `grace` with `graceEndsAt` for `past_due`/`unpaid` within `GRACE_DAYS` (7). Tests: PGlite (first failure kept through a retry and an update, cleared when active; nothing recorded while active or on a status change alone), policy boundaries (one millisecond before and exactly at 7 days, no timestamp, other statuses, enforcement off, Checkout unconfigured), and the Settings sentence.
+- **Client accounts.** `AGENCY_CLIENT_LIMIT` (10); Settings passes the workspace's client count; a live Agency subscription at 10 or more shows a soft notice with a pricing link. Nothing is enforced. Tests for 9, 10 and 14, custom plan, cancelled and no subscription.
+- **Env.** The seven billing variables are in `.env.example` as commented placeholders matching `docs/BILLING.md`.
+
+**Checks:** `pnpm check` (464 tests). `pnpm check:browsers` (52 crop checks) against a production server in demo mode with placeholder Checkout values; `/pricing` at 1440, 390 and 360 shows Subscribe linking to `/sign-in?next=%2Fsettings%23billing` and no payment link; following it lands on `/settings#billing`; `/sign-in?next=%2F%2Fevil.example` redirects to `/insights`.
+
+**Not verified:** the Billing section's grace and client notices only render in a signed-in Supabase deployment, so they are covered by render tests but have not been seen in a browser; the email-link round trip of the return cookie needs a Supabase test project.
+
+---
+
+## 2026-10-30 — First-run onboarding
+
+Owner brief: from first sign-in to the first real finding in about two minutes (D-090 to D-092; decision numbers are placeholders for the integrate step).
+
+- **Audit first**, in a real signed-in empty workspace: a throwaway stand-in for Supabase outside the repo (PGlite with the three migrations, answering `/auth/v1/user` and `/rest/v1/rpc/*` on 127.0.0.1, an HS256 session cookie so `getClaims` falls back to `getUser`), `pnpm dev` pointed at it. Found: every analysis page and Clients redirected to the import with Clients highlighted; one sentence of export guidance; no sense of the path; the first import ended on a summary with "View Overview"; targets easy to miss; "1 clients".
+- **Built:** `src/features/onboarding/` — `progress.ts` (`onboardingProgress`, `workspaceProgress`, null in demo mode), `export-steps.ts` (the audit branch's verified Ads Manager steps, reasons fitted to the import), `getting-started.tsx` (`GettingStarted`, `ExportGuide`, `TargetsNudge`, `stepContent`), `empty-workspace.tsx` (`EMPTY_COPY`, `EmptyWorkspace`), `imported-note.tsx` (`ImportedNote`, `FIRST_IMPORT_LANDING`). `server.ts`: `readyWorkspace()`; the six pages render their empty state instead of redirecting. `completion.ts`: `importDestination`; `import-flow.tsx` sends the first import to `/insights?imported=1`. Insights shows the import line and the targets nudge after it; Clients shows the nudge and says "1 client". Copy: Settings' empty Client section mentions targets; Review setup no longer mentions demo clients in a signed-in workspace.
+- **Verified** end to end in the stand-in: fresh workspace → every page renders its empty state (no redirects, no overflow at 1440, 390 and 360) → the sample ecommerce export imported as "Bloom Botanicals" → Insights opened about 240ms after the import returned, with the import line, the nudge and both real findings in the first viewport → "Set targets" opened `/settings#settings-targets`, a £30 target saved, and the nudge was gone from Clients and Insights. Demo mode checked separately: no onboarding anywhere, `?imported=1` ignored.
+- DESIGN.md §26, §27 and new §29; PRODUCT.md capabilities.
+- Tests: `onboarding.test.ts` (progress from state, seeded clients not counted as imports, demo returns null, step facts from the workspace, ROAS offered only with conversion value, one primary action and the export steps in the checklist, every empty page's copy with no figures, the nudge's conditions, the first-import destination, the import line).
+
+---
+
+## 2026-10-30 — Free tools: ROAS, CPA and break-even ROAS calculators
+
+Owner brief (D-095). Branch `feat/free-tools`.
+
+- `src/lib/routes.ts`: `TOOL_PATHS` (joined to `MARKETING_PATHS`, so access, sitemap and metadata pick them up) and `AUDIT_PATH`. `src/features/tools/`: `formulas.ts` (`parseAmount`, `roas`, `cpa`, `breakEvenRoas`, `breakEvenCpa`, ratios through `safeRatio`), `results.ts` (fields, field messages, the result with the formula worked through), `catalog.ts`, `calculator.tsx` (client: currency radio group, inputs, polite live result), `tool-page.tsx` (frame, tool rows, `ToolsCta` to `/audit`), `tools.module.css`. Pages under `src/app/(marketing)/tools/`. `seo.ts`: four `MARKETING_PAGES` entries, `toolStructuredData` (WebApplication), `toolsIndexStructuredData` (ItemList). Footer: "Free tools".
+- Found in review at 360px: the currency symbol's nested span inherited the segment's padding and fill, widening the control so the panel ran past the viewport; the page's `overflow-x: clip` hid it from a scroll-width probe. Fixed with child selectors, a `minmax(0, 1fr)` column and a flex gap; the probe now also measures element edges.
+- Verified with Playwright Chromium at 1440, 390 and 360px on all four pages, empty and filled (ROAS valid, CPA with zero conversions in USD, break-even with order value), plus invalid input at 390px: no element past the viewport; arrow keys switch currency, Tab reaches the first input, typing updates the result ("$500 ÷ $100 = 5.00x").
+- DESIGN.md §28 and PRODUCT.md updated. Tests: `formulas.test.ts` (every formula, parsing, zero denominators, negatives, NaN and Infinity, margin bounds, currency formatting, result states), `tools.test.ts` (index and each page: formula, labelled inputs, three currencies, live region, links to the audit and the other tools, no benchmark language, metadata, canonical, WebApplication data, signed-out access, footer link); `seo.test.ts` and `marketing-footer.test.ts` extended.
+
+**Checks:** `pnpm check`, then `pnpm check:browsers http://localhost:3217/` (52 crop checks). No `check:audit` script on this branch.
+
+---
+
+## 2026-10-30 — Launch readiness: deployment, CSP, RLS tests, health
+
+Launch brief (D-096, D-097, D-098). Branch `feat/launch-readiness`.
+
+- **CSP:** `src/lib/csp.ts` (policy and nonce), `src/proxy.ts` (policy on every response it returns and on the forwarded request, in every mode), `next.config.ts` (no CSP; COOP, `payment=()`, `usb=()`, HSTS `includeSubDomains`). The build already rendered every page per request (the root layout loads the session), so nonces change no route from static to dynamic.
+- **RLS:** `src/data/supabase/rls.test.ts` (tables from the catalogue; read, insert, update, delete and move across tenants, with the migrations' grants and with writes re-granted; fingerprints before and after). `test-database.ts`: Supabase's `auth.uid()` over `request.jwt.claims`, Supabase's default grants on `public`, and the shared `payload` fixture (moved from `schema.test.ts`). Mutation runs: a permissive select policy, a permissive all-commands policy and an unlisted table without RLS each failed the suite; removed afterwards.
+- **Health and errors:** `src/app/api/health/route.ts` and `src/lib/health.ts` (public via `PUBLIC_PATHS`); `src/app/global-error.tsx`; `error.tsx` uses `retry()`.
+- **Deployment:** `vercel.json`, `engines.node`, `scripts/check-deploy.mjs` (`pnpm check:deploy`), `scripts/check-csp.mjs` (`pnpm check:csp`), `docs/DEPLOY.md`, README (security, scripts, Before Launch), `.env.example`, DESIGN.md §27.
+- **Verified:** production build in demo mode on port 3417: `pnpm check:csp` (13 pages each in WebKit, Chromium and Firefox, plus client navigation and an Ask Analyst question) with no violations; the same against `pnpm dev` on 3418; `pnpm check:browsers` (all crops); `pnpm check:deploy` in demo mode and in Supabase mode with a fake, unreachable project URL (the proxy makes no network call without a session cookie), where an extra run with `AD_ANALYST_DEMO_MODE=true` beside the Supabase values was flagged as intended; `check:csp` in Supabase mode (app pages land on sign-in, no violations). Global error page rendered through a temporary throw in the root layout (reverted) in Chromium and WebKit at 1440, 390 and 360px: no overflow, no violations.
+- **Rejected:** experimental SRI (Next.js inline scripts need a nonce anyway); `upgrade-insecure-requests` (everything is same-origin, and HTTPS is already enforced by HSTS and the `.app` preload); a health check that queries Supabase.
+
+**Checks:** `pnpm check`, `pnpm check:browsers`, `pnpm check:csp`, `pnpm check:deploy`.
+
+---
+
+## 2026-10-30 — Client report
+
+Owner brief (D-093, D-094).
+
+- **Migration** `20261030140000_client_reports.sql`: `client_report_notes` (one note per client and period, composite key to its client's workspace, 4,000 characters, member read through RLS, no direct writes), `client_report_note` (invoker), `save_client_report_note` and `rename_workspace` (definer, membership and owner checks inside). Gateway: `reportNote`, `saveReportNote`, `renameWorkspace`.
+- **Model** `report-model.ts`: `buildClientReport` composes the Overview KPIs, Campaigns and Creatives rows (top five by spend) and the insight engine for the selected client, preset and comparison; `accountChart` exported from the insight rules so the charts match Insights. `client-wording.ts` rewords findings for a client with the engine's figures and drafts next steps from the suggested actions.
+- **UI**: `/report` page, `client-report.tsx`, `notes-editor.tsx` (server action `saveReportNote`, strict calendar dates, demo read-only), `print-button.tsx`, nav entry, print rules in `globals.css` and `print:` utilities on the shell. Settings: `workspace-name-form.tsx` and `renameWorkspace` action for owners.
+- **Visual review** (demo mode, Chromium and WebKit at 1440, 390 and 360, print media at A4's printable 688px, and a saved PDF split into page images):
+  - On phones the creatives table's 320px name column hid every figure; capped at 184px below `sm`.
+  - Pages with tables scrolled sideways on phones (108px on Report, 198px on Campaigns, also on main): the `sr-only` delta labels in table cells are absolutely positioned and the shared `Table` scroll wrapper had no position, so they escaped its clipping. The wrapper is now `relative`; 0px overflow on Report, Campaigns, Clients and Settings in both engines at all three widths.
+  - In print the seven-column tables ran 3–18px past the printable width: print cells take 6px side padding, headers wrap, and names wrap in a 200px column instead of truncating.
+  - "Top creatives" heading and table header were stranded at the foot of page 2: both table sections now avoid breaking inside (five rows always fit a page).
+  - The spend chart's end label ("£1,078") was clipped at the right margin: the report's chart grid takes 12px right padding (the shared chart is unchanged).
+- **Environment:** another process on the machine kept killing anything whose command line contained `next start` (exit 144), so the review server was started from a script with a different command line and stopped by port.
+- **Not built:** the read-only share link (D-094), left as a follow-up.
+- Tests: `report-model.test.ts` (KPIs, rows, findings and charts equal the app's for every client and period; client wording keeps the numbers; demo labelling; note rendering), `actions.test.ts` (save, clear, demo, foreign client, bad periods, long notes, failures; rename), `report-notes.test.ts` on PGlite with the real migrations (per-client and per-period isolation, members only, no direct writes, anonymous refused, cascade, owner-only rename, imported client report with no other client's data).
+
+**Checks:** `pnpm check`, `pnpm check:browsers`.
+
+---
+
+## 2026-10-30 — Integration: release/next
+
+Merged into `release/next` from `origin/main` (ae9660f), with merge commits and in this order: `feat/instant-audit`, `feat/billing`, `feat/onboarding`, `feat/client-report`, `feat/free-tools`, `feat/launch-readiness`. Every branch existed.
+
+- **Decisions.** The audit kept D-083 to D-085. Billing's D-083 collided and became D-088 in billing's files and in billing's lines of the shared docs, including the amendment notes on D-051 and D-065. The D-NEW records were numbered in merge order: D-086 and D-087 (audit targets, Free audit link), D-089 (billing answers), D-090 to D-092 (onboarding), D-093 and D-094 (client report), D-095 (free tools), D-096 to D-098 (CSP, RLS tests, deployment). Every reference in docs, code comments, scripts and one migration comment was updated.
+- **Migrations.** Billing and the client report both used `20261030120000`. The client report's migration is now `20261030140000_client_reports.sql`, after billing's two. The new migrations share no objects, and all six apply in order on an empty PGlite database in the Supabase tests.
+- **Docs.** DESIGN.md: the client report section is §30, since onboarding took §29. The footer line lists Free audit and Free tools. DEVLOG entries are ordered by when they were written.
+- **Conflicts in code.** `routes.ts`: the audit and free tools both defined `AUDIT_PATH`, and one definition is kept. `MARKETING_PATHS` keeps `/audit` and the tool pages. The CSP moved from `next.config.ts` to the proxy (D-096), so billing's `form-action` allowance for Stripe Checkout and the customer portal moved into `src/lib/csp.ts` with a test. `access.ts` makes both `/api/billing/webhook` and `/api/health` public.
+- **Integration fixes.** The billing and report test gateways each lacked the other branch's methods. `rls.test.ts` now covers `workspace_subscriptions`, `billing_events` and `client_report_notes`, and checks that `billing_webhook_secret` (no tenant) is closed to everyone. `/report` redirected an empty workspace to the import, against D-090; it now shows an empty state. Onboarding's copy of the audit's export steps and the audit's own list are now one list (`src/features/import/export-steps.ts`), with each screen's wording unchanged.
+
+**Checks:** `pnpm check` (619 tests, build). Against a production demo server: `pnpm check:browsers` (52), `pnpm check:audit` (45), `pnpm check:csp` (all pages, client navigation, Ask), `pnpm check:deploy … demo`. Screenshots of `/`, `/audit` (with the sample run), `/pricing`, `/tools` and the ROAS calculator at 1440, 390 and 360: no horizontal overflow. Signed-in empty states for every app page at the same widths, against a local PGlite stand-in for Supabase outside the repo: every page renders its empty state, no overflow.
+
+---
+
+## 2026-10-30 — Fixes from the release/next review and the owner's review
+
+Final review at 351d2d4 (`aa-agent-out/review.md`) and the owner's product fixes. Decisions D-NEW-fixes-checkout-1, D-NEW-fixes-grace-1, D-NEW-fixes-owner-1, D-NEW-fixes-report-1 and D-NEW-fixes-audit-hero-1.
+
+- **Flaky tests:** `vitest.config.mts` sets `testTimeout` and `hookTimeout` to 20s; the PGlite suites apply every migration per test and outlasted the 5s default under load.
+- **Docs:** removed the `> > > > > > > feat/free-tools` lines (Prettier's form of a conflict marker) from DESIGN.md and PRODUCT.md and the stale "Launch checkpoints" bullet listing billing as not started. A repo-wide search for every marker form (raw, spaced, escaped, entity-encoded) found nothing else.
+- **Billing:** Checkout asks Stripe for the workspace's live subscriptions and uses an idempotency key per workspace, price and ten-minute window (`checkout.ts`, `stripe.ts`). Migration `20261030150000_billing_grace_from_first_failure.sql`: a move into `past_due` or `unpaid` starts the grace. Checkout and the portal are owner-only (`role` on the session). A mutation run without the new migration failed both new grace tests.
+- **check:csp** also covers `/audit`, `/tools` and the three calculators, `/report` and `/clients/import`.
+- **Nits:** the calculators' error colour is `var(--color-negative)`; the report's findings say "cost per purchase/lead/trial" instead of "cost per result"; the audit refuses an unreadable file, or a sample request that fails outright, instead of staying on "reading" (`check:audit` covers it by making `Blob.arrayBuffer` reject).
+- **Owner's fixes:** footer order Free audit, Free tools, Pricing; `comparisonPhrase` for the report, Insights, Campaigns and Ask wording; the report's own 7D period; the `/audit` hero preview from the sample run and the outlined nav button there; "up to 10 MB" no longer breaks before MB on phones.
+- **Rejected:** recording a payment failure while the subscription is still `active` (a stale time could cut a later grace short); showing the audit preview on phones (it would push the drop zone below the fold).
+
+**Checks:** `pnpm check` twice in a row; `pnpm check:browsers`, `pnpm check:audit`, `pnpm check:csp` against a production demo server; screenshots of `/`, `/audit` and `/report` at 1440, 390 and 360.
+
+---
+
+## 2026-10-30 — Client report share links
+
+Built to D-094's requirements. Decision D-NEW-share-1; D-094 amended.
+
+- **Migration** `20261030160000_report_share_links.sql`: `report_share_links` (SHA-256 of the token only, client by the composite key, preset and period with a length check, expiry 1–365 days, revocation; member read through RLS on every column but the hash; no direct writes), `share_link_lookups` (per-visitor fixed window, hashed visitor, rows older than a day dropped), `create_report_share_link` (owner), `revoke_report_share_link` (member) and `shared_client_report` (anon only: rate limit, hash, expiry and revocation, then one client's rows for the period and the one before it and that period's note).
+- **Data:** `src/data/supabase/share.ts` (types, the anon reader, the payload as a `SnapshotRepository` through the existing mapping); gateway `createShareLink`, `shareLinks`, `revokeShareLink`; the same over PGlite in `test-database.ts`.
+- **Feature:** `src/features/report/share.ts` (256-bit token, pinned periods, `buildSharedReport` through `buildClientReport`, list labels in the client's timezone), `share-actions.ts` (owner-only create, member revoke), `share-dialog.tsx`, `share-links-list.tsx`, `shared-notice.tsx`; `ClientReport` takes `shared` (note as text, no form). `/report` gets "Share link"; Settings gets "Shared report links".
+- **Public page:** `src/app/(shared)/r/[token]/page.tsx` and its `not-found.tsx`; `SurfaceSwitch` leaves `(shared)` without the shell; `/r` is public in `access.ts`; `next.config.ts` sends `no-referrer` and `X-Robots-Tag: noindex, nofollow` on `/r/`; `check:csp` loads a `/r/` address.
+- **Tests:** `share-links.test.ts` on PGlite with the real migrations (no table holds the token in any form; 30-day default and chosen expiry; owner-only create; weak tokens, bad expiries and mismatched periods refused; the shared model equals the app's for the same client and period; only that client's rows and only the two periods'; cross-client and cross-workspace isolation; expiry; revocation by members only; unknown and malformed tokens; the 60-per-10-minutes limit per visitor and its reset; anon reaches no table and members no hash; anon can execute only `shared_client_report` and `apply_billing_event`). `rls.test.ts` covers both new tables. `share.test.ts`, `share-actions.test.ts`, `auth.test.ts` (/r public) and `csp.test.ts` (policy on /r/ signed out with no redirect, the /r/ headers). Mutation runs: widening the metrics window and dropping the revocation check each failed the suite.
+- **Visual review:** `next dev` in Supabase mode against a local PGlite stand-in for Supabase outside the repo (no env file, no live calls), with the sample export imported through the real import flow: the dialog before and after creating a link at 1440, 390 and 360, Settings at 1440 and 390, `/r/<token>` signed out at 1440, 390 and 360, then revoked from Settings and the expired page at the same widths, and an unknown token (404). Production demo build: the demo dialog at 1440 and 390. No horizontal overflow anywhere. Fixed from the screenshots: the period wrapped mid-date in the dialog; straight quotes; the demo dialog listed "Active links", which it can never have.
+- **Rejected:** generating the token in Postgres (pgcrypto's `gen_random_bytes` is not in the test database; the database checks the token's form instead); returning every entity of the client (only those with rows in the two periods are returned, and the model test shows the report is unchanged); raising on the rate limit (it would roll back the count).
+
+**Checks:** `pnpm check` (56 files, 663 tests, build); against a production demo build: `pnpm check:browsers`, `pnpm check:audit`, `pnpm check:csp` (with `/r/` in all three engines).

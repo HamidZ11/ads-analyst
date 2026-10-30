@@ -4,12 +4,23 @@ import { PageHeader } from "@/components/ui/page-header";
 import { formatDateRange } from "@/domain/format";
 import { buildCreativeBoard } from "@/features/creatives/board-data";
 import { CreativeBoard } from "@/features/creatives/creative-board";
-import { getWorkspace } from "@/features/workspace/server";
+import { EmptyWorkspace } from "@/features/onboarding/empty-workspace";
+import { workspaceProgress } from "@/features/onboarding/progress";
+import { getWorkspaceContext, readyWorkspace } from "@/features/workspace/server";
 
 export const metadata: Metadata = { title: "Creatives" };
 
 export default async function CreativesPage() {
-  const workspace = await getWorkspace();
+  const context = await getWorkspaceContext();
+  const workspace = readyWorkspace(context);
+  if (!workspace)
+    return (
+      <EmptyWorkspace
+        page="creatives"
+        workspaceName={context.workspace.name}
+        progress={workspaceProgress(context)}
+      />
+    );
   const { client, periods, comparison } = workspace;
   const model = buildCreativeBoard(workspace);
 

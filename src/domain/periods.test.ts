@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addDays,
   comparisonLabel,
+  comparisonPhrase,
   diffDays,
   eachDay,
   parseDatePreset,
@@ -11,6 +12,7 @@ import {
   rangeLength,
   sliceByRange,
   todayInTimezone,
+  type DatePreset,
 } from "./periods";
 
 const ANCHOR = "2026-10-02";
@@ -72,6 +74,16 @@ describe("presets", () => {
   it("labels the comparison baseline", () => {
     expect(comparisonLabel(periodPairForPreset("7d", ANCHOR))).toBe("previous 7 days");
     expect(comparisonLabel(periodPairForPreset("today", ANCHOR))).toBe("yesterday");
+  });
+
+  it('phrases the baseline to read after "compared with" for every preset', () => {
+    const phrase = (preset: DatePreset) =>
+      comparisonPhrase(periodPairForPreset(preset, ANCHOR));
+    expect(phrase("today")).toBe("yesterday");
+    expect(phrase("yesterday")).toBe("the day before");
+    expect(phrase("7d")).toBe("the previous 7 days");
+    expect(phrase("14d")).toBe("the previous 14 days");
+    expect(phrase("30d")).toBe("the previous 30 days");
   });
 });
 

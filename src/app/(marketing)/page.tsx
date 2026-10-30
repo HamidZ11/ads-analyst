@@ -6,7 +6,7 @@ import { landingEvidence } from "@/features/marketing/evidence";
 import { CtaBand } from "@/features/marketing/cta-band";
 import { FindingExhibit, InsightsWeekExhibit } from "@/features/marketing/exhibits";
 import m from "@/features/marketing/marketing.module.css";
-import { auditMailto, HERO_HEADLINE, HERO_LEAD } from "@/features/marketing/hero";
+import { HERO_HEADLINE, HERO_LEAD } from "@/features/marketing/hero";
 import { CampaignsPageCanvas, OverviewCanvas } from "@/features/marketing/product-canvases";
 import { ProductCrop, type Crop } from "@/features/marketing/product-crop";
 import cropStyles from "@/features/marketing/product-crop.module.css";
@@ -19,8 +19,7 @@ import {
   PRIORITY_LABELS,
 } from "@/domain/insights";
 import { cn } from "@/lib/cn";
-import { APP_HOME } from "@/lib/routes";
-import { CONTACT_EMAIL } from "@/lib/site";
+import { APP_HOME, AUDIT_PATH } from "@/lib/routes";
 import s from "./landing.module.css";
 
 export const metadata: Metadata = marketingMetadata("/");
@@ -60,7 +59,6 @@ export default function LandingPage() {
     currentLabel: insights.currentLabel,
     previousLabel: insights.previousLabel,
   };
-  const audit = auditMailto(CONTACT_EMAIL);
   const overviewLabel =
     "Ad Analyst Overview for Luxe Skin Co.: return on ad spend 2.71x against a 3.50x target, spend £7,420, revenue £20.1k, 276 purchases at £26.88 each, with a daily chart against the previous seven days.";
   const heroFindingLabel = `Ad Analyst Insights, ${zeroConversion.entity.name}: ${zeroConversion.headline} ${zeroConversion.evidence
@@ -95,24 +93,16 @@ export default function LandingPage() {
         </h1>
         <div className={s.heroCopy}>
           <p className={s.lead}>{HERO_LEAD}</p>
-          {/* The audit is the primary action only when there is an address to
-              send it to; otherwise the demo takes the filled button. */}
+          {/* The self-serve audit is the primary action; the demo is the
+              text link beside it (D-083). */}
           <div className={cn(m.actions, s.heroActions)}>
-            {audit ? (
-              <>
-                <a href={audit} className={m.button}>
-                  Get a free wasted-spend audit
-                </a>
-                <Link href={APP_HOME} className={m.textLink}>
-                  Try the demo
-                  <ArrowRight aria-hidden size={16} strokeWidth={1.75} />
-                </Link>
-              </>
-            ) : (
-              <Link href={APP_HOME} className={m.button}>
-                Try the demo
-              </Link>
-            )}
+            <Link href={AUDIT_PATH} className={m.button}>
+              Get a free wasted-spend audit
+            </Link>
+            <Link href={APP_HOME} className={m.textLink}>
+              Try the demo
+              <ArrowRight aria-hidden size={16} strokeWidth={1.75} />
+            </Link>
           </div>
         </div>
       </section>

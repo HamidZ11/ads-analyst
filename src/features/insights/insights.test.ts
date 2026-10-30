@@ -297,6 +297,7 @@ describe("finding rows", () => {
         currentLabel: "",
         previousLabel: "",
         comparison: "",
+        comparedWith: "",
         campaignCount: 0,
         creativeCount: 0,
       },

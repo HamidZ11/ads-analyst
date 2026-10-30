@@ -18,7 +18,7 @@ export default function PrivacyPage() {
     <LegalPage
       id="privacy-title"
       title="Privacy policy"
-      updated="17 October 2026"
+      updated="30 October 2026"
       lead="What Ad Analyst stores, why, where it is kept, how long for, and how to have it deleted."
     >
       <LegalSection title="Who we are">
@@ -58,6 +58,12 @@ export default function PrivacyPage() {
             <strong>Import records:</strong> each file’s name, size, row count and date range,
             and who imported it and when. We do not keep the uploaded file itself: it is read,
             checked and turned into the figures above.
+          </li>
+          <li>
+            <strong>Subscription:</strong> if your workspace subscribes, Stripe’s references for
+            your customer record and subscription, the plan, monthly or yearly billing, its
+            status and renewal date, and a record of each Stripe notification we have processed.
+            Your card details go to Stripe and never reach us.
           </li>
           <li>
             <strong>Usage limits:</strong> a counter of how many imports you have made in the
@@ -124,8 +130,8 @@ export default function PrivacyPage() {
         <p>
           When you ask us to delete your data, we delete your account and your workspace’s
           clients, ad data and import records within one month. Copies in our providers’ backups
-          are removed as those backups expire. Payment records are kept for as long as UK tax
-          law requires.
+          are removed as those backups expire. Payment and subscription records are kept for as
+          long as UK tax law requires.
         </p>
       </LegalSection>
 

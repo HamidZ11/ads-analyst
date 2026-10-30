@@ -274,8 +274,9 @@ export function InsightsWorkspace({ model }: { model: InsightsModel }) {
       )}
 
       <p className="mt-8 border-t border-border pt-4 text-xs leading-5 text-ink-muted">
-        Findings are computed from stored daily metrics for {model.currentLabel} against the{" "}
-        {model.comparison}. Suggested actions are advisory and are never applied automatically.
+        Findings are computed from stored daily metrics for {model.currentLabel} against{" "}
+        {model.comparedWith}. Suggested actions are advisory and are never applied
+        automatically.
       </p>
 
       <Dialog.Root

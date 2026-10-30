@@ -12,7 +12,10 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
-    "check:browsers": "node scripts/check-crops.mjs"
+    "check:browsers": "node scripts/check-crops.mjs",
+    "check:audit": "node scripts/check-audit.mjs",
+    "check:csp": "node scripts/check-csp.mjs",
+    "check:deploy": "node scripts/check-deploy.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
@@ -23,6 +26,7 @@
     "radix-ui": "^1.6.7",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "stripe": "23.0.1",
     "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
@@ -40,5 +44,8 @@
     "typescript": "^5",
     "vitest": "^5.0.3"
   },
-  "packageManager": "pnpm@11.24.0"
+  "packageManager": "pnpm@11.24.0",
+  "engines": {
+    "node": ">=22"
+  }
 }

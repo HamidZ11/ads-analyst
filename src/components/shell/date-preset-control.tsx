@@ -16,9 +16,12 @@ const OPTIONS = DATE_PRESETS.map((p) => ({
 export function DatePresetControl({
   value,
   className,
+  select = selectDatePreset,
 }: {
   value: DatePreset;
   className?: string;
+  /** The server action that stores the choice; the app-wide period by default. */
+  select?: (preset: string) => Promise<void>;
 }) {
   const [pending, startTransition] = useTransition();
   // The indicator moves immediately; the server confirms (or reverts) after the action.
@@ -32,7 +35,7 @@ export function DatePresetControl({
       onChange={(next) =>
         startTransition(async () => {
           setOptimisticValue(next);
-          await selectDatePreset(next);
+          await select(next);
         })
       }
       className={cn("transition-opacity duration-quick", pending && "opacity-70", className)}

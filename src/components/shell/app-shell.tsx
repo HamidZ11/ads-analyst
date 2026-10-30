@@ -44,17 +44,17 @@ export function AppShell({
     <div className="min-h-dvh">
       <a
         href="#main"
-        className="sr-only z-50 rounded-md bg-surface px-3 py-2 text-sm font-medium text-accent-strong shadow-md focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+        className="sr-only z-50 rounded-md bg-surface px-3 py-2 text-sm font-medium text-accent-strong shadow-md focus:not-sr-only focus:fixed focus:top-2 focus:left-2 print:hidden"
       >
         Skip to content
       </a>
 
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-border bg-canvas lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-border bg-canvas lg:block print:hidden">
         {sidebar}
       </aside>
 
-      <div className="lg:pl-60">
-        <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-canvas px-3 lg:hidden">
+      <div className="lg:pl-60 print:pl-0">
+        <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-canvas px-3 lg:hidden print:hidden">
           <MobileNav>{sidebar}</MobileNav>
           <ProductMark />
           {client ? (
@@ -72,7 +72,7 @@ export function AppShell({
         <main
           id="main"
           tabIndex={-1}
-          className="mx-auto min-h-dvh w-full max-w-[1440px] bg-surface px-4 py-5 outline-none sm:px-6 lg:px-10 lg:py-8"
+          className="mx-auto min-h-dvh w-full max-w-[1440px] bg-surface px-4 py-5 outline-none sm:px-6 lg:px-10 lg:py-8 print:min-h-0 print:max-w-none print:p-0"
         >
           {children}
         </main>

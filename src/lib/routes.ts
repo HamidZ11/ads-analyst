@@ -13,8 +13,26 @@ export const OVERVIEW_PATH = "/overview";
  */
 export const APP_HOME = "/insights";
 
+/** The free calculators (D-095): an index and one page per tool. */
+export const TOOL_PATHS = [
+  "/tools",
+  "/tools/roas-calculator",
+  "/tools/cpa-calculator",
+  "/tools/break-even-roas-calculator",
+] as const;
+
 /** Public marketing pages: reachable signed out, rendered without the app shell. */
-export const MARKETING_PATHS = ["/", "/pricing", "/privacy", "/terms"] as const;
+export const MARKETING_PATHS = [
+  "/",
+  "/audit",
+  "/pricing",
+  "/privacy",
+  "/terms",
+  ...TOOL_PATHS,
+] as const;
+
+/** The self-serve wasted-spend audit (D-083), where the calculators send people. */
+export const AUDIT_PATH = "/audit";
 
 export type MarketingPath = (typeof MARKETING_PATHS)[number];
 
@@ -29,6 +47,10 @@ export const APP_PATHS = [
   "/creatives",
   "/insights",
   "/ask",
+  "/report",
   "/clients",
   "/settings",
 ] as const;
+
+/** Read-only client reports opened by a share link: `/r/<token>` (D-NEW-share-1). */
+export const SHARED_REPORT_PATH = "/r";

@@ -1,9 +1,9 @@
 import type { PGlite } from "@electric-sql/pglite";
 import { describe, expect, it } from "vitest";
 import { ecommerceCsv, leadCsv } from "@/data/import/__fixtures__/meta-exports";
-import { inspectHeaders, parseCsv, proposeMapping, type ImportPayload } from "@/data/import";
-import { IMPORT_LIMIT_MESSAGE, importFailure, planImport } from "@/features/import/service";
-import { addUser, as, createTestDatabase, sqlGateway } from "./test-database";
+import type { ImportPayload } from "@/data/import";
+import { IMPORT_LIMIT_MESSAGE, importFailure } from "@/features/import/service";
+import { addUser, as, createTestDatabase, payload, sqlGateway } from "./test-database";
 
 /**
  * Row level security and tenant constraints, tested directly in SQL as the
@@ -22,37 +22,6 @@ const TABLES = [
   "daily_metrics",
   "imports",
 ];
-
-function payload(
-  csv: string,
-  name: string,
-  type: "ecommerce" | "lead_generation" = "ecommerce",
-) {
-  const parsed = parseCsv(csv);
-  if (!parsed.ok) throw new Error("bad fixture");
-  const plan = planImport(
-    {
-      fileName: "export.csv",
-      fileBytes: csv.length,
-      csv,
-      mapping: proposeMapping(inspectHeaders(parsed.table.headers), type).mapping,
-      destination: {
-        kind: "new",
-        client: {
-          name,
-          type,
-          currency: "GBP",
-          timezone: "Europe/London",
-          targetCpa: null,
-          targetRoas: null,
-        },
-      },
-    },
-    { now: new Date("2026-10-03T10:00:00Z"), clients: [], accountIdFor: () => null },
-  );
-  if (!plan.ok) throw new Error(plan.message);
-  return plan.payload;
-}
 
 async function seeded() {
   const db = await createTestDatabase();

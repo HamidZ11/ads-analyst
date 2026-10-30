@@ -27,23 +27,27 @@ Set `NEXT_PUBLIC_SITE_URL` to the production origin: sign-in emails, canonical U
 
 ## Scripts
 
-| Script                      | What it does                                                                                                                          |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm dev`                  | Start the development server                                                                                                          |
-| `pnpm build`                | Production build                                                                                                                      |
-| `pnpm lint`                 | ESLint                                                                                                                                |
-| `pnpm typecheck`            | TypeScript                                                                                                                            |
-| `pnpm test`                 | Vitest unit tests                                                                                                                     |
-| `pnpm format`               | Prettier (write)                                                                                                                      |
-| `pnpm format:check`         | Prettier (check)                                                                                                                      |
-| `pnpm check`                | Format check, lint, typecheck, test, build in one                                                                                     |
-| `pnpm check:browsers [url]` | Product crops in WebKit, Chromium and Firefox against a running server (needs `pnpm exec playwright install webkit chromium firefox`) |
+| Script                                        | What it does                                                                                                                           |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                                    | Start the development server                                                                                                           |
+| `pnpm build`                                  | Production build                                                                                                                       |
+| `pnpm lint`                                   | ESLint                                                                                                                                 |
+| `pnpm typecheck`                              | TypeScript                                                                                                                             |
+| `pnpm test`                                   | Vitest unit tests                                                                                                                      |
+| `pnpm format`                                 | Prettier (write)                                                                                                                       |
+| `pnpm format:check`                           | Prettier (check)                                                                                                                       |
+| `pnpm check`                                  | Format check, lint, typecheck, test, build in one                                                                                      |
+| `pnpm check:browsers [url]`                   | Product crops in WebKit, Chromium and Firefox against a running server (needs `pnpm exec playwright install webkit chromium firefox`)  |
+| `pnpm check:csp [origin]`                     | Every page under the Content Security Policy in WebKit, Chromium and Firefox: no violations, every page hydrates (running server)      |
+| `pnpm check:deploy <origin> <supabase\|demo>` | Smoke check of a deployment: health and mode, security headers, gating, robots and sitemap (plain HTTP, no browser)                    |
+| `pnpm check:audit [origin]`                   | The `/audit` page in the same three engines at 1440, 390 and 360px: report, refusals, print view, and that no request carries the file |
 
 ## Design and engineering records
 
 - [DESIGN.md](DESIGN.md): concrete visual system rules (tokens, type scale, spacing, components, charts, states, responsive, what not to do).
 - [docs/DEVLOG.md](docs/DEVLOG.md): one entry per implementation pass.
 - [docs/DECISIONS.md](docs/DECISIONS.md): settled architectural, product and design decisions.
+- [docs/BILLING.md](docs/BILLING.md): Stripe setup, environment, local testing with the Stripe CLI and the going-live checklist.
 
 ## Structure
 
@@ -112,8 +116,13 @@ Implemented (D-051, D-059, D-060):
 - One write boundary. Signed-in users can only read tables directly, through RLS (`workspace_members` not at all). Every write goes through a Postgres function that checks the caller, their membership and the input: `import_meta_csv` (imports), `update_client_targets` (targets), `ensure_default_workspace` (first sign-in) and `consume_rate_limit`. The two data writers run with owner rights and an empty `search_path`, so they check membership themselves; no table is directly writable. RLS policies stay in place as defence in depth.
 - The proxy and the data access layer both verify the session (`auth.getClaims()`); route handlers and server actions re-check it next to the data. Supabase session cookies are HTTP-only, `SameSite=Lax`, and `Secure` in production.
 - Imports are validated twice. The server re-parses the CSV (16 MB request, 10 MB CSV, 100,000 rows, 200 columns, 2,000 characters per cell), then `import_meta_csv` checks the payload's shape and sizes before writing, so a direct call cannot skip it. Limits per user and hour: 30 import attempts (spent by `/api/import` before it reads a file) and 30 written imports (counted in the import's own transaction). Import records name the caller.
-- Every response carries a same-origin Content Security Policy (no nonces, so inline scripts are allowed), `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`, a referrer policy, a permissions policy and, in production, HSTS. `X-Powered-By` is off.
+- Every page and API response carries a nonce-based Content Security Policy from the proxy: scripts run only with the request's nonce or when a nonced script loads them, everything else is same-origin apart from billing's form redirects to Stripe (D-088), `frame-ancestors 'none'` (D-096). `next.config.ts` adds `X-Frame-Options: DENY`, `nosniff`, a referrer policy, `Cross-Origin-Opener-Policy`, a permissions policy and, in production, HSTS with `includeSubDomains`. `X-Powered-By` is off.
+- Billing (D-088): the Stripe webhook verifies Stripe's signature over the raw body and writes only through `apply_billing_event`. That function is executable by `anon` but refuses any caller without `BILLING_WEBHOOK_DB_SECRET`, whose SHA-256 hash is stored in a table nobody can read. Members read `workspace_subscriptions` through RLS, and nobody writes it directly. Stripe keys must be `sk_test_` unless the build is production and `BILLING_LIVE=true`.
+- Share links (D-NEW-share-1): `/r/<token>` opens one client's report for one period without sign-in. The token is 256 random bits; only its SHA-256 is stored, and members cannot read even that. The page calls `shared_client_report` with the publishable key and no session; it is the only function `anon` can execute besides `apply_billing_event`, and it returns only that client's rows for the period and the one before it, or "expired" once the link is revoked or past its expiry (30 days unless chosen otherwise). Lookups are limited to 60 per visitor in 10 minutes. The page is never indexed and sends no referrer.
+- `src/data/supabase/rls.test.ts` proves, on every table in `public`, that one workspace cannot read or write another's rows, with and without the write boundary; what an in-process Postgres cannot prove is listed in [docs/DEPLOY.md](docs/DEPLOY.md) §7.
 - Sign-in links only return to `NEXT_PUBLIC_SITE_URL` in production, never to an origin taken from request headers. The callback redirects to a fixed path; there are no user-supplied redirect targets.
+
+Known limit (share links, D-NEW-share-1): the visitor key for the lookup limit is the address the app server sees (`x-forwarded-for`), which Vercel sets. Someone calling `shared_client_report` directly with the publishable key can choose any key, so the limit only bounds lookups through the app; guessing a 256-bit token is not feasible either way.
 
 Known limit (live configuration, see D-059): sign-in links are requested from the server, so Supabase's per-IP auth limits see the server's address, not the visitor's, and act as one shared bucket. It is handled at deployment, not in code: CAPTCHA, host rate limiting and tuned Supabase limits (items 7, 8 and 11 below).
 
@@ -131,17 +140,19 @@ Live validation before launch (none of this can be checked from the repository):
 10. HTTPS only, and `NEXT_PUBLIC_SITE_URL` set to the production origin in the production build.
 11. Host rate-limit rules for `POST /sign-in` and `/api/*`.
 12. Preview and staging deployments use a separate Supabase project, never production.
-13. Spend caps and usage alerts on the Supabase and hosting plans. There is no paid AI or external API in the app.
+13. Spend caps and usage alerts on the Supabase and hosting plans. There is no paid AI in the app; Stripe is the only external API (billing).
+14. Billing: store the webhook secret's hash (`docs/BILLING.md`), then check two things. Calling `apply_billing_event` with the publishable key and a wrong secret returns "not allowed". A signed-in user's direct write to `workspace_subscriptions` returns "permission denied".
+15. Share links: create a link, open it signed out in another browser, revoke it, and check that it then reads "This link has expired"; with the publishable key, a `select` on `report_share_links` returns "permission denied".
 
 ## Before Launch
 
-Ad Analyst is currently parked. Before a production launch:
+Ad Analyst is currently parked. Before a production launch (step by step, with every variable and a go-live checklist: [docs/DEPLOY.md](docs/DEPLOY.md)):
 
 1. Create or attach a production Supabase project.
 2. Validate authentication, RLS and two-user workspace isolation against the real database.
 3. Decide how the public demo should work in production.
-4. Add billing and subscription handling.
-5. Set a real sales/support contact email in `NEXT_PUBLIC_CONTACT_EMAIL` (and the Agency Stripe Payment Link in `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` once billing exists).
+4. Take billing live: it is built and tested in test mode (D-088). Follow the going-live checklist in `docs/BILLING.md`, and answer its open questions first.
+5. Set a real sales/support contact email in `NEXT_PUBLIC_CONTACT_EMAIL`.
 6. Deploy the production application.
-7. Validate imports with a real Meta Ads export.
+7. Validate imports and the `/audit` page with real Meta Ads exports (only synthetic variants have been tested, D-085).
 8. Get the product in front of real users before building additional features.

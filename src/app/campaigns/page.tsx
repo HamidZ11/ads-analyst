@@ -2,16 +2,28 @@ import type { Metadata } from "next";
 import { DatePresetControl } from "@/components/shell/date-preset-control";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatDateRange } from "@/domain/format";
+import { comparisonPhrase } from "@/domain/periods";
 import { conversionVocabulary, tracksRevenue } from "@/domain/labels";
 import { getCampaignRows } from "@/features/analytics/queries";
 import { CampaignsSummary } from "@/features/campaigns/campaigns-summary";
 import { CampaignsTable } from "@/features/campaigns/campaigns-table";
-import { getWorkspace } from "@/features/workspace/server";
+import { EmptyWorkspace } from "@/features/onboarding/empty-workspace";
+import { workspaceProgress } from "@/features/onboarding/progress";
+import { getWorkspaceContext, readyWorkspace } from "@/features/workspace/server";
 
 export const metadata: Metadata = { title: "Campaigns" };
 
 export default async function CampaignsPage() {
-  const workspace = await getWorkspace();
+  const context = await getWorkspaceContext();
+  const workspace = readyWorkspace(context);
+  if (!workspace)
+    return (
+      <EmptyWorkspace
+        page="campaigns"
+        workspaceName={context.workspace.name}
+        progress={workspaceProgress(context)}
+      />
+    );
   const { repository, client, periods, comparison } = workspace;
   const rows = getCampaignRows(repository, client, periods);
   const delivering = rows.filter((r) => r.current.totals.spend > 0).length;
@@ -49,7 +61,7 @@ export default async function CampaignsPage() {
         targetCpa={client.targetCpa}
       />
       <p className="mt-3 text-xs text-ink-muted">
-        Changes compare with the {comparison}. Movements under 5% stay grey.
+        Changes compare with {comparisonPhrase(periods)}. Movements under 5% stay grey.
       </p>
     </>
   );
