@@ -1291,3 +1291,24 @@ Owner brief (D-082). Run through the project's Impeccable skill: context loaded,
 **Checks:** `pnpm check` (367 tests), `pnpm check:browsers http://localhost:3100/` (52 crop checks), overflow probe on `/`, `/pricing`, `/privacy`, `/terms` in three engines at three widths.
 
 **Correction (follow-up commit):** `git add -A` in the D-082 commit (8f17a19) also staged four untracked iCloud conflict copies (`scripts/check-crops 2.mjs`, `crop-scale.test 2.ts`, `cta-band 2.tsx`, `cta-band.test 2.ts`), and they were pushed. Three were identical to their originals; `cta-band 2.tsx` was the pre-renumbering copy (D-074 in a comment). Nothing referenced them. They are removed, and `.gitignore` now ignores names with a space before a one- to three-digit number, which no tracked file has.
+
+---
+
+## 2026-10-30 — Client report
+
+Owner brief (D-NEW-client-report-1, D-NEW-client-report-2).
+
+- **Migration** `20261030120000_client_reports.sql`: `client_report_notes` (one note per client and period, composite key to its client's workspace, 4,000 characters, member read through RLS, no direct writes), `client_report_note` (invoker), `save_client_report_note` and `rename_workspace` (definer, membership and owner checks inside). Gateway: `reportNote`, `saveReportNote`, `renameWorkspace`.
+- **Model** `report-model.ts`: `buildClientReport` composes the Overview KPIs, Campaigns and Creatives rows (top five by spend) and the insight engine for the selected client, preset and comparison; `accountChart` exported from the insight rules so the charts match Insights. `client-wording.ts` rewords findings for a client with the engine's figures and drafts next steps from the suggested actions.
+- **UI**: `/report` page, `client-report.tsx`, `notes-editor.tsx` (server action `saveReportNote`, strict calendar dates, demo read-only), `print-button.tsx`, nav entry, print rules in `globals.css` and `print:` utilities on the shell. Settings: `workspace-name-form.tsx` and `renameWorkspace` action for owners.
+- **Visual review** (demo mode, Chromium and WebKit at 1440, 390 and 360, print media at A4's printable 688px, and a saved PDF split into page images):
+  - On phones the creatives table's 320px name column hid every figure; capped at 184px below `sm`.
+  - Pages with tables scrolled sideways on phones (108px on Report, 198px on Campaigns, also on main): the `sr-only` delta labels in table cells are absolutely positioned and the shared `Table` scroll wrapper had no position, so they escaped its clipping. The wrapper is now `relative`; 0px overflow on Report, Campaigns, Clients and Settings in both engines at all three widths.
+  - In print the seven-column tables ran 3–18px past the printable width: print cells take 6px side padding, headers wrap, and names wrap in a 200px column instead of truncating.
+  - "Top creatives" heading and table header were stranded at the foot of page 2: both table sections now avoid breaking inside (five rows always fit a page).
+  - The spend chart's end label ("£1,078") was clipped at the right margin: the report's chart grid takes 12px right padding (the shared chart is unchanged).
+- **Environment:** another process on the machine kept killing anything whose command line contained `next start` (exit 144), so the review server was started from a script with a different command line and stopped by port.
+- **Not built:** the read-only share link (D-NEW-client-report-2), left as a follow-up.
+- Tests: `report-model.test.ts` (KPIs, rows, findings and charts equal the app's for every client and period; client wording keeps the numbers; demo labelling; note rendering), `actions.test.ts` (save, clear, demo, foreign client, bad periods, long notes, failures; rename), `report-notes.test.ts` on PGlite with the real migrations (per-client and per-period isolation, members only, no direct writes, anonymous refused, cascade, owner-only rename, imported client report with no other client's data).
+
+**Checks:** `pnpm check`, `pnpm check:browsers`.
