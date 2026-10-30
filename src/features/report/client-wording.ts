@@ -42,16 +42,21 @@ const PLAIN_TERMS: Array<[RegExp, string]> = [
   [/\bCPM\b/g, "the cost per 1,000 impressions"],
   [/\bCPC\b/g, "cost per click"],
   [/\bROAS\b/g, "return on ad spend"],
-  [/\bCPA\b/g, "cost per result"],
 ];
+const CPA = /\bCPA\b/g;
 
 const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1);
 
-/** Replaces platform abbreviations with plain words; sentence-initial terms are capitalised. */
-export function plainLanguage(text: string): string {
+/**
+ * Replaces platform abbreviations with plain words; sentence-initial terms are
+ * capitalised. CPA takes the client's own label ("cost per purchase"), as the
+ * report's tiles and titles do; "cost per result" only without one.
+ */
+export function plainLanguage(text: string, vocab?: ConversionVocabulary): string {
   let out = text;
   for (const [pattern, words] of PLAIN_TERMS) out = out.replace(pattern, words);
+  out = out.replace(CPA, vocab ? vocab.costLabel.toLowerCase() : "cost per result");
   return capitalise(out);
 }
 
@@ -97,15 +102,15 @@ function where(finding: Finding): string {
   }
 }
 
-function sentence(finding: Finding): string {
+function sentence(finding: Finding, vocab: ConversionVocabulary): string {
   const { headline, detector } = finding;
   if (detector === "creative_fatigue") {
     // "This creative shows a fatigue pattern: CTR fell 31.4% while CPM held steady."
     const observed = headline.replace(/^This creative shows a fatigue pattern:\s*/, "");
-    return `${plainLanguage(observed).replace(/\.$/, "")}, which can mean the audience has seen it often.`;
+    return `${plainLanguage(observed, vocab).replace(/\.$/, "")}, which can mean the audience has seen it often.`;
   }
   if (detector === "underfunded_winner") return `This ad has the ${lowerFirst(headline)}`;
-  return plainLanguage(headline);
+  return plainLanguage(headline, vocab);
 }
 
 export function toClientFinding(finding: Finding, vocab: ConversionVocabulary): ClientFinding {
@@ -114,8 +119,8 @@ export function toClientFinding(finding: Finding, vocab: ConversionVocabulary): 
     group: GROUP_BY_PRIORITY[finding.priority],
     title: title(finding.detector, vocab),
     where: where(finding),
-    sentence: sentence(finding),
-    nextStep: plainLanguage(finding.action),
+    sentence: sentence(finding, vocab),
+    nextStep: plainLanguage(finding.action, vocab),
   };
 }
 

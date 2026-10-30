@@ -17,6 +17,7 @@ import { buildContext } from "@/features/workspace/context";
 import type { Workspace } from "@/features/workspace/server";
 import { ClientReport } from "./client-report";
 import { plainLanguage, suggestedNextSteps } from "./client-wording";
+import { conversionVocabulary } from "@/domain/labels";
 import { buildClientReport, REPORT_CAMPAIGNS, REPORT_FINDINGS } from "./report-model";
 
 vi.mock("./actions", () => ({ saveReportNote: vi.fn() }));
@@ -147,6 +148,17 @@ describe("client report model", () => {
     expect(plainLanguage("ROAS fell 20.1% to 2.10x.")).toBe(
       "Return on ad spend fell 20.1% to 2.10x.",
     );
+  });
+
+  it("names cost per conversion with the client's own label, as the report's tiles do", () => {
+    const vocab = conversionVocabulary("lead_generation");
+    expect(plainLanguage("CPA rose 18.0% to £42.10.", vocab)).toBe(
+      "Cost per lead rose 18.0% to £42.10.",
+    );
+    expect(plainLanguage("Blended CPA held at £9.00.", conversionVocabulary("ecommerce"))).toBe(
+      "Blended cost per purchase held at £9.00.",
+    );
+    expect(plainLanguage("CPA rose.")).toBe("Cost per result rose.");
   });
 
   it("drafts next steps from the findings, one line each", () => {
