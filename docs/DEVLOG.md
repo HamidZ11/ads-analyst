@@ -1460,3 +1460,19 @@ Merged into `release/next` from `origin/main` (ae9660f), with merge commits and 
 - **Integration fixes.** The billing and report test gateways each lacked the other branch's methods. `rls.test.ts` now covers `workspace_subscriptions`, `billing_events` and `client_report_notes`, and checks that `billing_webhook_secret` (no tenant) is closed to everyone. `/report` redirected an empty workspace to the import, against D-090; it now shows an empty state. Onboarding's copy of the audit's export steps and the audit's own list are now one list (`src/features/import/export-steps.ts`), with each screen's wording unchanged.
 
 **Checks:** `pnpm check` (619 tests, build). Against a production demo server: `pnpm check:browsers` (52), `pnpm check:audit` (45), `pnpm check:csp` (all pages, client navigation, Ask), `pnpm check:deploy … demo`. Screenshots of `/`, `/audit` (with the sample run), `/pricing`, `/tools` and the ROAS calculator at 1440, 390 and 360: no horizontal overflow. Signed-in empty states for every app page at the same widths, against a local PGlite stand-in for Supabase outside the repo: every page renders its empty state, no overflow.
+
+---
+
+## 2026-10-30 — Fixes from the release/next review and the owner's review
+
+Final review at 351d2d4 (`aa-agent-out/review.md`) and the owner's product fixes. Decisions D-NEW-fixes-checkout-1, D-NEW-fixes-grace-1, D-NEW-fixes-owner-1, D-NEW-fixes-report-1 and D-NEW-fixes-audit-hero-1.
+
+- **Flaky tests:** `vitest.config.mts` sets `testTimeout` and `hookTimeout` to 20s; the PGlite suites apply every migration per test and outlasted the 5s default under load.
+- **Docs:** removed the `> > > > > > > feat/free-tools` lines (Prettier's form of a conflict marker) from DESIGN.md and PRODUCT.md and the stale "Launch checkpoints" bullet listing billing as not started. A repo-wide search for every marker form (raw, spaced, escaped, entity-encoded) found nothing else.
+- **Billing:** Checkout asks Stripe for the workspace's live subscriptions and uses an idempotency key per workspace, price and ten-minute window (`checkout.ts`, `stripe.ts`). Migration `20261030150000_billing_grace_from_first_failure.sql`: a move into `past_due` or `unpaid` starts the grace. Checkout and the portal are owner-only (`role` on the session). A mutation run without the new migration failed both new grace tests.
+- **check:csp** also covers `/audit`, `/tools` and the three calculators, `/report` and `/clients/import`.
+- **Nits:** the calculators' error colour is `var(--color-negative)`; the report's findings say "cost per purchase/lead/trial" instead of "cost per result"; the audit refuses an unreadable file, or a sample request that fails outright, instead of staying on "reading" (`check:audit` covers it by making `Blob.arrayBuffer` reject).
+- **Owner's fixes:** footer order Free audit, Free tools, Pricing; `comparisonPhrase` for the report, Insights, Campaigns and Ask wording; the report's own 7D period; the `/audit` hero preview from the sample run and the outlined nav button there; "up to 10 MB" no longer breaks before MB on phones.
+- **Rejected:** recording a payment failure while the subscription is still `active` (a stale time could cut a later grace short); showing the audit preview on phones (it would push the drop zone below the fold).
+
+**Checks:** `pnpm check` twice in a row; `pnpm check:browsers`, `pnpm check:audit`, `pnpm check:csp` against a production demo server; screenshots of `/`, `/audit` and `/report` at 1440, 390 and 360.
