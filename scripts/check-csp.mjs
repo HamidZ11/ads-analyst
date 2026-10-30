@@ -2,8 +2,9 @@
 // (D-NEW-launch-csp).
 //
 // Usage: pnpm check:csp [origin]   (default http://localhost:3000)
-// Needs a running server in demo mode (the app pages need data without a
-// session) and Playwright's browsers. Run it against a production build
+// Needs a running server and Playwright's browsers. In demo mode the app pages
+// render; otherwise they redirect to sign-in and the demo-only steps (client
+// navigation and Ask Analyst) are skipped. Run it against a production build
 // (`pnpm build && pnpm start`): development adds 'unsafe-eval' and HMR.
 //
 // For WebKit, Chromium and Firefox, every marketing page, sign-in, every app
@@ -16,6 +17,9 @@ import { chromium, firefox, webkit } from "playwright";
 
 const origin = (process.argv[2] ?? "http://localhost:3000").replace(/\/$/, "");
 const engines = { webkit, chromium, firefox };
+const health = await fetch(`${origin}/api/health`).then((r) => r.json());
+const demo = health.mode === "demo";
+console.log(`mode: ${health.mode}${demo ? "" : " (demo-only steps skipped)"}`);
 const PAGES = [
   "/",
   "/pricing",
@@ -75,33 +79,35 @@ for (const [name, engine] of Object.entries(engines)) {
     else console.log(`  ✓ ${path} (${response.status()})`);
   }
 
-  // Client-side navigation: a soft navigation keeps the document.
-  await page.goto(`${origin}/overview`, { waitUntil: "load" });
-  await page.waitForFunction(hydrated);
-  await page.evaluate(() => (window.__sameDocument = true));
-  await page.getByRole("link", { name: "Campaigns", exact: true }).first().click();
-  await page.waitForURL(`${origin}/campaigns`);
-  if (!(await page.evaluate(() => window.__sameDocument === true)))
-    fail("client navigation reloaded the page");
-  else console.log("  ✓ client navigation /overview → /campaigns");
+  if (demo) {
+    // Client-side navigation: a soft navigation keeps the document.
+    await page.goto(`${origin}/overview`, { waitUntil: "load" });
+    await page.waitForFunction(hydrated);
+    await page.evaluate(() => (window.__sameDocument = true));
+    await page.getByRole("link", { name: "Campaigns", exact: true }).first().click();
+    await page.waitForURL(`${origin}/campaigns`);
+    if (!(await page.evaluate(() => window.__sameDocument === true)))
+      fail("client navigation reloaded the page");
+    else console.log("  ✓ client navigation /overview → /campaigns");
 
-  // Ask Analyst: a same-origin POST from a hydrated client component.
-  await page.goto(`${origin}/ask`, { waitUntil: "load" });
-  await page.waitForFunction(hydrated);
-  await page
-    .getByLabel("Ask about campaigns, creatives or performance")
-    .fill("Why did CPA change?");
-  await page.getByRole("button", { name: "Send question" }).click();
-  const answered = await page
-    .getByRole("article", { name: "Analytical answer" })
-    .first()
-    .waitFor({ timeout: 10_000 })
-    .then(() => true)
-    .catch(() => false);
-  const askViolations = await page.evaluate(() => window.__cspViolations);
-  if (!answered) fail("Ask Analyst gave no answer");
-  else if (askViolations.length) fail(`Ask Analyst: ${askViolations.join(", ")}`);
-  else console.log("  ✓ Ask Analyst answered");
+    // Ask Analyst: a same-origin POST from a hydrated client component.
+    await page.goto(`${origin}/ask`, { waitUntil: "load" });
+    await page.waitForFunction(hydrated);
+    await page
+      .getByLabel("Ask about campaigns, creatives or performance")
+      .fill("Why did CPA change?");
+    await page.getByRole("button", { name: "Send question" }).click();
+    const answered = await page
+      .getByRole("article", { name: "Analytical answer" })
+      .first()
+      .waitFor({ timeout: 10_000 })
+      .then(() => true)
+      .catch(() => false);
+    const askViolations = await page.evaluate(() => window.__cspViolations);
+    if (!answered) fail("Ask Analyst gave no answer");
+    else if (askViolations.length) fail(`Ask Analyst: ${askViolations.join(", ")}`);
+    else console.log("  ✓ Ask Analyst answered");
+  }
 
   if (consoleCsp.length) fail(`console: ${[...new Set(consoleCsp)].join(" | ")}`);
   await browser.close();
