@@ -22,21 +22,13 @@ describe("closing call to action", () => {
       expect(render(page)).not.toContain("cta-title");
   });
 
-  it("leads with the audit mailto and the demo as a text link when an address is set", () => {
-    const html = renderToStaticMarkup(
-      createElement(CtaBand, { email: "hello@ad-analyst.example" }),
-    );
+  it("leads with the self-serve audit and the demo as a text link, like the hero", () => {
+    const html = renderToStaticMarkup(createElement(CtaBand));
     expect(html).toMatch(
-      /<a href="mailto:hello@ad-analyst\.example\?subject=Wasted-spend%20audit%20request&amp;body=[^"]+" class="[^"]*button[^"]*">Get a free wasted-spend audit<\/a>/,
+      /<a class="[^"]*button[^"]*" href="\/audit">Get a free wasted-spend audit<\/a>/,
     );
     expect(html).toMatch(/<a class="[^"]*textLink[^"]*" href="\/insights">Try the demo/);
-    expect(html).toContain("audit your clients’ Meta Ads spend for free");
-  });
-
-  it("makes the demo the primary and drops the audit wording without an address", () => {
-    const html = renderToStaticMarkup(createElement(CtaBand, { email: null }));
+    expect(html).toContain("the file never leaves your browser");
     expect(html).not.toContain("mailto:");
-    expect(html).not.toMatch(/audit/i);
-    expect(html).toMatch(/<a class="[^"]*button[^"]*" href="\/insights">Try the demo<\/a>/);
   });
 });

@@ -1,6 +1,6 @@
-/* The landing hero's words and its audit request, in one place: the page
-   renders the lead and the home page's structured data quotes it (D-058), so
-   both read from here. */
+/* The landing hero's words, in one place: the page renders the lead and the
+   home page's structured data quotes it (D-058), so both read from here. The
+   audit-by-email request below is now the secondary option on /audit (D-084). */
 
 /*
  * Headline options (D-072). Option A is live. To swap, replace HERO_HEADLINE
