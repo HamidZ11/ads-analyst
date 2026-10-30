@@ -12,7 +12,7 @@ import s from "./tools.module.css";
 /**
  * The frame every calculator page shares: the title and lead, the calculator
  * beside its formula and explanation, the other tools, and the audit as the
- * one filled call to action (D-NEW-tools-1).
+ * one filled call to action (D-095).
  */
 export function ToolPage({ id, children }: { id: ToolId; children: ReactNode }) {
   const tool = toolById(id);

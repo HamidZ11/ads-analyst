@@ -8,7 +8,7 @@ Subscription billing with Stripe (D-088). Built and tested in test mode only; go
 - **Customer portal:** "Manage billing" posts to `/api/billing/portal`, which opens Stripe's portal for the workspace's Stripe customer (change card, switch interval, invoices, cancel).
 - **Webhook:** `/api/billing/webhook` checks the Stripe signature over the raw body. It then fetches the subscription from Stripe and calls `public.apply_billing_event` in Postgres. That call stores the state and records the event id in one transaction, so a redelivered event does nothing. Events handled: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`. Any other type gets a 200 and is not stored.
 - **Who can write:** the webhook has no user session and the app has no service-role key. It calls the database as `anon` with the publishable key and presents `BILLING_WEBHOOK_DB_SECRET`. `apply_billing_event` refuses every caller that lacks this secret. Members read `workspace_subscriptions` through RLS. Nobody can write that table directly.
-- **Who can manage billing:** any member of the workspace can subscribe and open Manage billing (D-NEW-billing-answers-1).
+- **Who can manage billing:** any member of the workspace can subscribe and open Manage billing (D-089).
 - **Gating:** `BILLING_ENFORCE=true` turns on the single policy in `src/features/billing/policy.ts`. When it's on, a workspace without an `active` or `trialing` subscription can still read every page but cannot import. After a failed payment there is a 7-day grace period: from the first `invoice.payment_failed` of an unpaid episode (stored as `payment_failed_at`, kept through Stripe's retries, cleared once the subscription is active or trialing again), a `past_due` or `unpaid` workspace can still import for 7 days, and Settings → Billing says until when. Gating applies only when Checkout is configured, so a blocked workspace always has a way to subscribe. If the subscription can't be read, imports are refused (fail closed).
 - **Pricing page:** when Checkout is configured, Agency's "Subscribe" goes to `/sign-in?next=/settings#billing`: a signed-in visitor passes straight to Settings → Billing, and a signed-out one signs in and returns there (the path is validated as an app page on this site, and carried to the emailed link's callback in a short-lived httpOnly cookie). The payment link is then never shown. Only if Checkout isn't configured does it go to `NEXT_PUBLIC_STRIPE_PAYMENT_LINK`, when that is set (D-065). With neither, the button isn't shown.
 - **Client accounts:** the Agency plan's 10 client accounts are not enforced. Settings → Billing shows a soft notice on a live Agency subscription at 10 or more clients, pointing to Enterprise on the pricing page.
@@ -17,7 +17,7 @@ Subscription billing with Stripe (D-088). Built and tested in test mode only; go
 
 1. Turn on **Test mode**.
 2. **Product catalogue → Add product:** "Ad Analyst Agency", with two recurring prices in GBP: £99 monthly and £990 yearly. Copy both price ids (`price_…`).
-3. **Settings → Billing → Customer portal:** activate the test-mode portal. Allow updating payment methods and viewing invoices. Allow cancellation **at the end of the billing period**, which is what the draft terms promise. Allow switching between the two Agency prices; the portal uses Stripe's default proration, which the owner chose (D-NEW-billing-answers-1). The code sets no proration behaviour of its own.
+3. **Settings → Billing → Customer portal:** activate the test-mode portal. Allow updating payment methods and viewing invoices. Allow cancellation **at the end of the billing period**, which is what the draft terms promise. Allow switching between the two Agency prices; the portal uses Stripe's default proration, which the owner chose (D-089). The code sets no proration behaviour of its own.
 4. **Developers → Webhooks → Add endpoint:** `https://<your domain>/api/billing/webhook`, with exactly these events:
    - `checkout.session.completed`
    - `customer.subscription.created`
@@ -99,7 +99,7 @@ Automated tests need none of this. They use a fake Stripe client, Stripe's offli
 
 ## Going live checklist
 
-1. The open questions in D-088 are decided (D-NEW-billing-answers-1). What remains is when to turn on gating.
+1. The open questions in D-088 are decided (D-089). What remains is when to turn on gating.
 2. Legal: finish the terms' billing, cancellation and refund wording and VAT (D-064). Check that the portal's cancellation setting matches the terms.
 3. In **live mode**, recreate the product, both prices, the customer portal settings and the webhook endpoint with the same five events.
 4. Production environment: set `STRIPE_SECRET_KEY=sk_live_…`, the live price ids, the live `whsec_…`, `BILLING_LIVE=true`, and a **new** `BILLING_WEBHOOK_DB_SECRET` with its hash stored in the production database. `NODE_ENV` is `production` in a production build.

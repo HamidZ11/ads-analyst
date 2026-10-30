@@ -1,6 +1,6 @@
 import { safeRatio } from "@/domain/metrics";
 
-/* The free calculators' arithmetic (D-NEW-tools-1). Pure, deterministic and
+/* The free calculators' arithmetic (D-095). Pure, deterministic and
    shared by the pages and their tests. Ratios use the product's own
    `safeRatio`, so a calculator and the app agree on what is undefined: a ratio
    with a zero denominator is unavailable (null), never zero or Infinity. */

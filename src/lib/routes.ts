@@ -13,7 +13,7 @@ export const OVERVIEW_PATH = "/overview";
  */
 export const APP_HOME = "/insights";
 
-/** The free calculators (D-NEW-tools-1): an index and one page per tool. */
+/** The free calculators (D-095): an index and one page per tool. */
 export const TOOL_PATHS = [
   "/tools",
   "/tools/roas-calculator",

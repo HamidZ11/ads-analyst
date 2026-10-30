@@ -1,6 +1,6 @@
 # Deploying Ad Analyst
 
-Going live is configuration, not code: one Supabase project, one Vercel project, a domain and a set of environment variables. This page covers each, then a go-live checklist against the launch checkpoints in `PRODUCT.md`. Security background is in the README ("Security") and D-059, D-060 and D-NEW-launch-csp in `docs/DECISIONS.md`.
+Going live is configuration, not code: one Supabase project, one Vercel project, a domain and a set of environment variables. This page covers each, then a go-live checklist against the launch checkpoints in `PRODUCT.md`. Security background is in the README ("Security") and D-059, D-060 and D-096 in `docs/DECISIONS.md`.
 
 Allow an afternoon. Do the steps in order: the app must not be deployed against a database that lacks the migrations.
 

@@ -6,7 +6,7 @@ import { BILLING_RETURN_PATH, signInHref } from "@/features/auth/return-path";
  * - Checkout configured: Settings' Billing section in the app, where the
  *   signed-in workspace starts Checkout. The link goes through sign-in with
  *   `next`, so a signed-out visitor returns to Billing after signing in and
- *   a signed-in one passes straight through (D-NEW-billing-answers-1). The
+ *   a signed-in one passes straight through (D-089). The
  *   payment link is then never shown.
  * - Otherwise a valid payment link (D-062, D-065): Stripe's hosted page, the
  *   fallback for deployments without Checkout.

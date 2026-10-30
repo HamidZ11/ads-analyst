@@ -1,5 +1,5 @@
 -- Ad Analyst: when a subscription's payment first failed, for the 7-day
--- grace period before gated imports stop (D-NEW-billing-answers-1).
+-- grace period before gated imports stop (D-089).
 --
 -- payment_failed_at is set by apply_billing_event when it handles
 -- invoice.payment_failed for a subscription that isn't active or trialing,

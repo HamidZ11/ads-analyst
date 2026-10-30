@@ -1,6 +1,6 @@
 /**
  * The Content Security Policy, built per request by the proxy with a fresh
- * nonce (D-NEW-launch-csp). Scripts run only if they carry the nonce, which
+ * nonce (D-096). Scripts run only if they carry the nonce, which
  * Next.js adds to its own scripts when it finds the policy on the request,
  * or if a nonced script loaded them ('strict-dynamic'); there is no
  * 'unsafe-inline' for scripts, and no 'self' fallback, which every supported

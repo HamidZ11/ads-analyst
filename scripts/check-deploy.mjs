@@ -1,4 +1,4 @@
-// Smoke check of a running deployment (D-NEW-launch-deploy).
+// Smoke check of a running deployment (D-098).
 //
 // Usage: pnpm check:deploy <origin> <supabase|demo>
 //   e.g. pnpm check:deploy https://adanalyst.app supabase

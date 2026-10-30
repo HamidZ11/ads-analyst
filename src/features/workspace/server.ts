@@ -115,7 +115,7 @@ export const getWorkspaceContext = cache(async (): Promise<WorkspaceContext> => 
 
 /**
  * The workspace with its selected client, or null while it has no clients;
- * pages then render their first-run state (D-NEW-onboarding-1).
+ * pages then render their first-run state (D-090).
  */
 export function readyWorkspace(context: WorkspaceContext): Workspace | null {
   if (!context.client || !context.dataSource) return null;

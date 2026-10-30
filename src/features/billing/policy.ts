@@ -9,7 +9,7 @@ import { isEntitled } from "./status";
  *   blocked workspace would have no way to subscribe.
  * - Otherwise: only with an `active` or `trialing` subscription, or for
  *   `GRACE_DAYS` after a payment first failed while the subscription is
- *   `past_due` or `unpaid` (D-NEW-billing-answers-1). When the subscription
+ *   `past_due` or `unpaid` (D-089). When the subscription
  *   can't be read, no (fail closed).
  *
  * Reading is never gated: every page stays available whatever this says.

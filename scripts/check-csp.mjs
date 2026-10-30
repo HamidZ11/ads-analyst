@@ -1,5 +1,5 @@
 // Cross-engine check that the site works under its Content Security Policy
-// (D-NEW-launch-csp).
+// (D-096).
 //
 // Usage: pnpm check:csp [origin]   (default http://localhost:3000)
 // Needs a running server and Playwright's browsers. In demo mode the app pages

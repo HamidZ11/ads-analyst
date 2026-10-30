@@ -404,7 +404,7 @@ export function ImportFlow({
       setCompletion(body.result);
       setStage("complete");
       router.refresh();
-      // The first import goes straight to its findings (D-NEW-onboarding-3).
+      // The first import goes straight to its findings (D-092).
       if (after.href === FIRST_IMPORT_LANDING)
         void openImportedClient(
           body.result.clientId,

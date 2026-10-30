@@ -4,7 +4,7 @@ import { OVERVIEW_PATH } from "@/lib/routes";
 /**
  * Where a completed import leads. The workspace's first import opens Insights
  * on the findings it produced; later imports offer the Overview, as before
- * (D-NEW-onboarding-3).
+ * (D-092).
  */
 export function importDestination(firstImport: boolean) {
   return firstImport

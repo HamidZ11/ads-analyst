@@ -1,7 +1,7 @@
 import { isAppPath } from "./access";
 
 /**
- * Where to go after signing in (D-NEW-billing-answers-1). Only a path to an
+ * Where to go after signing in (D-089). Only a path to an
  * app page on this site is accepted, so a crafted `next` can never send
  * someone to another origin (open redirect) or into the API or auth routes.
  */

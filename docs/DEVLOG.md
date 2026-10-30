@@ -1357,7 +1357,7 @@ Owner brief (D-083, D-084, D-085). Branch `feat/instant-audit`.
 
 ## 2026-10-30 — Audit follow-ups: optional targets, Free audit in the nav, first browser run
 
-Owner answers to the audit's open questions (D-NEW-audit-targets-1, D-NEW-audit-nav-1). Branch `feat/instant-audit`.
+Owner answers to the audit's open questions (D-086, D-087). Branch `feat/instant-audit`.
 
 - **Answers.** Closing band stays on `/audit` (D-084 confirmed). Currencies stay GBP, USD and EUR (D-083 confirmed). Optional target CPA and ROAS on the audit. "Free audit" in the nav and footer.
 - **Targets.** `readTargets`, `positiveOrNull` and the target limits moved to `src/features/import/targets.ts` (pure; `service.ts` re-exports `readTargets` for Settings). `auditExport` takes `targets`, validates them with `readTargets` (ROAS dropped when the conversions carry no value) and puts them on the in-memory client; the report carries `targets`. `audit-targets.tsx`: the "Targets" section, hidden in print; "What the rules found" names the targets used. Tests: empty targets give an identical report; targets reach the rules (findings change, a target appears in them, flagged spend is still `spendInvolved`); invalid values refused with Settings' messages; a ROAS target dropped on a lead file; the report renders the inputs and the targets sentence.
@@ -1371,7 +1371,7 @@ Owner answers to the audit's open questions (D-NEW-audit-targets-1, D-NEW-audit-
 
 ---
 
-## 2026-10-30 — Billing answers (D-NEW-billing-answers-1)
+## 2026-10-30 — Billing answers (D-089)
 
 Owner answers to D-088's open questions. Branch `feat/billing`.
 
@@ -1390,7 +1390,7 @@ Owner answers to D-088's open questions. Branch `feat/billing`.
 
 ## 2026-10-30 — First-run onboarding
 
-Owner brief: from first sign-in to the first real finding in about two minutes (D-NEW-onboarding-1 to 3; decision numbers are placeholders for the integrate step).
+Owner brief: from first sign-in to the first real finding in about two minutes (D-090 to D-092; decision numbers are placeholders for the integrate step).
 
 - **Audit first**, in a real signed-in empty workspace: a throwaway stand-in for Supabase outside the repo (PGlite with the three migrations, answering `/auth/v1/user` and `/rest/v1/rpc/*` on 127.0.0.1, an HS256 session cookie so `getClaims` falls back to `getUser`), `pnpm dev` pointed at it. Found: every analysis page and Clients redirected to the import with Clients highlighted; one sentence of export guidance; no sense of the path; the first import ended on a summary with "View Overview"; targets easy to miss; "1 clients".
 - **Built:** `src/features/onboarding/` — `progress.ts` (`onboardingProgress`, `workspaceProgress`, null in demo mode), `export-steps.ts` (the audit branch's verified Ads Manager steps, reasons fitted to the import), `getting-started.tsx` (`GettingStarted`, `ExportGuide`, `TargetsNudge`, `stepContent`), `empty-workspace.tsx` (`EMPTY_COPY`, `EmptyWorkspace`), `imported-note.tsx` (`ImportedNote`, `FIRST_IMPORT_LANDING`). `server.ts`: `readyWorkspace()`; the six pages render their empty state instead of redirecting. `completion.ts`: `importDestination`; `import-flow.tsx` sends the first import to `/insights?imported=1`. Insights shows the import line and the targets nudge after it; Clients shows the nudge and says "1 client". Copy: Settings' empty Client section mentions targets; Review setup no longer mentions demo clients in a signed-in workspace.
@@ -1402,7 +1402,7 @@ Owner brief: from first sign-in to the first real finding in about two minutes (
 
 ## 2026-10-30 — Free tools: ROAS, CPA and break-even ROAS calculators
 
-Owner brief (D-NEW-tools-1). Branch `feat/free-tools`.
+Owner brief (D-095). Branch `feat/free-tools`.
 
 - `src/lib/routes.ts`: `TOOL_PATHS` (joined to `MARKETING_PATHS`, so access, sitemap and metadata pick them up) and `AUDIT_PATH`. `src/features/tools/`: `formulas.ts` (`parseAmount`, `roas`, `cpa`, `breakEvenRoas`, `breakEvenCpa`, ratios through `safeRatio`), `results.ts` (fields, field messages, the result with the formula worked through), `catalog.ts`, `calculator.tsx` (client: currency radio group, inputs, polite live result), `tool-page.tsx` (frame, tool rows, `ToolsCta` to `/audit`), `tools.module.css`. Pages under `src/app/(marketing)/tools/`. `seo.ts`: four `MARKETING_PAGES` entries, `toolStructuredData` (WebApplication), `toolsIndexStructuredData` (ItemList). Footer: "Free tools".
 - Found in review at 360px: the currency symbol's nested span inherited the segment's padding and fill, widening the control so the panel ran past the viewport; the page's `overflow-x: clip` hid it from a scroll-width probe. Fixed with child selectors, a `minmax(0, 1fr)` column and a flex gap; the probe now also measures element edges.
@@ -1415,7 +1415,7 @@ Owner brief (D-NEW-tools-1). Branch `feat/free-tools`.
 
 ## 2026-10-30 — Launch readiness: deployment, CSP, RLS tests, health
 
-Launch brief (D-NEW-launch-csp, D-NEW-launch-rls, D-NEW-launch-deploy). Branch `feat/launch-readiness`.
+Launch brief (D-096, D-097, D-098). Branch `feat/launch-readiness`.
 
 - **CSP:** `src/lib/csp.ts` (policy and nonce), `src/proxy.ts` (policy on every response it returns and on the forwarded request, in every mode), `next.config.ts` (no CSP; COOP, `payment=()`, `usb=()`, HSTS `includeSubDomains`). The build already rendered every page per request (the root layout loads the session), so nonces change no route from static to dynamic.
 - **RLS:** `src/data/supabase/rls.test.ts` (tables from the catalogue; read, insert, update, delete and move across tenants, with the migrations' grants and with writes re-granted; fingerprints before and after). `test-database.ts`: Supabase's `auth.uid()` over `request.jwt.claims`, Supabase's default grants on `public`, and the shared `payload` fixture (moved from `schema.test.ts`). Mutation runs: a permissive select policy, a permissive all-commands policy and an unlisted table without RLS each failed the suite; removed afterwards.
@@ -1430,7 +1430,7 @@ Launch brief (D-NEW-launch-csp, D-NEW-launch-rls, D-NEW-launch-deploy). Branch `
 
 ## 2026-10-30 — Client report
 
-Owner brief (D-NEW-client-report-1, D-NEW-client-report-2).
+Owner brief (D-093, D-094).
 
 - **Migration** `20261030140000_client_reports.sql`: `client_report_notes` (one note per client and period, composite key to its client's workspace, 4,000 characters, member read through RLS, no direct writes), `client_report_note` (invoker), `save_client_report_note` and `rename_workspace` (definer, membership and owner checks inside). Gateway: `reportNote`, `saveReportNote`, `renameWorkspace`.
 - **Model** `report-model.ts`: `buildClientReport` composes the Overview KPIs, Campaigns and Creatives rows (top five by spend) and the insight engine for the selected client, preset and comparison; `accountChart` exported from the insight rules so the charts match Insights. `client-wording.ts` rewords findings for a client with the engine's figures and drafts next steps from the suggested actions.
@@ -1442,7 +1442,7 @@ Owner brief (D-NEW-client-report-1, D-NEW-client-report-2).
   - "Top creatives" heading and table header were stranded at the foot of page 2: both table sections now avoid breaking inside (five rows always fit a page).
   - The spend chart's end label ("£1,078") was clipped at the right margin: the report's chart grid takes 12px right padding (the shared chart is unchanged).
 - **Environment:** another process on the machine kept killing anything whose command line contained `next start` (exit 144), so the review server was started from a script with a different command line and stopped by port.
-- **Not built:** the read-only share link (D-NEW-client-report-2), left as a follow-up.
+- **Not built:** the read-only share link (D-094), left as a follow-up.
 - Tests: `report-model.test.ts` (KPIs, rows, findings and charts equal the app's for every client and period; client wording keeps the numbers; demo labelling; note rendering), `actions.test.ts` (save, clear, demo, foreign client, bad periods, long notes, failures; rename), `report-notes.test.ts` on PGlite with the real migrations (per-client and per-period isolation, members only, no direct writes, anonymous refused, cascade, owner-only rename, imported client report with no other client's data).
 
 **Checks:** `pnpm check`, `pnpm check:browsers`.

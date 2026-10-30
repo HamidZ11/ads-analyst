@@ -14,7 +14,7 @@ export interface OnboardingStep {
 /**
  * Where a new workspace is on the way to its first finding. Every step is
  * read from what the workspace holds (clients, imports, stored days, targets);
- * nothing is stored to remember progress (D-NEW-onboarding-2).
+ * nothing is stored to remember progress (D-091).
  */
 export interface OnboardingProgress {
   steps: OnboardingStep[];
