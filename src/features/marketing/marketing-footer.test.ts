@@ -16,6 +16,7 @@ describe("marketing footer", () => {
     expect(links).toEqual([
       "Product /#product",
       "How it works /#how-it-works",
+      "Free audit /audit",
       "Pricing /pricing",
       "Privacy /privacy",
       "Terms /terms",
