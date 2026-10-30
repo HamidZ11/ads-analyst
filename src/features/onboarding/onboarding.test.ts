@@ -7,7 +7,7 @@ import type { Client, ClientDataSource, Dataset, ImportRecord } from "@/domain/t
 import { importDestination } from "@/features/import/completion";
 import { buildContext } from "@/features/workspace/context";
 import { EMPTY_COPY, EmptyWorkspace, type EmptyPage } from "./empty-workspace";
-import { EXPORT_STEPS } from "./export-steps";
+import { exportSteps } from "@/features/import/export-steps";
 import { GettingStarted, TargetsNudge, stepContent } from "./getting-started";
 import { ImportedNote } from "./imported-note";
 import { onboardingProgress, workspaceProgress, type OnboardingInput } from "./progress";
@@ -215,7 +215,7 @@ describe("getting started", () => {
     expect(html.match(/bg-accent /g)).toHaveLength(1);
     expect(html).toContain('href="/clients/import?client=new"');
     expect(html).toContain("How to export from Ads Manager");
-    for (const step of EXPORT_STEPS) expect(html).toContain(step.title);
+    for (const step of exportSteps("import")) expect(html).toContain(step.title);
   });
 
   it("nudges once toward targets, only when findings can be read and none is set", () => {

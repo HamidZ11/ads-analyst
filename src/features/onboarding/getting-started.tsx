@@ -4,7 +4,7 @@ import { buttonClasses } from "@/components/ui/button";
 import { formatCurrency, formatDateRange, formatMultiple, formatNumber } from "@/domain/format";
 import { CLIENT_TYPE_LABELS, conversionVocabulary, tracksRevenue } from "@/domain/labels";
 import { cn } from "@/lib/cn";
-import { EXPORT_NOTE, EXPORT_STEPS } from "./export-steps";
+import { EXPORT_NOTE, exportSteps } from "@/features/import/export-steps";
 import type { OnboardingProgress, OnboardingStep, OnboardingStepId } from "./progress";
 
 export const FIRST_IMPORT_HREF = "/clients/import?client=new";
@@ -93,7 +93,7 @@ export function ExportGuide({ open = false }: { open?: boolean }) {
         How to export from Ads Manager
       </summary>
       <ol className="mt-3 space-y-2.5 border-l border-border pl-4">
-        {EXPORT_STEPS.map((step, index) => (
+        {exportSteps("import").map((step, index) => (
           <li key={step.title} className="text-xs leading-5">
             <span className="font-medium text-ink">
               <span className="text-ink-faint tabular">{index + 1}.</span> {step.title}
