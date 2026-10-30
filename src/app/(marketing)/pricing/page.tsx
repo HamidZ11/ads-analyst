@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
+import { checkoutConfig } from "@/features/billing/config";
+import { agencySubscribeTarget, type SubscribeTarget } from "@/features/billing/links";
 import { CtaBand } from "@/features/marketing/cta-band";
 import { landingEvidence } from "@/features/marketing/evidence";
 import m from "@/features/marketing/marketing.module.css";
@@ -15,8 +17,9 @@ export const metadata: Metadata = marketingMetadata("/pricing");
 
 /* Two buying paths on one stage: Agency (self-serve, £99) and Enterprise
    (more than 10 client accounts, custom pricing). They differ in capacity, not
-   features, so the product list is shared beneath both. Billing is not built:
-   nothing here starts a subscription. */
+   features, so the product list is shared beneath both. Agency's Subscribe
+   leads to Checkout in the app when billing is configured, else to the
+   payment link, else it isn't shown (D-083). */
 
 const SHARED = [
   "Meta Ads CSV imports",
@@ -56,15 +59,21 @@ const FAQ = [
   },
 ];
 
-/** Agency's actions: with a payment link, Subscribe is the one filled primary
-    and the demo becomes the text link; without one, the demo and sign-in. */
-function AgencyActions({ paymentLink }: { paymentLink: string | null }) {
-  if (paymentLink)
+/** Agency's actions: with somewhere to subscribe, Subscribe is the one filled
+    primary and the demo becomes the text link; without, the demo and sign-in. */
+function AgencyActions({ subscribe }: { subscribe: SubscribeTarget }) {
+  if (subscribe)
     return (
       <div className={s.planActions}>
-        <a href={paymentLink} className={m.button}>
-          Subscribe
-        </a>
+        {subscribe.kind === "checkout" ? (
+          <Link href={subscribe.href} className={m.button}>
+            Subscribe
+          </Link>
+        ) : (
+          <a href={subscribe.href} className={m.button}>
+            Subscribe
+          </a>
+        )}
         <Link href={APP_HOME} className={m.textLink}>
           Try the demo
           <ArrowRight aria-hidden size={16} strokeWidth={1.75} />
@@ -136,7 +145,12 @@ export default function PricingPage() {
                 <Check aria-hidden size={16} strokeWidth={1.75} />
                 Up to 10 client accounts
               </p>
-              <AgencyActions paymentLink={STRIPE_PAYMENT_LINK} />
+              <AgencyActions
+                subscribe={agencySubscribeTarget({
+                  checkoutConfigured: checkoutConfig() !== null,
+                  paymentLink: STRIPE_PAYMENT_LINK,
+                })}
+              />
               <p className={s.planNote}>
                 The demo runs on a seeded sample agency. Trying it doesn’t start a subscription.
                 Prices in GBP.
