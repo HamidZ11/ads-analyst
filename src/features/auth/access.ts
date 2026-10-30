@@ -7,7 +7,7 @@
 import { APP_PATHS, MARKETING_PATHS } from "@/lib/routes";
 
 /** Routes reachable without a session (besides the marketing pages). */
-const PUBLIC_PATHS = ["/sign-in", "/auth/callback"];
+const PUBLIC_PATHS = ["/sign-in", "/auth/callback", "/api/health"];
 
 /** `redirect_app` sends a signed-in visitor to the app (`APP_HOME`). */
 export type AccessDecision = "allow" | "redirect_to_sign_in" | "unauthorized" | "redirect_app";
