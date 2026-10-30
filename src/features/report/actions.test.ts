@@ -16,6 +16,7 @@ const gateway = {
   reportNote: vi.fn(),
   saveReportNote: vi.fn(),
   consumeRateLimit: vi.fn(),
+  subscription: vi.fn(),
 } satisfies WorkspaceGateway;
 
 const signedIn = {

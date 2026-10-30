@@ -34,6 +34,9 @@ const gateway = {
   snapshot: vi.fn(),
   importMetaCsv: vi.fn(),
   updateTargets: vi.fn(),
+  renameWorkspace: vi.fn(),
+  reportNote: vi.fn(),
+  saveReportNote: vi.fn(),
   consumeRateLimit: vi.fn(),
   subscription: vi.fn(),
 } satisfies WorkspaceGateway;
