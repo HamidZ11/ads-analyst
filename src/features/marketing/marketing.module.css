@@ -387,6 +387,16 @@
     display: none;
   }
 }
+/* Five links since Free audit: closer together until the bar has room, with a
+   gap that keeps Pricing clear of Sign in. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .nav {
+    column-gap: 28px;
+  }
+  .links {
+    gap: 24px;
+  }
+}
 
 /* Print: a page's content alone, on white. The audit report is the reason
    (D-083); the other pages print the same way. --------------------------- */
