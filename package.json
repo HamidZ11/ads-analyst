@@ -12,7 +12,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
-    "check:browsers": "node scripts/check-crops.mjs"
+    "check:browsers": "node scripts/check-crops.mjs",
+    "check:csp": "node scripts/check-csp.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
