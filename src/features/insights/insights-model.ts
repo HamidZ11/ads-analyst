@@ -7,7 +7,7 @@ import {
   type PriorityCounts,
 } from "@/domain/insights";
 import { formatDateRange } from "@/domain/format";
-import { rangeLength } from "@/domain/periods";
+import { comparisonPhrase, rangeLength } from "@/domain/periods";
 import type { CurrencyCode } from "@/domain/types";
 import type { Workspace } from "@/features/workspace/server";
 import { collectInsightFacts } from "./facts";
@@ -24,6 +24,8 @@ export interface InsightsModel {
   currentLabel: string;
   previousLabel: string;
   comparison: string;
+  /** The baseline after "against": "yesterday", "the previous 7 days". */
+  comparedWith: string;
   campaignCount: number;
   creativeCount: number;
 }
@@ -44,6 +46,7 @@ export function buildInsightsModel(workspace: Workspace): InsightsModel {
     currentLabel: formatDateRange(periods.current),
     previousLabel: formatDateRange(periods.previous),
     comparison,
+    comparedWith: comparisonPhrase(periods),
     campaignCount: facts.campaigns.length,
     creativeCount: facts.creatives.length,
   };

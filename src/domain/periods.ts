@@ -152,3 +152,13 @@ export function comparisonLabel(pair: PeriodPair): string {
   if (pair.preset === "yesterday") return "the day before";
   return `previous ${days} days`;
 }
+
+/**
+ * The baseline as a phrase that reads after "compared with" or "against":
+ * "yesterday", "the day before", "the previous 7 days". `comparisonLabel`
+ * is the short form for "vs …".
+ */
+export function comparisonPhrase(pair: PeriodPair): string {
+  const label = comparisonLabel(pair);
+  return label.startsWith("previous ") ? `the ${label}` : label;
+}

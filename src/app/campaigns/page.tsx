@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DatePresetControl } from "@/components/shell/date-preset-control";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatDateRange } from "@/domain/format";
+import { comparisonPhrase } from "@/domain/periods";
 import { conversionVocabulary, tracksRevenue } from "@/domain/labels";
 import { getCampaignRows } from "@/features/analytics/queries";
 import { CampaignsSummary } from "@/features/campaigns/campaigns-summary";
@@ -60,7 +61,7 @@ export default async function CampaignsPage() {
         targetCpa={client.targetCpa}
       />
       <p className="mt-3 text-xs text-ink-muted">
-        Changes compare with the {comparison}. Movements under 5% stay grey.
+        Changes compare with {comparisonPhrase(periods)}. Movements under 5% stay grey.
       </p>
     </>
   );

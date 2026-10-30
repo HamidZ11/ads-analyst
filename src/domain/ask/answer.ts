@@ -26,6 +26,13 @@ const CAMPAIGN_QUESTION = "Which campaign should I investigate first?";
 const CREATIVE_QUESTION = "Show me the creatives in that campaign.";
 const FATIGUE_QUESTION = "Does the data prove audience fatigue?";
 const SPEND_QUESTION = "Was spend also higher?";
+/** "in the previous 7 days", "yesterday", "on the day before", from the short comparison label. */
+const baselinePhrase = (label: string) =>
+  label.startsWith("previous ")
+    ? `in the ${label}`
+    : label.startsWith("the ")
+      ? `on ${label}`
+      : label;
 const shortName = (entity: InsightEntity) => entity.name.split(" | ").at(-1) ?? entity.name;
 
 export function cleanContext(data: AskData, supplied?: AskContext): AskContext {
@@ -341,7 +348,7 @@ export function answerQuestion(
           : Math.abs(movement.change) < INSIGHT_RULES.steady
             ? `${name}: ${label.toLowerCase()} is essentially flat.`
             : `${name}: ${label.toLowerCase()} ${movement.change > 0 ? "rose" : "fell"} ${formatPercent(Math.abs(movement.change))}.`;
-      answer.summary = `${label} is ${format(movement.current, kind)}, versus ${format(movement.previous, kind)} in the ${scope.comparison}. ${movement.change === null ? "A missing or zero baseline prevents a relative change calculation." : "The direction above reflects the data, even if the question assumed a different movement."}`;
+      answer.summary = `${label} is ${format(movement.current, kind)}, versus ${format(movement.previous, kind)} ${baselinePhrase(scope.comparison)}. ${movement.change === null ? "A missing or zero baseline prevents a relative change calculation." : "The direction above reflects the data, even if the question assumed a different movement."}`;
       if (movement.current === null || movement.change === null) answer.state = "insufficient";
       evidence(
         [movement, ...basic(subject).filter((item) => item.label !== label)].slice(0, 3),

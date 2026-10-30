@@ -24,6 +24,7 @@ import {
 import { collectInsightFacts } from "@/features/insights/facts";
 import type { Workspace } from "@/features/workspace/server";
 import { toClientFinding, type ClientFinding } from "./client-wording";
+import { comparisonPhrase } from "@/domain/periods";
 
 /**
  * Everything a client report shows, computed from the same queries and rules
@@ -79,6 +80,8 @@ export interface ClientReportModel {
   previousLabel: string;
   /** "previous 7 days". */
   comparison: string;
+  /** The baseline after "compared with": "yesterday", "the previous 7 days". */
+  comparedWith: string;
   preparedOn: string;
   metrics: ReportMetric[];
   charts: InsightChart[];
@@ -157,6 +160,7 @@ export function buildClientReport(workspace: Workspace): ClientReportModel {
     currentLabel: formatDateRange(periods.current),
     previousLabel: formatDateRange(periods.previous),
     comparison,
+    comparedWith: comparisonPhrase(periods),
     preparedOn: formatDate(workspace.today, { year: true }),
     metrics,
     charts,

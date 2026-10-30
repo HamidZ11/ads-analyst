@@ -100,8 +100,8 @@ function Findings({ model }: { model: ClientReportModel }) {
   if (model.findings.length === 0)
     return (
       <p className="text-sm text-ink-secondary">
-        Nothing stood out against the {model.comparison}: no campaign, ad or creative crossed
-        the checks for wasted spend, falling results or room to grow.
+        Nothing stood out against {model.comparedWith}: no campaign, ad or creative crossed the
+        checks for wasted spend, falling results or room to grow.
       </p>
     );
   return (
@@ -249,7 +249,7 @@ export function ClientReport({
       <Section
         id="report-results"
         title="Headline results"
-        description={`Against the ${model.comparison}`}
+        description={`Compared with ${model.comparedWith}`}
         className="break-inside-avoid"
       >
         <HeadlineMetrics model={model} />
@@ -338,8 +338,8 @@ export function ClientReport({
 
       <footer className="border-t border-border pt-4 text-xs text-ink-muted">
         {model.demo
-          ? `Figures are computed from the seeded demo dataset for ${model.currentLabel} and the ${model.comparison}; they are not real results.`
-          : `Figures are computed from ${model.clientName}'s Meta Ads daily data for ${model.currentLabel} and the ${model.comparison}.`}{" "}
+          ? `Figures are computed from the seeded demo dataset for ${model.currentLabel} and ${model.previousLabel}; they are not real results.`
+          : `Figures are computed from ${model.clientName}'s Meta Ads daily data for ${model.currentLabel} and ${model.previousLabel}.`}{" "}
         Prepared by {model.agencyName}.
       </footer>
     </article>

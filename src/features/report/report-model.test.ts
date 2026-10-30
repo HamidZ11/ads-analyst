@@ -190,6 +190,25 @@ describe("client report model", () => {
       expect(html).toContain(`id="${id}"`);
   });
 
+  it("words the comparison so it reads for every preset", () => {
+    const expected: Record<string, string> = {
+      today: "Compared with yesterday",
+      yesterday: "Compared with the day before",
+      "7d": "Compared with the previous 7 days",
+      "14d": "Compared with the previous 14 days",
+      "30d": "Compared with the previous 30 days",
+    };
+    for (const preset of PRESETS) {
+      const report = buildClientReport(workspace("cli_luxe", preset));
+      const html = renderToStaticMarkup(
+        createElement(ClientReport, { model: report, note: null, canSave: false }),
+      );
+      expect(html).toContain(expected[preset]);
+      expect(html).toContain(`and ${report.previousLabel}`);
+      expect(html).not.toMatch(/\bthe (yesterday|the\b)/i);
+    }
+  });
+
   it("renders a saved note for printing and offers saving when stored", () => {
     const report = buildClientReport(workspace("cli_peak"));
     const html = renderToStaticMarkup(
