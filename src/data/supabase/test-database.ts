@@ -1,6 +1,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PGlite } from "@electric-sql/pglite";
+import { inspectHeaders, parseCsv, proposeMapping } from "@/data/import";
+import { planImport } from "@/features/import/service";
 import {
   gatewayError,
   importWriteResult,
@@ -11,10 +13,15 @@ import type { WorkspaceSnapshot } from "./snapshot";
 
 /**
  * Test-only: a real Postgres (PGlite, in process) with the pieces of Supabase
- * the migrations rely on — the anon and authenticated roles, auth.users and
- * auth.uid() reading the JWT subject — then every migration in
- * supabase/migrations applied in order. Policies are exercised by switching to
- * the authenticated role with a chosen subject, exactly as PostgREST does.
+ * the migrations rely on — the anon and authenticated roles, auth.users,
+ * Supabase's own auth.uid() (the JWT subject from the claims PostgREST sets)
+ * and Supabase's default grants, which give anon and authenticated every
+ * privilege on new tables and functions in public unless a migration revokes
+ * them — then every migration in supabase/migrations applied in order.
+ * Policies are exercised by switching to the authenticated role with chosen
+ * claims, as PostgREST does. Not emulated: JWT signing and expiry, PostgREST
+ * itself, and the rest of the auth schema (docs/DEPLOY.md, "What the tests
+ * cannot prove").
  */
 const SUPABASE_SHIM = `
   create role anon nologin;
@@ -22,9 +29,17 @@ const SUPABASE_SHIM = `
   create schema auth;
   create table auth.users (id uuid primary key, email text);
   create function auth.uid() returns uuid language sql stable
-    as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+    as $$
+      select coalesce(
+        nullif(current_setting('request.jwt.claim.sub', true), ''),
+        (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')
+      )::uuid
+    $$;
   grant usage on schema auth to anon, authenticated;
   grant usage on schema public to anon, authenticated;
+  alter default privileges in schema public grant all on tables to anon, authenticated;
+  alter default privileges in schema public grant all on functions to anon, authenticated;
+  alter default privileges in schema public grant all on sequences to anon, authenticated;
 `;
 
 export const MIGRATIONS_DIR = join(process.cwd(), "supabase", "migrations");
@@ -43,19 +58,22 @@ export async function addUser(db: PGlite, id: string, email: string) {
   await db.query("insert into auth.users (id, email) values ($1, $2)", [id, email]);
 }
 
-/** Runs `fn` as the authenticated role with `userId` as the JWT subject (or as anon). */
+/** Runs `fn` as the authenticated role with `userId` as the JWT subject (or as anon), as PostgREST does. */
 export async function as<T>(
   db: PGlite,
   userId: string | null,
   fn: () => Promise<T>,
 ): Promise<T> {
   await db.exec(userId ? "set role authenticated" : "set role anon");
-  await db.query("select set_config('request.jwt.claim.sub', $1, false)", [userId ?? ""]);
+  const claims = userId ? { sub: userId, role: "authenticated" } : { role: "anon" };
+  await db.query("select set_config('request.jwt.claims', $1, false)", [
+    JSON.stringify(claims),
+  ]);
   try {
     return await fn();
   } finally {
     await db.exec("reset role");
-    await db.query("select set_config('request.jwt.claim.sub', '', false)");
+    await db.query("select set_config('request.jwt.claims', '', false)");
   }
 }
 
@@ -105,4 +123,36 @@ export function sqlGateway(db: PGlite, userId: string): WorkspaceGateway {
     consumeRateLimit: (action) =>
       run<boolean>("select public.consume_rate_limit($1) as r", [action]),
   };
+}
+
+/** An import payload for a new client from a fixture CSV, as the importer plans it. Test-only. */
+export function payload(
+  csv: string,
+  name: string,
+  type: "ecommerce" | "lead_generation" = "ecommerce",
+) {
+  const parsed = parseCsv(csv);
+  if (!parsed.ok) throw new Error("bad fixture");
+  const plan = planImport(
+    {
+      fileName: "export.csv",
+      fileBytes: csv.length,
+      csv,
+      mapping: proposeMapping(inspectHeaders(parsed.table.headers), type).mapping,
+      destination: {
+        kind: "new",
+        client: {
+          name,
+          type,
+          currency: "GBP",
+          timezone: "Europe/London",
+          targetCpa: null,
+          targetRoas: null,
+        },
+      },
+    },
+    { now: new Date("2026-10-03T10:00:00Z"), clients: [], accountIdFor: () => null },
+  );
+  if (!plan.ok) throw new Error(plan.message);
+  return plan.payload;
 }
