@@ -1,7 +1,15 @@
 import type { PGlite } from "@electric-sql/pglite";
 import { beforeAll, describe, expect, it } from "vitest";
 import { ecommerceCsv, leadCsv } from "@/data/import/__fixtures__/meta-exports";
-import { addUser, as, createTestDatabase, payload, sqlGateway } from "./test-database";
+import {
+  addUser,
+  as,
+  createTestDatabase,
+  payload,
+  setBillingSecret,
+  sqlBillingWriter,
+  sqlGateway,
+} from "./test-database";
 
 /**
  * Cross-tenant isolation on every table in `public`, discovered from the
@@ -29,8 +37,16 @@ const TENANT_COLUMN: Record<string, string> = {
   daily_metrics: "workspace_id",
   imports: "workspace_id",
   rate_limits: "user_id",
+  workspace_subscriptions: "workspace_id",
+  billing_events: "workspace_id",
+  client_report_notes: "workspace_id",
 };
 const TABLES = Object.keys(TENANT_COLUMN);
+
+/** Tables with no tenant: nobody but the database owner may read or write them. */
+const UNTENANTED = ["billing_webhook_secret"];
+
+const BILLING_SECRET = "test-db-secret-0123456789abcdefghijklmnop";
 
 type Tenant = { user: string; key: (table: string) => string };
 
@@ -44,6 +60,35 @@ async function twoTenants() {
   const [benWs] = await ben.ensureWorkspaces("Ben's workspace");
   await ana.importMetaCsv(anaWs.id, payload(ecommerceCsv(), "Bloom Botanicals"));
   await ben.importMetaCsv(benWs.id, payload(leadCsv(), "Harbour Law", "lead_generation"));
+  // A subscription and its event through the webhook's function, and a report
+  // note through the member's function, for each workspace.
+  await setBillingSecret(db, BILLING_SECRET);
+  const webhook = sqlBillingWriter(db, BILLING_SECRET);
+  for (const [gateway, ws, name] of [
+    [ana, anaWs, "Ana"],
+    [ben, benWs, "Ben"],
+  ] as const) {
+    await webhook.applyEvent(`evt_${name}1`, "customer.subscription.created", {
+      workspace_id: ws.id,
+      customer_id: `cus_${name}1`,
+      subscription_id: `sub_${name}1`,
+      plan: "agency",
+      interval: "month",
+      status: "active",
+      current_period_end: "2026-11-30T12:00:00.000Z",
+      cancel_at_period_end: false,
+    });
+    const { rows } = await db.query<{ id: string }>(
+      "select id from public.clients where workspace_id = $1 limit 1",
+      [ws.id],
+    );
+    await gateway.saveReportNote(
+      rows[0].id,
+      "2026-10-01",
+      "2026-10-07",
+      `${name}'s next steps.`,
+    );
+  }
   const tenant = (user: string, workspace: string): Tenant => ({
     user,
     key: (table) => (TENANT_COLUMN[table] === "user_id" ? user : workspace),
@@ -138,7 +183,7 @@ describe("row level security on every table", () => {
         where n.nspname = 'public' and c.relkind in ('r', 'p', 'v', 'm', 'f')
         order by 1`,
     );
-    expect(rows.map((r) => r.name)).toEqual([...TABLES].sort());
+    expect(rows.map((r) => r.name)).toEqual([...TABLES, ...UNTENANTED].sort());
     for (const row of rows) expect(row.rls, row.name).toBe(true);
   });
 
@@ -180,6 +225,20 @@ describe("row level security on every table", () => {
       expect(anon.error, `anon read ${table}`).toMatch(/permission denied/);
     }
   }, 30_000);
+
+  it("keeps tables with no tenant closed to every user and to anonymous callers", async () => {
+    for (const user of [ANA, BEN, null])
+      for (const table of UNTENANTED)
+        for (const sql of [
+          `select 1 from public.${table}`,
+          `insert into public.${table} default values`,
+          `update public.${table} set created_at = now()`,
+          `delete from public.${table}`,
+        ]) {
+          const result = await attempt(db, user, sql);
+          expect(result.error, `${user} ${sql}`).toMatch(/permission denied/);
+        }
+  });
 
   it("refuses every direct write into the other tenant, with the privileges the migrations grant", async () => {
     const before = [await fingerprints(db, ana), await fingerprints(db, ben)];
@@ -224,6 +283,12 @@ describe("row level security without the grant boundary", () => {
         if (writes.move.error)
           expect(writes.move.error, `move ${table}`).toMatch(/row-level security|foreign key/);
       }
+    for (const table of UNTENANTED) {
+      const read = await attempt(db, ANA, `select 1 from public.${table}`);
+      expect(read, `read ${table}`).toEqual({ affected: 0, error: null });
+      const wipe = await attempt(db, ANA, `delete from public.${table}`);
+      expect(wipe, `delete ${table}`).toEqual({ affected: 0, error: null });
+    }
     expect([await fingerprints(db, ana), await fingerprints(db, ben)]).toEqual(before);
   }, 30_000);
 });
