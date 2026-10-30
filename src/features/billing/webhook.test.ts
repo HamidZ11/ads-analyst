@@ -49,6 +49,7 @@ function fakeStripe(sub: StripeSubscriptionLike | Error = subscription()) {
       if (sub instanceof Error) throw sub;
       return sub;
     }),
+    subscriptionStatuses: vi.fn(),
   } satisfies BillingStripe;
 }
 

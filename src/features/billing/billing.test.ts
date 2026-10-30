@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { WorkspaceSubscription } from "@/data/supabase/billing";
 import { AGENCY_CLIENT_LIMIT, BillingSection, NOTICES, parseNotice } from "./billing-section";
-import { checkoutRedirect, portalRedirect } from "./checkout";
+import { checkoutIdempotencyKey, checkoutRedirect, portalRedirect } from "./checkout";
 import {
   agencyPrices,
   checkoutConfig,
@@ -255,6 +255,7 @@ describe("Checkout and the portal", () => {
         url: "https://billing.stripe.com/p/session/test_1",
       })),
       retrieveSubscription: vi.fn(),
+      subscriptionStatuses: vi.fn(async (): Promise<string[]> => []),
     } satisfies BillingStripe;
     return { client, factory: vi.fn(() => client) };
   };
@@ -268,9 +269,14 @@ describe("Checkout and the portal", () => {
       workspaceId: "ws_1",
       email: "ana@agency.test",
       subscription: null,
+      now: new Date("2026-10-30T12:04:00Z"),
     });
     expect(target).toBe("https://checkout.stripe.com/c/pay/cs_test_1");
     expect(factory).toHaveBeenCalledWith(TEST_KEY);
+    expect(client.subscriptionStatuses).toHaveBeenCalledWith({
+      workspaceId: "ws_1",
+      customerId: null,
+    });
     expect(client.createCheckoutSession).toHaveBeenCalledWith({
       priceId: "price_Y",
       workspaceId: "ws_1",
@@ -278,7 +284,76 @@ describe("Checkout and the portal", () => {
       customerEmail: "ana@agency.test",
       successUrl: "https://adanalyst.example/settings?billing=success#billing",
       cancelUrl: "https://adanalyst.example/settings?billing=cancelled#billing",
+      idempotencyKey: checkoutIdempotencyKey(
+        "ws_1",
+        "price_Y",
+        new Date("2026-10-30T12:04:00Z"),
+      ),
     });
+  });
+
+  it("refuses a second Checkout while Stripe already holds a live subscription the webhook hasn't stored", async () => {
+    for (const status of ["active", "trialing", "incomplete", "past_due"]) {
+      const { client, factory } = fake();
+      client.subscriptionStatuses.mockResolvedValueOnce(["canceled", status]);
+      expect(
+        await checkoutRedirect({
+          config: checkoutConfig(configured),
+          stripe: factory,
+          interval: "month",
+          workspaceId: "ws_1",
+          email: null,
+          subscription: sub({ status: "canceled", stripeCustomerId: "cus_old" }),
+        }),
+      ).toBe("https://adanalyst.example/settings?billing=active#billing");
+      expect(client.subscriptionStatuses).toHaveBeenCalledWith({
+        workspaceId: "ws_1",
+        customerId: "cus_old",
+      });
+      expect(client.createCheckoutSession).not.toHaveBeenCalled();
+    }
+  });
+
+  it("starts Checkout when Stripe's subscriptions for the workspace have all ended", async () => {
+    const { client, factory } = fake();
+    client.subscriptionStatuses.mockResolvedValueOnce(["canceled", "incomplete_expired"]);
+    expect(
+      await checkoutRedirect({
+        config: checkoutConfig(configured),
+        stripe: factory,
+        interval: "month",
+        workspaceId: "ws_1",
+        email: null,
+        subscription: null,
+      }),
+    ).toBe("https://checkout.stripe.com/c/pay/cs_test_1");
+  });
+
+  it("does not start Checkout when Stripe's subscriptions cannot be read", async () => {
+    const { client, factory } = fake();
+    client.subscriptionStatuses.mockRejectedValueOnce(new Error("search unavailable"));
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(
+      await checkoutRedirect({
+        config: checkoutConfig(configured),
+        stripe: factory,
+        interval: "month",
+        workspaceId: "ws_1",
+        email: null,
+        subscription: null,
+      }),
+    ).toBe("https://adanalyst.example/settings?billing=error#billing");
+    quiet.mockRestore();
+    expect(client.createCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it("keys Checkout per workspace, price and ten-minute window", () => {
+    const at = (iso: string) => new Date(iso);
+    const key = checkoutIdempotencyKey("ws_1", "price_M", at("2026-10-30T12:00:00Z"));
+    expect(checkoutIdempotencyKey("ws_1", "price_M", at("2026-10-30T12:09:59Z"))).toBe(key);
+    expect(checkoutIdempotencyKey("ws_1", "price_M", at("2026-10-30T12:10:00Z"))).not.toBe(key);
+    expect(checkoutIdempotencyKey("ws_2", "price_M", at("2026-10-30T12:00:00Z"))).not.toBe(key);
+    expect(checkoutIdempotencyKey("ws_1", "price_Y", at("2026-10-30T12:00:00Z"))).not.toBe(key);
   });
 
   it("reuses the workspace's customer after a cancellation", async () => {

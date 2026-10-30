@@ -1,6 +1,6 @@
 import type { BillingInterval, WorkspaceSubscription } from "@/data/supabase/billing";
 import type { CheckoutConfig } from "./config";
-import { isLive } from "./status";
+import { isLive, isSubscriptionStatus } from "./status";
 import type { BillingStripe } from "./stripe";
 
 /**
@@ -16,6 +16,13 @@ export type BillingNotice = "success" | "cancelled" | "active" | "unavailable" |
 export const settingsUrl = (origin: string, notice: BillingNotice) =>
   `${origin}${SETTINGS_BILLING}?billing=${notice}#billing`;
 
+/** Repeated Subscribe clicks within this window reuse one Checkout session. */
+export const CHECKOUT_WINDOW_MS = 10 * 60 * 1000;
+
+/** One key per workspace, price and ten-minute window (Stripe keeps keys for 24 hours). */
+export const checkoutIdempotencyKey = (workspaceId: string, priceId: string, now: Date) =>
+  `checkout:${workspaceId}:${priceId}:${Math.floor(now.getTime() / CHECKOUT_WINDOW_MS)}`;
+
 export async function checkoutRedirect(input: {
   config: CheckoutConfig | null;
   stripe: (secretKey: string) => BillingStripe;
@@ -23,6 +30,7 @@ export async function checkoutRedirect(input: {
   workspaceId: string;
   email: string | null;
   subscription: WorkspaceSubscription | null;
+  now?: Date;
 }): Promise<string> {
   const { config } = input;
   const price = config?.prices[input.interval];
@@ -31,14 +39,25 @@ export async function checkoutRedirect(input: {
   if (input.subscription && isLive(input.subscription.status))
     return settingsUrl(config.origin, "active");
   try {
-    const session = await input.stripe(config.secretKey).createCheckoutSession({
+    const stripe = input.stripe(config.secretKey);
+    const customerId = input.subscription?.stripeCustomerId ?? null;
+    // The stored row lags the payment until the webhook lands, so ask Stripe
+    // too: a second tab or click must not start a second subscription.
+    const statuses = await stripe.subscriptionStatuses({
+      workspaceId: input.workspaceId,
+      customerId,
+    });
+    if (statuses.some((status) => isSubscriptionStatus(status) && isLive(status)))
+      return settingsUrl(config.origin, "active");
+    const session = await stripe.createCheckoutSession({
       priceId: price,
       workspaceId: input.workspaceId,
       // Reuse the workspace's Stripe customer after a cancellation.
-      customerId: input.subscription?.stripeCustomerId ?? null,
+      customerId,
       customerEmail: input.email,
       successUrl: settingsUrl(config.origin, "success"),
       cancelUrl: settingsUrl(config.origin, "cancelled"),
+      idempotencyKey: checkoutIdempotencyKey(input.workspaceId, price, input.now ?? new Date()),
     });
     return session.url ?? settingsUrl(config.origin, "error");
   } catch (failure) {

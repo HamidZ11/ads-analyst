@@ -18,6 +18,7 @@ const stripe = vi.hoisted(() => ({
   createCheckoutSession: vi.fn(),
   createPortalSession: vi.fn(),
   retrieveSubscription: vi.fn(),
+  subscriptionStatuses: vi.fn(),
 }));
 vi.mock("@/features/billing/stripe", async (original) => ({
   ...(await original<typeof import("@/features/billing/stripe")>()),
@@ -81,6 +82,7 @@ beforeEach(() => {
   for (const [key, value] of Object.entries(ENV)) vi.stubEnv(key, value);
   vi.mocked(loadSession).mockResolvedValue(session);
   gateway.subscription.mockResolvedValue(null);
+  stripe.subscriptionStatuses.mockResolvedValue([]);
   stripe.createCheckoutSession.mockResolvedValue({
     url: "https://checkout.stripe.com/c/pay/cs_test_1",
   });
