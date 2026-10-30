@@ -15,7 +15,7 @@ export function Table({
   ...props
 }: TableProps) {
   return (
-    <div className={cn("w-full scrollbar-thin overflow-x-auto", wrapperClassName)}>
+    <div className={cn("relative w-full scrollbar-thin overflow-x-auto", wrapperClassName)}>
       <table className={cn("w-full border-collapse text-sm", className)} {...props}>
         <caption className="sr-only">{caption}</caption>
         {children}

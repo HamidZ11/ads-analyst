@@ -278,6 +278,16 @@
     display: table-header-group;
   }
 
+  /* Seven-column report tables fit A4's printable width (about 688px). */
+  th,
+  td {
+    padding-inline: 6px !important;
+  }
+
+  th {
+    white-space: normal !important;
+  }
+
   h2,
   h3 {
     break-after: avoid;

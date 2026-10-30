@@ -155,15 +155,18 @@ function EntityTable({
       <TBody>
         {rows.map((row) => (
           <Tr key={row.id} className="break-inside-avoid">
-            <Td className="max-w-[320px] py-2 whitespace-normal">
+            <Td className="max-w-[184px] py-2 whitespace-normal sm:max-w-[320px] print:max-w-[200px]">
               {campaigns ? (
                 <CampaignName
                   name={row.name}
-                  className="truncate text-sm font-medium text-ink"
-                  contextClassName="truncate"
+                  className="truncate text-sm font-medium text-ink print:whitespace-normal"
+                  contextClassName="truncate print:whitespace-normal"
                 />
               ) : (
-                <span className="block truncate text-sm font-medium text-ink" title={row.name}>
+                <span
+                  className="block truncate text-sm font-medium text-ink print:whitespace-normal"
+                  title={row.name}
+                >
                   {row.name}
                 </span>
               )}
@@ -259,7 +262,7 @@ export function ClientReport({
           description="This period against the one before, aligned by day"
           className="break-inside-avoid"
         >
-          <div className="grid gap-x-10 md:grid-cols-2 print:grid-cols-2 [&>section]:mt-0 [&>section]:border-t-0 [&>section]:pt-0">
+          <div className="grid gap-x-10 pr-3 md:grid-cols-2 print:grid-cols-2 [&>section]:mt-0 [&>section]:border-t-0 [&>section]:pt-0">
             {model.charts.map((chart) => (
               <FindingChart
                 key={chart.title}
@@ -288,6 +291,7 @@ export function ClientReport({
       <Section
         id="report-campaigns"
         title="Top campaigns"
+        className="break-inside-avoid"
         description={shownOf(model.campaigns.length, model.campaignTotal, "campaigns")}
       >
         {model.campaigns.length > 0 ? (
@@ -306,6 +310,7 @@ export function ClientReport({
       <Section
         id="report-creatives"
         title="Top creatives"
+        className="break-inside-avoid"
         description={shownOf(model.creatives.length, model.creativeTotal, "creatives")}
       >
         {model.creatives.length > 0 ? (
