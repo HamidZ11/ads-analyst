@@ -1,11 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ImportPayload } from "../import/payload";
+import {
+  SUBSCRIPTION_COLUMNS,
+  subscriptionFromRow,
+  type SubscriptionRow,
+  type WorkspaceSubscription,
+} from "./billing";
 import type { WorkspaceSnapshot } from "./snapshot";
 
 /**
  * The only path between the application and Postgres. Every call runs as the
  * signed-in user (publishable key + the user's session), so RLS applies; there
- * is no service-role key anywhere in the app.
+ * is no service-role key anywhere in the app. (The Stripe webhook, which has
+ * no session, has its own narrower writer in `./billing`.)
  */
 export interface WorkspaceMembership {
   id: string;
@@ -33,6 +40,8 @@ export interface WorkspaceGateway {
   ): Promise<boolean>;
   /** Counts one attempt by the signed-in user; false once their allowance for the window is spent. */
   consumeRateLimit(action: RateLimitedAction): Promise<boolean>;
+  /** The workspace's subscription, read through RLS; null when it has never subscribed. */
+  subscription(workspaceId: string): Promise<WorkspaceSubscription | null>;
 }
 
 /** Operations with a per-user allowance, set in public.consume_rate_limit. */
@@ -121,6 +130,15 @@ export function supabaseGateway(db: SupabaseClient): WorkspaceGateway {
         p_target_roas: targetRoas,
       }),
     consumeRateLimit: (action) => call<boolean>("consume_rate_limit", { p_action: action }),
+    subscription: async (workspaceId) => {
+      const { data, error } = await db
+        .from("workspace_subscriptions")
+        .select(SUBSCRIPTION_COLUMNS)
+        .eq("workspace_id", workspaceId)
+        .maybeSingle<SubscriptionRow>();
+      if (error) throw gatewayError(error);
+      return subscriptionFromRow(data);
+    },
   };
 }
 

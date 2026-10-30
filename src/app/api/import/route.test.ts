@@ -12,6 +12,7 @@ const gateway = {
   importMetaCsv: vi.fn(),
   updateTargets: vi.fn(),
   consumeRateLimit: vi.fn(),
+  subscription: vi.fn(),
 } satisfies WorkspaceGateway;
 
 const session = {
