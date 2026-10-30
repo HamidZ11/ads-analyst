@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Building2,
+  FileText,
   Images,
   LayoutDashboard,
   Lightbulb,
@@ -66,6 +67,13 @@ export const PRIMARY_NAV: readonly NavItem[] = [
     icon: MessageCircleQuestion,
     group: "analyse",
     description: "Query your data in plain English",
+  },
+  {
+    href: "/report",
+    label: "Client report",
+    icon: FileText,
+    group: "analyse",
+    description: "A report to send to your client",
   },
   {
     href: "/clients",

@@ -8,6 +8,7 @@ import { signOut } from "@/features/auth/actions";
 import type { Workspace } from "@/features/workspace/server";
 import type { WorkspaceContext } from "@/features/workspace/context";
 import { TargetForm } from "./target-form";
+import { WorkspaceNameForm } from "./workspace-name-form";
 
 /* Settings reads as one page of sections separated by hairlines: a heading
    and one line of context on the left, the settings on the right. Only what
@@ -64,10 +65,7 @@ export function AccountSection({
       <DefinitionList
         items={
           signedIn
-            ? [
-                { label: "Signed in as", value: email ?? "Signed in" },
-                { label: "Workspace", value: workspaceName },
-              ]
+            ? [{ label: "Signed in as", value: email ?? "Signed in" }]
             : [
                 { label: "Agency", value: workspaceName },
                 { label: "Mode", value: "Demo", detail: "Read-only. Nothing is stored." },
@@ -75,7 +73,12 @@ export function AccountSection({
         }
       />
       {signedIn ? (
-        <form action={signOut} className="mt-4">
+        <div className="mt-4">
+          <WorkspaceNameForm name={workspaceName} />
+        </div>
+      ) : null}
+      {signedIn ? (
+        <form action={signOut} className="mt-2">
           <button type="submit" className={buttonClasses("secondary")}>
             Sign out
           </button>
