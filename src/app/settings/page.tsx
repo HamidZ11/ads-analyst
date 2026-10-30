@@ -58,7 +58,7 @@ export default async function SettingsPage({
           <SettingsSection
             id="settings-client"
             title="Client"
-            description="Client settings appear after your first Meta Ads CSV import."
+            description="Client settings and performance targets appear after your first Meta Ads CSV import."
           >
             <p className="py-2.5 text-sm text-ink-muted">No clients in this workspace yet.</p>
           </SettingsSection>

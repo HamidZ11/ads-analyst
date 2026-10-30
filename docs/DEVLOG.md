@@ -1385,3 +1385,17 @@ Owner answers to D-088's open questions. Branch `feat/billing`.
 **Checks:** `pnpm check` (464 tests). `pnpm check:browsers` (52 crop checks) against a production server in demo mode with placeholder Checkout values; `/pricing` at 1440, 390 and 360 shows Subscribe linking to `/sign-in?next=%2Fsettings%23billing` and no payment link; following it lands on `/settings#billing`; `/sign-in?next=%2F%2Fevil.example` redirects to `/insights`.
 
 **Not verified:** the Billing section's grace and client notices only render in a signed-in Supabase deployment, so they are covered by render tests but have not been seen in a browser; the email-link round trip of the return cookie needs a Supabase test project.
+
+---
+
+## 2026-10-30 — First-run onboarding
+
+Owner brief: from first sign-in to the first real finding in about two minutes (D-NEW-onboarding-1 to 3; decision numbers are placeholders for the integrate step).
+
+- **Audit first**, in a real signed-in empty workspace: a throwaway stand-in for Supabase outside the repo (PGlite with the three migrations, answering `/auth/v1/user` and `/rest/v1/rpc/*` on 127.0.0.1, an HS256 session cookie so `getClaims` falls back to `getUser`), `pnpm dev` pointed at it. Found: every analysis page and Clients redirected to the import with Clients highlighted; one sentence of export guidance; no sense of the path; the first import ended on a summary with "View Overview"; targets easy to miss; "1 clients".
+- **Built:** `src/features/onboarding/` — `progress.ts` (`onboardingProgress`, `workspaceProgress`, null in demo mode), `export-steps.ts` (the audit branch's verified Ads Manager steps, reasons fitted to the import), `getting-started.tsx` (`GettingStarted`, `ExportGuide`, `TargetsNudge`, `stepContent`), `empty-workspace.tsx` (`EMPTY_COPY`, `EmptyWorkspace`), `imported-note.tsx` (`ImportedNote`, `FIRST_IMPORT_LANDING`). `server.ts`: `readyWorkspace()`; the six pages render their empty state instead of redirecting. `completion.ts`: `importDestination`; `import-flow.tsx` sends the first import to `/insights?imported=1`. Insights shows the import line and the targets nudge after it; Clients shows the nudge and says "1 client". Copy: Settings' empty Client section mentions targets; Review setup no longer mentions demo clients in a signed-in workspace.
+- **Verified** end to end in the stand-in: fresh workspace → every page renders its empty state (no redirects, no overflow at 1440, 390 and 360) → the sample ecommerce export imported as "Bloom Botanicals" → Insights opened about 240ms after the import returned, with the import line, the nudge and both real findings in the first viewport → "Set targets" opened `/settings#settings-targets`, a £30 target saved, and the nudge was gone from Clients and Insights. Demo mode checked separately: no onboarding anywhere, `?imported=1` ignored.
+- DESIGN.md §26, §27 and new §29; PRODUCT.md capabilities.
+- Tests: `onboarding.test.ts` (progress from state, seeded clients not counted as imports, demo returns null, step facts from the workspace, ROAS offered only with conversion value, one primary action and the export steps in the checklist, every empty page's copy with no figures, the nudge's conditions, the first-import destination, the import line).
+
+**Checks:** `pnpm check`, `pnpm check:browsers`.

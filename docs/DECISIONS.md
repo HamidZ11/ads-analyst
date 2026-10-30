@@ -600,3 +600,21 @@ Threads live only in the current mounted page. Start fresh clears answers and en
 
 **Reason:** Owner answers (2026-10-30).
 **Consequences:** The billing variables are listed in `.env.example` as commented placeholders matching `docs/BILLING.md`. The grace period starts when the webhook processes the event, not at Stripe's event time; a failure that Stripe reports while the subscription is still `active` starts no grace, because the subscription is still entitled.
+
+### D-NEW-onboarding-1 — An empty workspace shows each page's empty state instead of redirecting to the import
+
+**Decision:** In a workspace with no clients, Overview, Campaigns, Creatives, Insights, Ask Analyst and Clients render their own page with a "{workspace} · no clients yet" header and a statement of what will appear there and what produces it, with one next action (the first import). Insights, where sign-in lands, also carries the getting-started checklist. `readyWorkspace()` returns the workspace with its client or null; `getWorkspace()` keeps its redirect for routes that cannot render without a client (the Ask API). This amends the empty-workspace line of DESIGN.md §27, which redirected analysis pages and Clients to `/clients/import?client=new`.
+**Reason:** Owner brief (2026-10-30, first-run onboarding). Audit in a real signed-in empty workspace: every navigation item opened the same import page with Clients highlighted, so the navigation looked broken and nothing said what the product would show (PRODUCT.md requires placeholders to say what will appear and what produces it).
+**Consequences:** A new page that needs a client must handle `readyWorkspace()` returning null with its own empty state. Demo mode is unaffected: it always has clients.
+
+### D-NEW-onboarding-2 — Onboarding progress is derived from workspace state, never stored
+
+**Decision:** The four steps are read from what the workspace holds: a client exists; an imported client has an import; an imported client has stored days (findings are computed on read, so this is when there are findings to see); any imported client has a cost or ROAS target (optional). There is no "seen" or "dismissed" flag. Once findings can be read, the checklist gives way to a single "Next, optional" line about targets on Clients and on the post-import Insights line, which disappears when a target exists. Adding a client and importing stay one flow, because a client is created by its first export. The export steps reuse the instant audit's verified guide (D-083) with the reasons fitted to the import.
+**Reason:** Owner brief: progress from real state, not stored flags where avoidable. A stored "seen Insights" flag would need a table or a cookie and could disagree with the data; deriving keeps the checklist true across devices and members, and leaves nothing to migrate.
+**Consequences:** "See your first findings" completes with the import rather than on a visit; the first import lands on Insights anyway (D-NEW-onboarding-3). An agency that never sets a target keeps one quiet line on Clients. When the audit branch is merged, its `EXPORT_STEPS` and this one should become one list.
+
+### D-NEW-onboarding-3 — The first import lands on Insights for that client
+
+**Decision:** When a workspace with no imported clients completes an import, the flow selects the new client and opens `/insights?imported=1` without a further click; the completion screen's button reads "View findings" while it does. Insights then names the stored import above the briefing ("Imported {file} for {client}: {dates}, {rows} rows. The findings below are computed from it."), read from the client's newest import record, so a reload stays true; the parameter is ignored for demo clients. Later imports keep "View Overview".
+**Reason:** Owner brief: after the first import, land on Insights with the findings in view. Findings are the product's point (catching wasted spend), and before this the first import ended on a summary with a button to the Overview.
+**Consequences:** `openImportedClient` takes the destination; `importDestination(firstImport)` decides it, fixed when the flow mounts because the refresh after importing adds the new client.

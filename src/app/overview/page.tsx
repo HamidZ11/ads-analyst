@@ -8,12 +8,23 @@ import {
   getTrailingSeries,
 } from "@/features/analytics/queries";
 import { OverviewAnalytics } from "@/features/overview/overview-analytics";
-import { getWorkspace } from "@/features/workspace/server";
+import { EmptyWorkspace } from "@/features/onboarding/empty-workspace";
+import { workspaceProgress } from "@/features/onboarding/progress";
+import { getWorkspaceContext, readyWorkspace } from "@/features/workspace/server";
 
 export const metadata: Metadata = { title: "Overview" };
 
 export default async function OverviewPage() {
-  const workspace = await getWorkspace();
+  const context = await getWorkspaceContext();
+  const workspace = readyWorkspace(context);
+  if (!workspace)
+    return (
+      <EmptyWorkspace
+        page="overview"
+        workspaceName={context.workspace.name}
+        progress={workspaceProgress(context)}
+      />
+    );
   const { repository, client, adAccount, periods, comparison } = workspace;
   const summary = getClientPeriodSummary(repository, client, periods);
   const campaignRows = getCampaignRows(repository, client, periods);

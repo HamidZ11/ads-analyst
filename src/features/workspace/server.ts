@@ -113,9 +113,18 @@ export const getWorkspaceContext = cache(async (): Promise<WorkspaceContext> => 
   redirect("/sign-in");
 });
 
-/** For analysis pages: the selected client; an empty workspace goes to its first import. */
-export const getWorkspace = cache(async (): Promise<Workspace> => {
-  const context = await getWorkspaceContext();
-  if (!context.client || !context.dataSource) redirect("/clients/import?client=new");
+/**
+ * The workspace with its selected client, or null while it has no clients;
+ * pages then render their first-run state (D-NEW-onboarding-1).
+ */
+export function readyWorkspace(context: WorkspaceContext): Workspace | null {
+  if (!context.client || !context.dataSource) return null;
   return { ...context, client: context.client, dataSource: context.dataSource };
+}
+
+/** For routes that need a client: the selected one; an empty workspace goes to its first import. */
+export const getWorkspace = cache(async (): Promise<Workspace> => {
+  const workspace = readyWorkspace(await getWorkspaceContext());
+  if (!workspace) redirect("/clients/import?client=new");
+  return workspace;
 });

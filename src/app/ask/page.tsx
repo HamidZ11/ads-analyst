@@ -3,12 +3,23 @@ import { PageHeader } from "@/components/ui/page-header";
 import { DatePresetControl } from "@/components/shell/date-preset-control";
 import { AskAnalyst } from "@/features/ask/ask-analyst";
 import { askScope } from "@/features/ask/facts";
-import { getWorkspace } from "@/features/workspace/server";
+import { EmptyWorkspace } from "@/features/onboarding/empty-workspace";
+import { workspaceProgress } from "@/features/onboarding/progress";
+import { getWorkspaceContext, readyWorkspace } from "@/features/workspace/server";
 
 export const metadata: Metadata = { title: "Ask Analyst" };
 
 export default async function AskAnalystPage() {
-  const workspace = await getWorkspace();
+  const context = await getWorkspaceContext();
+  const workspace = readyWorkspace(context);
+  if (!workspace)
+    return (
+      <EmptyWorkspace
+        page="ask"
+        workspaceName={context.workspace.name}
+        progress={workspaceProgress(context)}
+      />
+    );
   const scope = askScope(workspace);
 
   return (

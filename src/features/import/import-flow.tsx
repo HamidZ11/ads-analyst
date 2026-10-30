@@ -36,7 +36,8 @@ import {
   requiredGaps,
   type ImportSetup,
 } from "./setup";
-import { openImportedClient } from "./completion";
+import { FIRST_IMPORT_LANDING } from "@/features/onboarding/imported-note";
+import { importDestination, openImportedClient } from "./completion";
 
 export interface ImportableClient {
   id: string;
@@ -179,6 +180,8 @@ export function ImportFlow({
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [completion, setCompletion] = useState<ImportCompletion | null>(null);
+  // Fixed at mount: the refresh after importing adds the new client to `clients`.
+  const [after] = useState(() => importDestination(clients.length === 0));
   const pendingFocus = useRef<string | null>(null);
 
   const existing = clients.find((c) => c.id === destination) ?? null;
@@ -401,6 +404,14 @@ export function ImportFlow({
       setCompletion(body.result);
       setStage("complete");
       router.refresh();
+      // The first import goes straight to its findings (D-NEW-onboarding-3).
+      if (after.href === FIRST_IMPORT_LANDING)
+        void openImportedClient(
+          body.result.clientId,
+          selectClient,
+          (href) => router.push(href),
+          after.href,
+        );
     } catch {
       setServerError("The import couldn't reach the server. Nothing was changed; try again.");
       setStage("review");
@@ -655,7 +666,8 @@ export function ImportFlow({
                 </div>
               ) : (
                 <p className="mt-1 text-xs text-ink-muted">
-                  This import creates a new client; demo clients are read-only.
+                  This import creates a new client. Its name, business type and timezone are set
+                  here.
                 </p>
               )}
 
@@ -1177,13 +1189,16 @@ export function ImportFlow({
               <button
                 type="button"
                 onClick={() =>
-                  openImportedClient(completion.clientId, selectClient, (href) =>
-                    router.push(href),
+                  openImportedClient(
+                    completion.clientId,
+                    selectClient,
+                    (href) => router.push(href),
+                    after.href,
                   )
                 }
                 className={buttonClasses("primary")}
               >
-                View Overview
+                {after.label}
               </button>
               <button type="button" onClick={restart} className={buttonClasses("secondary")}>
                 Import another file
