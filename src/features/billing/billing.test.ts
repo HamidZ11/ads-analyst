@@ -515,6 +515,7 @@ describe("dead-link rules", () => {
     expect(html).toContain(`role="status"`);
     expect(html).toContain(NOTICES.cancelled);
     expect(parseNotice("success")).toBe("success");
+    expect(parseNotice("owner")).toBe("owner");
     expect(parseNotice("<script>")).toBeNull();
     expect(parseNotice(["success"])).toBeNull();
   });

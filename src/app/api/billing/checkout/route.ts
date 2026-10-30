@@ -26,6 +26,9 @@ export async function POST(request: Request) {
       new URL("/settings?billing=unavailable#billing", request.url),
       303,
     );
+  // Billing is the owner's, as renaming the workspace is (D-NEW-fixes-owner-1).
+  if (session.role !== "owner")
+    return Response.redirect(new URL("/settings?billing=owner#billing", request.url), 303);
 
   const target = await checkoutRedirect({
     config: billing.checkout,

@@ -11,7 +11,8 @@ import type { BillingStripe } from "./stripe";
 
 export const SETTINGS_BILLING = "/settings";
 
-export type BillingNotice = "success" | "cancelled" | "active" | "unavailable" | "error";
+export type BillingNotice =
+  "success" | "cancelled" | "active" | "unavailable" | "owner" | "error";
 
 export const settingsUrl = (origin: string, notice: BillingNotice) =>
   `${origin}${SETTINGS_BILLING}?billing=${notice}#billing`;

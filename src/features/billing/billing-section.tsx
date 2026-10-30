@@ -18,6 +18,7 @@ export const NOTICES: Record<BillingNotice, string> = {
   cancelled: "Checkout was cancelled. Nothing was charged.",
   active: "This workspace already has a subscription. Change it in Manage billing.",
   unavailable: "Billing isn't available right now. Nothing was charged.",
+  owner: "Only the workspace owner can manage billing. Nothing was changed.",
   error: "Stripe couldn't be reached. Nothing was charged; try again.",
 };
 

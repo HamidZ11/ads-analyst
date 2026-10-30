@@ -45,6 +45,7 @@ const gateway = {
 const session = {
   kind: "app",
   gateway,
+  role: "owner",
   context: {
     mode: "supabase",
     canImport: true,
@@ -157,6 +158,31 @@ describe("checkout route", () => {
       "https://adanalyst.example/settings?billing=unavailable#billing",
     );
     expect(stripe.createCheckoutSession).not.toHaveBeenCalled();
+  });
+});
+
+describe("owner only", () => {
+  it("sends a member back to Settings from Checkout and the portal without reaching Stripe", async () => {
+    vi.mocked(loadSession).mockResolvedValue({ ...session, role: "member" } as SessionState);
+    gateway.subscription.mockResolvedValue({
+      plan: "agency",
+      interval: "month",
+      status: "active",
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: false,
+      stripeCustomerId: "cus_1",
+      paymentFailedAt: null,
+    });
+    const back = "https://adanalyst.example/settings?billing=owner#billing";
+    expect(
+      (await checkout(form("/api/billing/checkout", { interval: "month" }))).headers.get(
+        "location",
+      ),
+    ).toBe(back);
+    expect((await portal(form("/api/billing/portal"))).headers.get("location")).toBe(back);
+    expect(stripe.subscriptionStatuses).not.toHaveBeenCalled();
+    expect(stripe.createCheckoutSession).not.toHaveBeenCalled();
+    expect(stripe.createPortalSession).not.toHaveBeenCalled();
   });
 });
 

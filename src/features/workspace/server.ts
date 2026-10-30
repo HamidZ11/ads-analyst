@@ -2,7 +2,11 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDemoRepository } from "@/data";
-import { supabaseGateway, type WorkspaceGateway } from "@/data/supabase/gateway";
+import {
+  supabaseGateway,
+  type WorkspaceGateway,
+  type WorkspaceMembership,
+} from "@/data/supabase/gateway";
 import { snapshotRepository } from "@/data/supabase/snapshot";
 import { parseDatePreset } from "@/domain/periods";
 import type { Client, ClientDataSource } from "@/domain/types";
@@ -28,7 +32,13 @@ export type SessionState =
   | { kind: "unconfigured" }
   | { kind: "signed_out" }
   | { kind: "unavailable" }
-  | { kind: "app"; context: WorkspaceContext; gateway: WorkspaceGateway | null };
+  | {
+      kind: "app";
+      context: WorkspaceContext;
+      gateway: WorkspaceGateway | null;
+      /** The user's role in the active workspace; null in demo mode, which has no members. */
+      role: WorkspaceMembership["role"] | null;
+    };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -52,6 +62,7 @@ export const loadSession = cache(async (): Promise<SessionState> => {
     return {
       kind: "app",
       gateway: null,
+      role: null,
       context: buildContext({
         mode: "demo",
         user: null,
@@ -81,6 +92,7 @@ export const loadSession = cache(async (): Promise<SessionState> => {
     return {
       kind: "app",
       gateway,
+      role: workspace.role,
       context: buildContext({
         mode: "supabase",
         user: { id: sub, email },
