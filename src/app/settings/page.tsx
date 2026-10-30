@@ -10,7 +10,9 @@ import {
   ClientSettings,
   SettingsSection,
 } from "@/features/settings/client-settings";
-import { getWorkspaceContext } from "@/features/workspace/server";
+import { shareLinkView } from "@/features/report/share";
+import { ShareLinksList } from "@/features/report/share-links-list";
+import { getWorkspaceContext, loadSession } from "@/features/workspace/server";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -30,6 +32,27 @@ export default async function SettingsPage({
       notice={parseNotice((await searchParams).billing)}
       clientCount={context.clients.length}
     />
+  ) : null;
+  // Every link in the workspace that still opens, to revoke from here too (D-NEW-share-1).
+  const session = await loadSession();
+  const gateway = session.kind === "app" ? session.gateway : null;
+  const shareLinks = gateway ? (
+    <SettingsSection
+      id="settings-share"
+      title="Shared report links"
+      description="Read-only links to client reports. Revoking one closes it at once."
+    >
+      <ShareLinksList
+        links={await gateway
+          .shareLinks(context.workspace.id)
+          .then((all) =>
+            all.map((link) => shareLinkView(link, context.clients)).filter((l) => l !== null),
+          )
+          .catch(() => [])}
+        showClient
+        empty="No active links. Create one from a client report with Share link."
+      />
+    </SettingsSection>
   ) : null;
   const { client, dataSource } = context;
   const workspaceName =
@@ -69,7 +92,11 @@ export default async function SettingsPage({
   return (
     <>
       <PageHeader title="Settings" description={`${client.name} · ${workspaceName}`} />
-      <ClientSettings workspace={{ ...context, client, dataSource }} billing={billingSection} />
+      <ClientSettings
+        workspace={{ ...context, client, dataSource }}
+        billing={billingSection}
+        shareLinks={shareLinks}
+      />
     </>
   );
 }

@@ -6,6 +6,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { ClientReport } from "@/features/report/client-report";
 import { PrintButton } from "@/features/report/print-button";
 import { buildClientReport } from "@/features/report/report-model";
+import { shareLinkView } from "@/features/report/share";
+import { ShareDialog } from "@/features/report/share-dialog";
 import { EmptyWorkspace } from "@/features/onboarding/empty-workspace";
 import { workspaceProgress } from "@/features/onboarding/progress";
 import { parseDatePreset } from "@/domain/periods";
@@ -39,6 +41,23 @@ export default async function ClientReportPage() {
         .reportNote(model.clientId, model.current.start, model.current.end)
         .catch(() => null)
     : null;
+  // The client's links that still open, for the share dialog (D-NEW-share-1).
+  const links = gateway
+    ? await gateway
+        .shareLinks(context.workspace.id)
+        .then((all) =>
+          all
+            .filter((link) => link.clientId === model.clientId)
+            .map((link) => shareLinkView(link, context.clients))
+            .filter((link) => link !== null),
+        )
+        .catch(() => [])
+    : null;
+  const shareUnavailable = !gateway
+    ? "Share links need a signed-in workspace. In the demo, use Print or save as PDF to send the report."
+    : session.kind === "app" && session.role !== "owner"
+      ? "Only the workspace owner can create share links. You can still revoke the links below."
+      : null;
 
   return (
     <>
@@ -53,6 +72,16 @@ export default async function ClientReportPage() {
               <span className="mt-0.5 block">vs {model.comparison}</span>
             </span>
             <DatePresetControl value={workspace.preset} select={selectReportDatePreset} />
+            <ShareDialog
+              clientId={model.clientId}
+              clientName={model.clientName}
+              preset={workspace.preset}
+              periodStart={model.current.start}
+              periodEnd={model.current.end}
+              periodLabel={model.currentLabel}
+              links={links}
+              unavailable={shareUnavailable}
+            />
             <PrintButton />
           </>
         }

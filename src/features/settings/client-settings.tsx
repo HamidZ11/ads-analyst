@@ -91,10 +91,13 @@ export function AccountSection({
 export function ClientSettings({
   workspace,
   billing,
+  shareLinks,
 }: {
   workspace: Workspace;
   /** The Billing section, in a signed-in deployment (D-088). */
   billing?: ReactNode;
+  /** The Shared report links section, in a signed-in deployment (D-NEW-share-1). */
+  shareLinks?: ReactNode;
 }) {
   const { client, adAccount, coverage, dataSource, canImport } = workspace;
   const vocab = conversionVocabulary(client.type);
@@ -112,6 +115,7 @@ export function ClientSettings({
         }
       />
       {billing}
+      {shareLinks}
 
       <SettingsSection
         id="settings-client"
