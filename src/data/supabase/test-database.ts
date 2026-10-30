@@ -4,6 +4,7 @@ import { PGlite } from "@electric-sql/pglite";
 import {
   gatewayError,
   importWriteResult,
+  reportNoteResult,
   type WorkspaceGateway,
   type WorkspaceMembership,
 } from "./gateway";
@@ -101,6 +102,23 @@ export function sqlGateway(db: PGlite, userId: string): WorkspaceGateway {
         clientId,
         targetCpa,
         targetRoas,
+      ]),
+    renameWorkspace: (workspaceId, name) =>
+      run<boolean>("select public.rename_workspace($1, $2) as r", [workspaceId, name]),
+    reportNote: async (clientId, periodStart, periodEnd) =>
+      reportNoteResult(
+        await run<unknown>("select public.client_report_note($1, $2, $3) as r", [
+          clientId,
+          periodStart,
+          periodEnd,
+        ]),
+      ),
+    saveReportNote: (clientId, periodStart, periodEnd, body) =>
+      run<boolean>("select public.save_client_report_note($1, $2, $3, $4) as r", [
+        clientId,
+        periodStart,
+        periodEnd,
+        body,
       ]),
     consumeRateLimit: (action) =>
       run<boolean>("select public.consume_rate_limit($1) as r", [action]),
