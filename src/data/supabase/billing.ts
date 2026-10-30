@@ -32,6 +32,12 @@ export interface WorkspaceSubscription {
   cancelAtPeriodEnd: boolean;
   /** Present once Checkout has created a Stripe customer; the portal needs it. */
   stripeCustomerId: string;
+  /**
+   * When invoice.payment_failed first arrived for this subscription's current
+   * unpaid episode; null once it is active or trialing again. Starts the
+   * grace period under gating.
+   */
+  paymentFailedAt: string | null;
 }
 
 /** What the webhook asks the database to store, already fetched from Stripe. */
@@ -88,10 +94,11 @@ export interface SubscriptionRow {
   current_period_end: string | null;
   cancel_at_period_end: boolean;
   stripe_customer_id: string;
+  payment_failed_at: string | null;
 }
 
 export const SUBSCRIPTION_COLUMNS =
-  "plan, interval, status, current_period_end, cancel_at_period_end, stripe_customer_id";
+  "plan, interval, status, current_period_end, cancel_at_period_end, stripe_customer_id, payment_failed_at";
 
 export function subscriptionFromRow(row: SubscriptionRow | null): WorkspaceSubscription | null {
   if (!row) return null;
@@ -104,6 +111,9 @@ export function subscriptionFromRow(row: SubscriptionRow | null): WorkspaceSubsc
       : null,
     cancelAtPeriodEnd: row.cancel_at_period_end,
     stripeCustomerId: row.stripe_customer_id,
+    paymentFailedAt: row.payment_failed_at
+      ? new Date(row.payment_failed_at).toISOString()
+      : null,
   };
 }
 

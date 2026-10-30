@@ -66,6 +66,7 @@ describe("subscription reads", () => {
       currentPeriodEnd: "2026-11-30T12:00:00.000Z",
       cancelAtPeriodEnd: false,
       stripeCustomerId: "cus_Ana1",
+      paymentFailedAt: null,
     });
     // Another tenant sees nothing (RLS), and anonymous callers have no grant.
     expect(await ben.subscription(anaWs.id)).toBeNull();
@@ -300,5 +301,65 @@ describe("the webhook's write path", () => {
       interval: null,
       currentPeriodEnd: null,
     });
+  });
+});
+
+describe("when a payment first failed (grace period)", () => {
+  const failedAt = async (db: Awaited<ReturnType<typeof seeded>>["db"]) =>
+    (
+      await db.query<{ payment_failed_at: Date | null }>(
+        "select payment_failed_at from public.workspace_subscriptions",
+      )
+    ).rows[0]?.payment_failed_at ?? null;
+
+  it("records the first failure, keeps it through retries, and clears it once paid", async () => {
+    const { db, ana, anaWs, writer } = await seeded();
+    await writer.applyEvent(
+      "evt_g1",
+      "checkout.session.completed",
+      state({ workspace_id: anaWs.id }),
+    );
+    expect(await failedAt(db)).toBeNull();
+
+    await writer.applyEvent("evt_g2", "invoice.payment_failed", state({ status: "past_due" }));
+    const first = await failedAt(db);
+    expect(first).toBeInstanceOf(Date);
+    expect((await ana.subscription(anaWs.id))?.paymentFailedAt).toBe(first!.toISOString());
+
+    // A retry that fails again, or a subscription update, doesn't move the start.
+    await db.query(
+      "update public.workspace_subscriptions set payment_failed_at = payment_failed_at - interval '2 days'",
+    );
+    const moved = await failedAt(db);
+    await writer.applyEvent("evt_g3", "invoice.payment_failed", state({ status: "past_due" }));
+    await writer.applyEvent(
+      "evt_g4",
+      "customer.subscription.updated",
+      state({ status: "unpaid" }),
+    );
+    expect(await failedAt(db)).toEqual(moved);
+
+    await writer.applyEvent(
+      "evt_g5",
+      "customer.subscription.updated",
+      state({ status: "active" }),
+    );
+    expect(await failedAt(db)).toBeNull();
+  });
+
+  it("ignores a failure while the subscription is still active, and a status change alone starts nothing", async () => {
+    const { db, anaWs, writer } = await seeded();
+    await writer.applyEvent(
+      "evt_h1",
+      "invoice.payment_failed",
+      state({ workspace_id: anaWs.id }),
+    );
+    expect(await failedAt(db)).toBeNull();
+    await writer.applyEvent(
+      "evt_h2",
+      "customer.subscription.updated",
+      state({ status: "past_due" }),
+    );
+    expect(await failedAt(db)).toBeNull();
   });
 });

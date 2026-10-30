@@ -164,6 +164,7 @@ describe("portal route", () => {
       currentPeriodEnd: null,
       cancelAtPeriodEnd: false,
       stripeCustomerId: "cus_1",
+      paymentFailedAt: null,
     });
     const response = await portal(form("/api/billing/portal"));
     expect(response.status).toBe(303);

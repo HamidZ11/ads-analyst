@@ -44,6 +44,7 @@ export async function billingFor(session: SessionState): Promise<BillingContext 
       enforce: enforcementRequested(),
       checkoutConfigured: checkout !== null,
       subscription,
+      now: new Date(),
     }),
   };
 }
