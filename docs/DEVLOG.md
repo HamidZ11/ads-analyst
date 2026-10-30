@@ -1446,3 +1446,17 @@ Owner brief (D-093, D-094).
 - Tests: `report-model.test.ts` (KPIs, rows, findings and charts equal the app's for every client and period; client wording keeps the numbers; demo labelling; note rendering), `actions.test.ts` (save, clear, demo, foreign client, bad periods, long notes, failures; rename), `report-notes.test.ts` on PGlite with the real migrations (per-client and per-period isolation, members only, no direct writes, anonymous refused, cascade, owner-only rename, imported client report with no other client's data).
 
 **Checks:** `pnpm check`, `pnpm check:browsers`.
+
+---
+
+## 2026-10-30 — Integration: release/next
+
+Merged into `release/next` from `origin/main` (ae9660f), with merge commits and in this order: `feat/instant-audit`, `feat/billing`, `feat/onboarding`, `feat/client-report`, `feat/free-tools`, `feat/launch-readiness`. Every branch existed.
+
+- **Decisions.** The audit kept D-083 to D-085. Billing's D-083 collided and became D-088 in billing's files and in billing's lines of the shared docs, including the amendment notes on D-051 and D-065. The D-NEW records were numbered in merge order: D-086 and D-087 (audit targets, Free audit link), D-089 (billing answers), D-090 to D-092 (onboarding), D-093 and D-094 (client report), D-095 (free tools), D-096 to D-098 (CSP, RLS tests, deployment). Every reference in docs, code comments, scripts and one migration comment was updated.
+- **Migrations.** Billing and the client report both used `20261030120000`. The client report's migration is now `20261030140000_client_reports.sql`, after billing's two. The new migrations share no objects, and all six apply in order on an empty PGlite database in the Supabase tests.
+- **Docs.** DESIGN.md: the client report section is §30, since onboarding took §29. The footer line lists Free audit and Free tools. DEVLOG entries are ordered by when they were written.
+- **Conflicts in code.** `routes.ts`: the audit and free tools both defined `AUDIT_PATH`, and one definition is kept. `MARKETING_PATHS` keeps `/audit` and the tool pages. The CSP moved from `next.config.ts` to the proxy (D-096), so billing's `form-action` allowance for Stripe Checkout and the customer portal moved into `src/lib/csp.ts` with a test. `access.ts` makes both `/api/billing/webhook` and `/api/health` public.
+- **Integration fixes.** The billing and report test gateways each lacked the other branch's methods. `rls.test.ts` now covers `workspace_subscriptions`, `billing_events` and `client_report_notes`, and checks that `billing_webhook_secret` (no tenant) is closed to everyone. `/report` redirected an empty workspace to the import, against D-090; it now shows an empty state. Onboarding's copy of the audit's export steps and the audit's own list are now one list (`src/features/import/export-steps.ts`), with each screen's wording unchanged.
+
+**Checks:** `pnpm check` (619 tests, build). Against a production demo server: `pnpm check:browsers` (52), `pnpm check:audit` (45), `pnpm check:csp` (all pages, client navigation, Ask), `pnpm check:deploy … demo`. Screenshots of `/`, `/audit` (with the sample run), `/pricing`, `/tools` and the ROAS calculator at 1440, 390 and 360: no horizontal overflow. Signed-in empty states for every app page at the same widths, against a local PGlite stand-in for Supabase outside the repo: every page renders its empty state, no overflow.
