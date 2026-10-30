@@ -8,7 +8,7 @@ const INPUT =
   "mt-1 h-9 w-full rounded-md border border-border bg-surface px-3 text-sm text-ink transition-colors placeholder:text-ink-faint hover:border-border-strong aria-[invalid=true]:border-negative";
 
 /** Email-only sign-in: one field, one action, then "check your email". */
-export function SignInForm({ linkError }: { linkError: boolean }) {
+export function SignInForm({ linkError, next }: { linkError: boolean; next: string | null }) {
   const [state, action, pending] = useActionState<SignInState, FormData>(requestSignInLink, {
     status: "idle",
     message: null,
@@ -35,6 +35,7 @@ export function SignInForm({ linkError }: { linkError: boolean }) {
         </p>
         <form action={action} className="mt-4">
           <input type="hidden" name="email" value={state.email} />
+          {next ? <input type="hidden" name="next" value={next} /> : null}
           <button type="submit" disabled={pending} className={buttonClasses("secondary")}>
             {pending ? "Sending…" : "Send another link"}
           </button>
@@ -45,6 +46,7 @@ export function SignInForm({ linkError }: { linkError: boolean }) {
   const error = state.status === "error" ? state.message : null;
   return (
     <form action={action} className="mt-6">
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       {linkError && !error ? (
         <p role="alert" className="mb-4 text-sm text-negative">
           That sign-in link has expired or was already used. Request a new one.

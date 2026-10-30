@@ -6,6 +6,7 @@ import { appMode, signupsAllowed } from "@/lib/supabase/config";
 import { supabaseServerClient } from "@/lib/supabase/server";
 import { CLIENT_COOKIE, WORKSPACE_COOKIE } from "@/features/workspace/cookies";
 import { signInFailureMessage, signInLinkOrigin, validEmail } from "./messages";
+import { RETURN_COOKIE, RETURN_COOKIE_MAX_AGE, safeReturnPath } from "./return-path";
 
 export interface SignInState {
   status: "idle" | "sent" | "error";
@@ -58,6 +59,20 @@ export async function requestSignInLink(
       return { status: "error", message, email };
     }
   }
+  // Where the emailed link returns to. The link must be opened in this
+  // browser anyway (PKCE), so a cookie carries it; it is validated again on
+  // the way out.
+  const store = await cookies();
+  const next = safeReturnPath(form.get("next"));
+  if (next)
+    store.set(RETURN_COOKIE, next, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: RETURN_COOKIE_MAX_AGE,
+    });
+  else store.delete(RETURN_COOKIE);
   return { status: "sent", message: null, email };
 }
 
