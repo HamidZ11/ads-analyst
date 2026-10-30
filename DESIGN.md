@@ -492,5 +492,3 @@ A document the agency sends to its own client (D-093, D-094). It uses the app's 
 - What we're doing next: a textarea with a secondary "Save note" (signed in) and a ghost "Start from the suggested actions"; in demo a quiet note says edits are not saved. In print only the text appears, and the whole section is omitted when empty.
 - Print: A4, 16mm × 14mm margins, white, exact colours, no motion; the shell, header, editor and hint are hidden; table headers repeat on each page; headings stay with their content and tiles, findings, chart pairs, table rows and each top-five table section do not split. To fit the 688px printable width, table cells take 6px side padding, headers wrap and names wrap in a 200px column. The chart pair keeps 12px right padding so the end-value label is never cut.
 - Tables (all pages): the shared `Table` scroll wrapper is `relative`, so absolutely positioned `sr-only` text inside cells is clipped by it and cannot widen the page.
-
-> > > > > > > feat/free-tools
