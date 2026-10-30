@@ -1291,3 +1291,44 @@ Owner brief (D-082). Run through the project's Impeccable skill: context loaded,
 **Checks:** `pnpm check` (367 tests), `pnpm check:browsers http://localhost:3100/` (52 crop checks), overflow probe on `/`, `/pricing`, `/privacy`, `/terms` in three engines at three widths.
 
 **Correction (follow-up commit):** `git add -A` in the D-082 commit (8f17a19) also staged four untracked iCloud conflict copies (`scripts/check-crops 2.mjs`, `crop-scale.test 2.ts`, `cta-band 2.tsx`, `cta-band.test 2.ts`), and they were pushed. Three were identical to their originals; `cta-band 2.tsx` was the pre-renumbering copy (D-074 in a comment). Nothing referenced them. They are removed, and `.gitignore` now ignores names with a space before a one- to three-digit number, which no tracked file has.
+
+---
+
+## 2026-10-30 — Stripe subscription billing, test mode (D-083)
+
+Owner brief: subscription billing with Stripe, built and tested entirely in test mode, so the product is one configuration step from charging. Read first: D-051, D-055, D-060 to D-065, all three migrations, Next.js 16 route handler docs (`request.text()` for webhooks).
+
+- **Write path decided (D-083):** a `security definer` function guarded by a webhook-held secret, not a service-role key. Migration `20261030120000_workspace_billing.sql` adds:
+  - `workspace_subscriptions`: RLS member read, `SELECT` only.
+  - `billing_events`: processed event ids and outcomes.
+  - `billing_webhook_secret`: one SHA-256 hash, unreadable.
+  - `apply_billing_event`: anon-only, refuses without the secret, validates, then claims the event id and upserts in one transaction. Outcomes `duplicate`, `ignored`, `applied`, `unlinked`, `stale`, `conflict`.
+- **Data layer:** `src/data/supabase/billing.ts` (types, `supabaseBillingWriter` with the publishable key and no session) and `WorkspaceGateway.subscription` (RLS read). `test-database.ts` gains `setBillingSecret` and `sqlBillingWriter`.
+- **Billing feature** (`src/features/billing/`):
+  - `config.ts`: key guard (`sk_test_`, or `sk_live_` only with `NODE_ENV=production` and `BILLING_LIVE=true`), prices, origin, webhook configuration and `BILLING_ENFORCE`.
+  - `status.ts`: labels and entitlement.
+  - `policy.ts`: `importDecision`, the single gating policy.
+  - `stripe.ts`: a narrow client interface; `stripe` 23.0.1, pinned.
+  - `webhook.ts`: verify, ignore unhandled types, fetch the subscription from Stripe, write.
+  - `checkout.ts`, `server.ts`, `billing-section.tsx`, `links.ts`.
+- **Routes:** `/api/billing/checkout` and `/api/billing/portal` (form posts, origin check, 303 to Stripe or back to `/settings?billing=…#billing`) and `/api/billing/webhook` (public in the proxy, raw body). CSP `form-action` adds the Checkout and portal origins.
+- **Surfaces:**
+  - Settings: a Billing section after Account, in signed-in deployments only.
+  - Pricing: Agency Subscribe goes to Checkout via Settings, else the payment link, else is hidden.
+  - Import page and `/api/import`: gated by the policy (402, or 503 fail closed), only with `BILLING_ENFORCE=true` and Checkout configured.
+  - Privacy policy: lists the subscription details stored (updated 30 October 2026).
+- **Docs:** new `docs/BILLING.md` (dashboard setup, database secret, environment, Stripe CLI testing, going-live checklist). D-083 added; D-051 and D-065 marked amended. DESIGN.md §26 and §28, PRODUCT.md and README updated.
+- **Tests** (no network: fake Stripe client, Stripe's offline signature helper, PGlite):
+  - `src/data/supabase/billing.test.ts`: RLS reads, direct writes refused, secret required, idempotency, unlinked, stale, conflict, validation.
+  - `webhook.test.ts`: signature failures, replay, mode mismatch, each event type, retries, status mapping, end to end over SQL.
+  - `billing.test.ts`: key guard, configuration, policy on and off, wording, Checkout and portal, dead-link rules, pricing.
+  - `stripe.test.ts`: exact Checkout params, no trial or discount.
+  - `routes.test.ts`: the three routes, including public access to the webhook.
+  - `route.test.ts` for `/api/import`: gating.
+- **Smoke test** on a dev server (demo mode, port 3217): `/`, `/pricing`, `/settings` and `/clients/import` return 200; pricing shows no Subscribe without configuration; Settings has no Billing section in demo mode; the webhook answers 503 unconfigured. Server stopped afterwards.
+- **Not done in this pass:**
+  - `.env.example` is outside what this session may read or edit, so it isn't updated. The variable block to add is in `docs/BILLING.md` → Environment.
+  - `pnpm check:browsers`: Playwright browsers aren't installed on this machine, so it didn't run.
+  - Visual review of the Billing section: it needs a signed-in Supabase deployment.
+
+**Checks:** `pnpm check` (451 tests, build green). `pnpm check:browsers` not run: no Playwright browsers installed.

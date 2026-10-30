@@ -44,6 +44,7 @@ Set `NEXT_PUBLIC_SITE_URL` to the production origin: sign-in emails, canonical U
 - [DESIGN.md](DESIGN.md): concrete visual system rules (tokens, type scale, spacing, components, charts, states, responsive, what not to do).
 - [docs/DEVLOG.md](docs/DEVLOG.md): one entry per implementation pass.
 - [docs/DECISIONS.md](docs/DECISIONS.md): settled architectural, product and design decisions.
+- [docs/BILLING.md](docs/BILLING.md): Stripe setup, environment, local testing with the Stripe CLI and the going-live checklist.
 
 ## Structure
 
@@ -113,6 +114,7 @@ Implemented (D-051, D-059, D-060):
 - The proxy and the data access layer both verify the session (`auth.getClaims()`); route handlers and server actions re-check it next to the data. Supabase session cookies are HTTP-only, `SameSite=Lax`, and `Secure` in production.
 - Imports are validated twice. The server re-parses the CSV (16 MB request, 10 MB CSV, 100,000 rows, 200 columns, 2,000 characters per cell), then `import_meta_csv` checks the payload's shape and sizes before writing, so a direct call cannot skip it. Limits per user and hour: 30 import attempts (spent by `/api/import` before it reads a file) and 30 written imports (counted in the import's own transaction). Import records name the caller.
 - Every response carries a same-origin Content Security Policy (no nonces, so inline scripts are allowed), `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`, a referrer policy, a permissions policy and, in production, HSTS. `X-Powered-By` is off.
+- Billing (D-083): the Stripe webhook verifies Stripe's signature over the raw body and writes only through `apply_billing_event`. That function is executable by `anon` but refuses any caller without `BILLING_WEBHOOK_DB_SECRET`, whose SHA-256 hash is stored in a table nobody can read. Members read `workspace_subscriptions` through RLS, and nobody writes it directly. Stripe keys must be `sk_test_` unless the build is production and `BILLING_LIVE=true`.
 - Sign-in links only return to `NEXT_PUBLIC_SITE_URL` in production, never to an origin taken from request headers. The callback redirects to a fixed path; there are no user-supplied redirect targets.
 
 Known limit (live configuration, see D-059): sign-in links are requested from the server, so Supabase's per-IP auth limits see the server's address, not the visitor's, and act as one shared bucket. It is handled at deployment, not in code: CAPTCHA, host rate limiting and tuned Supabase limits (items 7, 8 and 11 below).
@@ -131,7 +133,8 @@ Live validation before launch (none of this can be checked from the repository):
 10. HTTPS only, and `NEXT_PUBLIC_SITE_URL` set to the production origin in the production build.
 11. Host rate-limit rules for `POST /sign-in` and `/api/*`.
 12. Preview and staging deployments use a separate Supabase project, never production.
-13. Spend caps and usage alerts on the Supabase and hosting plans. There is no paid AI or external API in the app.
+13. Spend caps and usage alerts on the Supabase and hosting plans. There is no paid AI in the app; Stripe is the only external API (billing).
+14. Billing: store the webhook secret's hash (`docs/BILLING.md`), then check two things. Calling `apply_billing_event` with the publishable key and a wrong secret returns "not allowed". A signed-in user's direct write to `workspace_subscriptions` returns "permission denied".
 
 ## Before Launch
 
@@ -140,8 +143,8 @@ Ad Analyst is currently parked. Before a production launch:
 1. Create or attach a production Supabase project.
 2. Validate authentication, RLS and two-user workspace isolation against the real database.
 3. Decide how the public demo should work in production.
-4. Add billing and subscription handling.
-5. Set a real sales/support contact email in `NEXT_PUBLIC_CONTACT_EMAIL` (and the Agency Stripe Payment Link in `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` once billing exists).
+4. Take billing live: it is built and tested in test mode (D-083). Follow the going-live checklist in `docs/BILLING.md`, and answer its open questions first.
+5. Set a real sales/support contact email in `NEXT_PUBLIC_CONTACT_EMAIL`.
 6. Deploy the production application.
 7. Validate imports with a real Meta Ads export.
 8. Get the product in front of real users before building additional features.
