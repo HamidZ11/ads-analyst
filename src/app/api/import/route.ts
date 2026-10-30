@@ -1,4 +1,6 @@
 import { revalidatePath } from "next/cache";
+import { IMPORT_BLOCKED_MESSAGES } from "@/features/billing/policy";
+import { billingFor } from "@/features/billing/server";
 import { IMPORT_LIMIT_MESSAGE, readImportRequest, runImport } from "@/features/import/service";
 import { loadSession } from "@/features/workspace/server";
 
@@ -37,6 +39,15 @@ export async function POST(request: Request) {
         message: "Imports need a connected database; this deployment runs read-only demo data.",
       },
       503,
+    );
+
+  // Billing (D-083): off unless BILLING_ENFORCE is on. Checked before the
+  // allowance, so a blocked workspace spends nothing.
+  const billing = await billingFor(session);
+  if (billing && !billing.imports.allowed)
+    return json(
+      { ok: false, message: IMPORT_BLOCKED_MESSAGES[billing.imports.reason] },
+      billing.imports.reason === "unknown" ? 503 : 402,
     );
 
   // Spend the user's allowance before reading or parsing anything, so

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { buttonClasses } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { tracksRevenue } from "@/domain/labels";
+import { IMPORT_BLOCKED_MESSAGES } from "@/features/billing/policy";
+import { loadBilling } from "@/features/billing/server";
 import { ImportFlow, type ImportableClient } from "@/features/import/import-flow";
 import { getWorkspaceContext } from "@/features/workspace/server";
 
@@ -36,6 +38,29 @@ export default async function ImportPage({
           </p>
           <Link href="/clients" className={buttonClasses("secondary", "md", "mt-4")}>
             Back to clients
+          </Link>
+        </section>
+      </>
+    );
+
+  // Billing gating (D-083), off unless BILLING_ENFORCE is on: reads stay
+  // open, only new imports wait for a subscription.
+  const billing = await loadBilling();
+  if (billing && !billing.imports.allowed)
+    return (
+      <>
+        <PageHeader title="Import data" description="Meta Ads CSV export" />
+        <section aria-labelledby="import-billing" className="max-w-[560px]">
+          <h2 id="import-billing" className="text-base font-semibold text-ink">
+            {billing.imports.reason === "unknown"
+              ? "The subscription couldn’t be checked"
+              : "Imports need an active subscription"}
+          </h2>
+          <p className="mt-1 text-sm leading-5 text-ink-muted">
+            {IMPORT_BLOCKED_MESSAGES[billing.imports.reason]}
+          </p>
+          <Link href="/settings#billing" className={buttonClasses("secondary", "md", "mt-4")}>
+            Go to billing
           </Link>
         </section>
       </>
