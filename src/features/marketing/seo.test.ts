@@ -131,7 +131,13 @@ describe("marketing metadata", () => {
 describe("sitemap and robots", () => {
   it("lists exactly the canonical public URLs", () => {
     const urls = sitemapFor(ORIGIN).map((entry) => entry.url);
-    expect(urls).toEqual([ORIGIN, `${ORIGIN}/pricing`, `${ORIGIN}/privacy`, `${ORIGIN}/terms`]);
+    expect(urls).toEqual([
+      ORIGIN,
+      `${ORIGIN}/audit`,
+      `${ORIGIN}/pricing`,
+      `${ORIGIN}/privacy`,
+      `${ORIGIN}/terms`,
+    ]);
     for (const path of [...APP_PATHS, "/sign-in", "/auth/callback"])
       expect(
         urls.some((url) => url.startsWith(`${ORIGIN}${path}`)),

@@ -387,3 +387,18 @@
     display: none;
   }
 }
+
+/* Print: a page's content alone, on white. The audit report is the reason
+   (D-083); the other pages print the same way. --------------------------- */
+
+@media print {
+  .site {
+    min-height: 0;
+    background: #fff;
+  }
+  .skip,
+  .navBar,
+  .footer {
+    display: none !important;
+  }
+}
