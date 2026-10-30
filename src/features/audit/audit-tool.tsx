@@ -8,7 +8,7 @@ import { todayInTimezone } from "@/domain/periods";
 import m from "@/features/marketing/marketing.module.css";
 import { auditMailto } from "@/features/marketing/hero";
 import { cn } from "@/lib/cn";
-import { auditExport, type AuditProblem, type AuditReport } from "./audit";
+import { auditExport, type AuditProblem, type AuditReport, type AuditTargets } from "./audit";
 import s from "./audit.module.css";
 import { AuditReportView } from "./audit-report";
 import { SAMPLE_FILE_NAME, SAMPLE_PATH } from "./sample-path";
@@ -47,8 +47,14 @@ export function AuditTool({ guide, email }: { guide: ReactNode; email: string | 
     resultRef.current?.scrollIntoView({ block: "start" });
   }, [state.kind]);
 
-  function run(bytes: Uint8Array, fileName: string, sample: boolean, outcomeColumn?: number) {
-    const result = auditExport({ bytes, fileName, today: today(), outcomeColumn });
+  function run(
+    bytes: Uint8Array,
+    fileName: string,
+    sample: boolean,
+    outcomeColumn?: number,
+    targets?: AuditTargets,
+  ) {
+    const result = auditExport({ bytes, fileName, today: today(), outcomeColumn, targets });
     setState(
       result.ok
         ? { kind: "report", report: result.report, bytes, sample }
@@ -223,7 +229,22 @@ export function AuditTool({ guide, email }: { guide: ReactNode; email: string | 
                 document.getElementById("audit-file")?.focus();
               }}
               onOutcome={(column) =>
-                run(state.bytes, state.report.fileName, state.sample, column)
+                run(
+                  state.bytes,
+                  state.report.fileName,
+                  state.sample,
+                  column,
+                  state.report.targets,
+                )
+              }
+              onTargets={(targets) =>
+                run(
+                  state.bytes,
+                  state.report.fileName,
+                  state.sample,
+                  state.report.outcome.column,
+                  targets,
+                )
               }
             />
             <section className={cn(m.cta, s.next)} aria-labelledby="audit-next-title">

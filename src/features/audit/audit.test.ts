@@ -247,3 +247,59 @@ describe("unsupported exports get a specific fix, never a generic error", () => 
     expect(p.detail).toContain("17 Sep 2026");
   });
 });
+
+describe("optional targets", () => {
+  const csv = toDelimited(ECOM_HEADERS, ecommerceRows());
+  const withTargets = (targets: { targetCpa: number | null; targetRoas: number | null }) =>
+    auditExport({
+      bytes: new TextEncoder().encode(csv),
+      fileName: "export.csv",
+      today: TODAY,
+      targets,
+    });
+
+  it("changes nothing when they are left empty", () => {
+    const none = report(csv);
+    const empty = withTargets({ targetCpa: null, targetRoas: null });
+    expect(empty.ok && empty.report).toEqual(none);
+    expect(none.targets).toEqual({ targetCpa: null, targetRoas: null });
+  });
+
+  it("hands them to the rules as a client's targets, so findings are judged against them", () => {
+    const none = report(csv);
+    const result = withTargets({ targetCpa: 5, targetRoas: 20 });
+    if (!result.ok) throw new Error(result.problem.detail);
+    const r = result.report;
+    expect(r.targets).toEqual({ targetCpa: 5, targetRoas: 20 });
+    expect(r.findings).not.toEqual(none.findings);
+    const text = r.findings.map((f) => JSON.stringify(f)).join("\n");
+    expect(text).toMatch(/target/i);
+    // Flagged spend is still the rules' own spendInvolved.
+    const zero = r.findings.filter((f) => f.detector === "zero_conversion_spend");
+    expect(r.spend.zeroConversion).toBeCloseTo(
+      zero.reduce((s, f) => s + f.spendInvolved, 0),
+      6,
+    );
+  });
+
+  it("validates them as Settings does and drops ROAS when conversions carry no value", () => {
+    for (const bad of [
+      { targetCpa: 0, targetRoas: null },
+      { targetCpa: -3, targetRoas: null },
+      { targetCpa: Number.NaN, targetRoas: null },
+      { targetCpa: null, targetRoas: 5000 },
+    ]) {
+      const result = withTargets(bad);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.problem.code).toBe("targets");
+    }
+    const leads = auditExport({
+      bytes: new TextEncoder().encode(leadCsv()),
+      fileName: "leads.csv",
+      today: TODAY,
+      targets: { targetCpa: 30, targetRoas: 3 },
+    });
+    if (!leads.ok) throw new Error(leads.problem.detail);
+    expect(leads.report.targets).toEqual({ targetCpa: 30, targetRoas: null });
+  });
+});

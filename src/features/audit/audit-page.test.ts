@@ -57,6 +57,7 @@ describe("the audit report", () => {
       sample: true,
       onReset: () => {},
       onOutcome: () => {},
+      onTargets: () => {},
     }),
   );
   const money = (value: number) => formatInsightValue(value, "money", report.currency);
@@ -88,5 +89,35 @@ describe("the audit report", () => {
     expect(html).toContain(DETECTOR_LABELS.zero_conversion_spend);
     expect(html).toContain("<tfoot>");
     expect(html).toContain("Save as PDF");
+  });
+});
+
+describe("the audit report's targets", () => {
+  const report = sampleReport();
+  const render = (targets: { targetCpa: number | null; targetRoas: number | null }) =>
+    renderToStaticMarkup(
+      createElement(AuditReportView, {
+        report: { ...report, targets },
+        sample: true,
+        onReset: () => {},
+        onOutcome: () => {},
+        onTargets: () => {},
+      }),
+    );
+
+  it("offers optional target inputs in the report's currency, empty by default", () => {
+    const html = render({ targetCpa: null, targetRoas: null });
+    expect(html).toContain(`Target CPA (${report.currency})`);
+    expect(html).toContain("Target ROAS");
+    expect(html).toContain("Apply targets");
+    expect(html).toContain("No targets are set");
+  });
+
+  it("states the targets the rules used", () => {
+    const html = render({ targetCpa: 20, targetRoas: 3 });
+    expect(html).toContain(escaped(formatInsightValue(20, "cost", report.currency)));
+    expect(html).toContain(formatInsightValue(3, "multiple", report.currency));
+    expect(html).toContain("Judged with your targets");
+    expect(html).not.toContain("No targets are set");
   });
 });

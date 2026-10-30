@@ -16,8 +16,9 @@ import {
 import { FindingDetail, INSIGHT_MATERIALITY } from "@/features/insights/finding-detail";
 import { PriorityDot } from "@/features/insights/priority";
 import { cn } from "@/lib/cn";
-import type { AuditReport } from "./audit";
+import type { AuditReport, AuditTargets } from "./audit";
 import s from "./audit.module.css";
+import { AuditTargetsForm } from "./audit-targets";
 
 /**
  * The audit report, in the app's type on a white panel: what the file covers,
@@ -87,11 +88,13 @@ export function AuditReportView({
   sample,
   onReset,
   onOutcome,
+  onTargets,
 }: {
   report: AuditReport;
   sample: boolean;
   onReset: () => void;
   onOutcome: (column: number) => void;
+  onTargets: (targets: AuditTargets) => void;
 }) {
   const { file, periods, vocabulary, currency, spend } = report;
   const fmt = (value: number | null, format: ValueFormat) =>
@@ -100,6 +103,17 @@ export function AuditReportView({
   const campaignsWord = (n: number) => `${n} ${n === 1 ? "campaign" : "campaigns"}`;
   const windowPhrase = `the last ${periods.days} days of the file (${periods.currentLabel})`;
   const outcomeId = useId();
+  const { targetCpa, targetRoas } = report.targets;
+  const targetParts = [
+    targetCpa !== null
+      ? `${vocabulary.costLabel.toLowerCase()} against your ${fmt(targetCpa, "cost")} target`
+      : null,
+    targetRoas !== null ? `ROAS against your ${fmt(targetRoas, "multiple")} target` : null,
+  ].filter((part): part is string => part !== null);
+  const judged =
+    targetParts.length === 0
+      ? `No targets are set, so cost and ROAS are judged against the previous ${periods.days} days.`
+      : `Judged with your targets: ${targetParts.join(", and ")}, as well as against the previous ${periods.days} days.`;
 
   return (
     <article
@@ -162,6 +176,19 @@ export function AuditReportView({
       </dl>
 
       <Section
+        title="Targets"
+        className={s.noPrint}
+        description={`Optional. Add this account’s targets and the rules judge cost${report.revenueTracked ? " and ROAS" : ""} against them, as they do for a client in Ad Analyst. Leave them blank to compare with the previous ${periods.days} days only.`}
+      >
+        <AuditTargetsForm
+          currency={currency}
+          revenueTracked={report.revenueTracked}
+          targets={report.targets}
+          onApply={onTargets}
+        />
+      </Section>
+
+      <Section
         title="Spend on flagged campaigns"
         description={`In ${windowPhrase}. These are amounts spent on campaigns the rules flagged, not an estimate of money lost.`}
       >
@@ -192,7 +219,7 @@ export function AuditReportView({
 
       <Section
         title="What the rules found"
-        description={`${countsPhrase(report.counts)}, comparing ${periods.currentLabel} with ${periods.previousLabel}. No targets are set, so cost and ROAS are judged against the previous ${periods.days} days.`}
+        description={`${countsPhrase(report.counts)}, comparing ${periods.currentLabel} with ${periods.previousLabel}. ${judged}`}
       >
         {report.findings.length === 0 ? (
           <p className="mt-4 text-sm text-ink-secondary">

@@ -35,6 +35,7 @@ import type {
   EntityStatus,
   IsoDate,
 } from "@/domain/types";
+import { readTargets } from "@/features/import/targets";
 import { collectInsightFacts } from "@/features/insights/facts";
 
 /**
@@ -103,6 +104,8 @@ export interface AuditReport {
   };
   campaigns: AuditCampaignRow[];
   totals: Omit<AuditCampaignRow, "id" | "name" | "status" | "finding">;
+  /** The visitor's optional targets, as the rules received them; null when not set. */
+  targets: AuditTargets;
   /** What was resolved automatically while reading the file. */
   notes: string[];
 }
@@ -314,6 +317,11 @@ function fileCurrency(
   return list[0];
 }
 
+export interface AuditTargets {
+  targetCpa: number | null;
+  targetRoas: number | null;
+}
+
 export interface AuditInput {
   bytes: Uint8Array;
   fileName: string;
@@ -321,6 +329,12 @@ export interface AuditInput {
   today: IsoDate;
   /** A column chosen among `outcomeOptions`, when the file offers several. */
   outcomeColumn?: number;
+  /**
+   * Optional targets, validated as Settings validates them (`readTargets`).
+   * A ROAS target is dropped when the counted conversions carry no value,
+   * as a client without conversion value can't hold one.
+   */
+  targets?: AuditTargets;
 }
 
 /** Reads one export and runs the rules over its later half against its earlier half. */
@@ -398,6 +412,15 @@ export function auditExport(input: AuditInput): AuditResult {
       `It runs ${formatDateRange(fileRange)}. The audit compares two equal periods of at least ${AUDIT_MIN_PERIOD_DAYS} days, so it needs at least ${AUDIT_MIN_PERIOD_DAYS * 2}. In Ads Manager, set the date range to the last 14 days or longer, keep Breakdown › By time › Day, and export again.`,
     );
 
+  const targets = readTargets(
+    {
+      targetCpa: input.targets?.targetCpa ?? null,
+      targetRoas: revenueTracked ? (input.targets?.targetRoas ?? null) : null,
+    },
+    revenueTracked,
+  );
+  if (!targets.ok) return problem("targets", "Check the targets", targets.message);
+
   const accountName = validation.accountName;
   const client = {
     id: "audit",
@@ -406,8 +429,8 @@ export function auditExport(input: AuditInput): AuditResult {
     type,
     currency,
     timezone: "UTC",
-    targetCpa: null,
-    targetRoas: null,
+    targetCpa: targets.targetCpa,
+    targetRoas: targets.targetRoas,
     revenueTracked,
   };
   const normalized = normalizeImport(validation.rows, client, {
@@ -488,6 +511,7 @@ export function auditExport(input: AuditInput): AuditResult {
       },
       campaigns,
       totals: rowFor(facts.account),
+      targets: { targetCpa: targets.targetCpa, targetRoas: targets.targetRoas },
       notes: validation.issues
         .filter((i) => i.level === "warning" && !NOTES_NOT_SHOWN.has(i.code))
         .map((i) => i.message),
