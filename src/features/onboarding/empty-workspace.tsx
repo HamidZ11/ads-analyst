@@ -4,7 +4,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { ExportGuide, FIRST_IMPORT_HREF, GettingStarted } from "./getting-started";
 import type { OnboardingProgress } from "./progress";
 
-export type EmptyPage = "overview" | "campaigns" | "creatives" | "insights" | "ask" | "clients";
+export type EmptyPage =
+  "overview" | "campaigns" | "creatives" | "insights" | "ask" | "report" | "clients";
 
 interface EmptyCopy {
   title: string;
@@ -59,6 +60,14 @@ export const EMPTY_COPY: Record<EmptyPage, EmptyCopy> = {
       "Answers are computed from the selected client’s imported Meta Ads data and nothing else.",
     action: "Import a Meta Ads export",
   },
+  report: {
+    title: "A report for your client will appear here",
+    appears:
+      "A printable document for the selected client and period: headline results against the previous period, day-by-day charts, what the rules found, the top campaigns and creatives, and your own note on what you’re doing next.",
+    source:
+      "Everything except your note is computed from the client’s imported Meta Ads data; the note is the only thing stored.",
+    action: "Import a Meta Ads export",
+  },
   clients: {
     title: "No clients yet",
     appears:
@@ -75,6 +84,7 @@ const PAGE_TITLES: Record<EmptyPage, string> = {
   creatives: "Creatives",
   insights: "Insights",
   ask: "Ask Analyst",
+  report: "Client report",
   clients: "Clients",
 };
 

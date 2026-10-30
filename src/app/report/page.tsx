@@ -5,12 +5,24 @@ import { PageHeader } from "@/components/ui/page-header";
 import { ClientReport } from "@/features/report/client-report";
 import { PrintButton } from "@/features/report/print-button";
 import { buildClientReport } from "@/features/report/report-model";
-import { loadSession, getWorkspace } from "@/features/workspace/server";
+import { EmptyWorkspace } from "@/features/onboarding/empty-workspace";
+import { workspaceProgress } from "@/features/onboarding/progress";
+import { getWorkspaceContext, loadSession, readyWorkspace } from "@/features/workspace/server";
 
 export const metadata: Metadata = { title: "Client report" };
 
 export default async function ClientReportPage() {
-  const workspace = await getWorkspace();
+  const context = await getWorkspaceContext();
+  const workspace = readyWorkspace(context);
+  // An empty workspace shows what the report will hold, like every page (D-090).
+  if (!workspace)
+    return (
+      <EmptyWorkspace
+        page="report"
+        workspaceName={context.workspace.name}
+        progress={workspaceProgress(context)}
+      />
+    );
   const session = await loadSession();
   const gateway = session.kind === "app" ? session.gateway : null;
   const model = buildClientReport(workspace);

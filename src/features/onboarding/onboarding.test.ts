@@ -254,6 +254,7 @@ describe("empty states", () => {
     "creatives",
     "insights",
     "ask",
+    "report",
     "clients",
   ];
   const render = (page: EmptyPage) =>
