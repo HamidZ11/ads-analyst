@@ -23,6 +23,38 @@
   line-height: 1.5;
 }
 
+/* Copy left and, from 1024px, a finding from the sample export on the right
+   (the intake's 7/5 columns); the finding is left out below 1024px. */
+.preview {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    column-gap: clamp(32px, 4vw, 64px);
+    align-items: start;
+  }
+  .preview {
+    display: block;
+    margin: 0;
+  }
+}
+.previewCard {
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 2px 4px rgb(11 16 32 / 4%),
+    0 24px 48px -28px rgb(11 16 32 / 24%);
+}
+.previewCaption {
+  margin-bottom: 10px;
+  color: var(--ink-3);
+  font-size: 14px;
+  line-height: 20px;
+}
+
 .panel {
   border-radius: 12px;
   background: var(--surface);

@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { APP_HOME } from "@/lib/routes";
+import { cn } from "@/lib/cn";
+import { APP_HOME, AUDIT_PATH } from "@/lib/routes";
 import { Mark } from "./mark";
 import s from "./marketing.module.css";
 import { SectionLink, useActiveSection, type LandingSection } from "./section-nav";
@@ -64,6 +65,8 @@ export function MarketingNav() {
   const closeNow = () => flushSync(() => setOpen(false));
   const pricing = pathname === "/pricing" ? "page" : undefined;
   const audit = pathname === "/audit" ? "page" : undefined;
+  // The audit's drop zone is that page's one primary, so the demo steps back there.
+  const demoSecondary = pathname === AUDIT_PATH;
 
   return (
     <header className={s.navBar} data-scrolled={scrolled && !open ? "" : undefined}>
@@ -93,7 +96,7 @@ export function MarketingNav() {
           <Link href="/sign-in" className={s.quiet}>
             Sign in
           </Link>
-          <Link href={APP_HOME} className={s.navCta}>
+          <Link href={APP_HOME} className={cn(s.navCta, demoSecondary && s.secondary)}>
             Try the demo
           </Link>
         </div>
@@ -140,7 +143,11 @@ export function MarketingNav() {
             </li>
           </ul>
         </nav>
-        <Link href={APP_HOME} className={s.button} onClick={close}>
+        <Link
+          href={APP_HOME}
+          className={cn(s.button, demoSecondary && s.secondary)}
+          onClick={close}
+        >
           Try the demo
         </Link>
       </div>

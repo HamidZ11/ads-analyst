@@ -235,6 +235,22 @@
 .button:hover {
   background: #1e2539;
 }
+/* The nav's "Try the demo" on a page whose own primary must lead (the audit's
+   drop zone): outlined in ink instead of filled, same size and radius. */
+.navCta.secondary,
+.button.secondary {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--ink-quiet);
+  color: var(--ink);
+  transition:
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+.navCta.secondary:hover,
+.button.secondary:hover {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
 .textLink {
   display: inline-flex;
   align-items: center;

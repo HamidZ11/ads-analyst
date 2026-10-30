@@ -136,7 +136,8 @@ export function AuditTool({ guide, email }: { guide: ReactNode; email: string | 
                 Drop a Meta Ads Manager CSV here
               </p>
               <p className="mt-1 text-sm leading-5 text-ink-muted">
-                Ad level, by day, at least 14 days · up to 10 MB
+                Ad level, by day, at least 14 days ·{" "}
+                <span className="whitespace-nowrap">up to 10 MB</span>
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">

@@ -8,6 +8,7 @@ import { auditExport, type AuditReport } from "./audit";
 import { AuditReportView } from "./audit-report";
 import { EXPORT_STEPS } from "./export-guide";
 import { buildSampleCsv, SAMPLE_ACCOUNT_NAME } from "./sample";
+import { samplePreview } from "./sample-preview";
 
 /** Text as React writes it into HTML. */
 const escaped = (text: string) =>
@@ -30,6 +31,23 @@ describe("the /audit page", () => {
     expect(metadata.title).toEqual({ absolute: MARKETING_PAGES["/audit"].title });
     expect(metadata.description).toBe(MARKETING_PAGES["/audit"].description);
     expect(html.match(/<h1/g)?.length).toBe(1);
+  });
+
+  it("previews a finding the audit makes in its own sample export, labelled as the sample", () => {
+    const preview = samplePreview();
+    if (!preview) throw new Error("The sample export no longer produces a finding.");
+    // Exactly what "Try the sample export" shows, whatever day the visitor runs it.
+    const report = sampleReport();
+    expect(preview.finding).toEqual(report.findings.find((f) => f.id === preview.finding.id));
+    expect(preview.finding.detector).toBe("zero_conversion_spend");
+    expect([preview.currentLabel, preview.previousLabel]).toEqual([
+      report.periods.currentLabel,
+      report.periods.previousLabel,
+    ]);
+    expect(html).toContain(`From the sample export · ${escaped(SAMPLE_ACCOUNT_NAME)}`);
+    expect(html).toContain(escaped(preview.finding.headline));
+    for (const item of preview.finding.evidence)
+      expect(html).toContain(formatInsightValue(item.value, item.format, preview.currency));
   });
 
   it("offers a CSV file input and the sample, with no form to submit", () => {
