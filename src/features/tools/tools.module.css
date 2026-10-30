@@ -34,6 +34,7 @@
   color: var(--ink-2);
   font-size: 19px;
   line-height: 1.5;
+  text-wrap: pretty;
 }
 .h2 {
   color: var(--ink);
@@ -54,6 +55,7 @@
 /* Calculator and explanation: side by side from 1024px, stacked below. */
 .split {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(48px, 5vw, 72px);
   align-items: start;
   margin-top: clamp(32px, 4vw, 56px);
@@ -101,9 +103,10 @@
   opacity: 0;
   cursor: pointer;
 }
-.segment span {
+.segment > span {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   height: 38px;
   padding: 0 14px;
   border-radius: 4px;
@@ -115,7 +118,7 @@
     background-color 180ms ease,
     color 180ms ease;
 }
-.segment:hover span {
+.segment:hover > span {
   color: var(--ink);
 }
 .segment input:checked + span {
@@ -271,6 +274,7 @@
   font-size: 19px;
   font-weight: 500;
   letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 .section {
   margin-top: 36px;

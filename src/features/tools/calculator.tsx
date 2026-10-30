@@ -42,7 +42,7 @@ export function Calculator({ tool }: { tool: ToolId }) {
                 onChange={() => setCurrency(option.code)}
               />
               <span>
-                <span aria-hidden>{option.symbol} </span>
+                <span aria-hidden>{option.symbol}</span>
                 {option.code}
               </span>
             </label>
