@@ -28,6 +28,12 @@ export interface ImportWriteResult {
   daysReplaced: number;
 }
 
+/** The agency's own words for one client and reporting period. */
+export interface ReportNote {
+  body: string;
+  updatedAt: string;
+}
+
 export interface WorkspaceGateway {
   /** Creates a personal workspace on first sign-in; returns every membership. */
   ensureWorkspaces(defaultName: string): Promise<WorkspaceMembership[]>;
@@ -37,6 +43,21 @@ export interface WorkspaceGateway {
     clientId: string,
     targetCpa: number | null,
     targetRoas: number | null,
+  ): Promise<boolean>;
+  /** Owners only; false when the workspace isn't the caller's to rename. */
+  renameWorkspace(workspaceId: string, name: string): Promise<boolean>;
+  /** Null when there is no note, or the client is not in the caller's workspace. */
+  reportNote(
+    clientId: string,
+    periodStart: string,
+    periodEnd: string,
+  ): Promise<ReportNote | null>;
+  /** A blank body clears the note; false when the client isn't available to the caller. */
+  saveReportNote(
+    clientId: string,
+    periodStart: string,
+    periodEnd: string,
+    body: string,
   ): Promise<boolean>;
   /** Counts one attempt by the signed-in user; false once their allowance for the window is spent. */
   consumeRateLimit(action: RateLimitedAction): Promise<boolean>;
@@ -102,6 +123,13 @@ const asResult = (value: unknown): ImportWriteResult => {
   };
 };
 
+const asNote = (value: unknown): ReportNote | null => {
+  const r = value as { body?: unknown; updated_at?: unknown } | null;
+  return r && typeof r.body === "string"
+    ? { body: r.body, updatedAt: String(r.updated_at) }
+    : null;
+};
+
 export function supabaseGateway(db: SupabaseClient): WorkspaceGateway {
   const call = async <T>(fn: string, args: Record<string, unknown>): Promise<T> => {
     const { data, error } = await db.rpc(fn, args);
@@ -129,6 +157,23 @@ export function supabaseGateway(db: SupabaseClient): WorkspaceGateway {
         p_target_cpa: targetCpa,
         p_target_roas: targetRoas,
       }),
+    renameWorkspace: (workspaceId, name) =>
+      call<boolean>("rename_workspace", { p_workspace_id: workspaceId, p_name: name }),
+    reportNote: async (clientId, periodStart, periodEnd) =>
+      asNote(
+        await call<unknown>("client_report_note", {
+          p_client_id: clientId,
+          p_period_start: periodStart,
+          p_period_end: periodEnd,
+        }),
+      ),
+    saveReportNote: (clientId, periodStart, periodEnd, body) =>
+      call<boolean>("save_client_report_note", {
+        p_client_id: clientId,
+        p_period_start: periodStart,
+        p_period_end: periodEnd,
+        p_body: body,
+      }),
     consumeRateLimit: (action) => call<boolean>("consume_rate_limit", { p_action: action }),
     subscription: async (workspaceId) => {
       const { data, error } = await db
@@ -142,4 +187,4 @@ export function supabaseGateway(db: SupabaseClient): WorkspaceGateway {
   };
 }
 
-export { asResult as importWriteResult };
+export { asResult as importWriteResult, asNote as reportNoteResult };

@@ -32,6 +32,7 @@ export const APP_PATHS = [
   "/creatives",
   "/insights",
   "/ask",
+  "/report",
   "/clients",
   "/settings",
 ] as const;

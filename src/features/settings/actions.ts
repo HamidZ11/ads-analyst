@@ -47,3 +47,30 @@ export async function saveClientTargets(
   revalidatePath("/", "layout");
   return { ok: true, message: "Targets saved." };
 }
+
+export interface WorkspaceNameState {
+  message: string | null;
+  ok: boolean;
+}
+
+/** Renames the caller's workspace; the name heads every client report. Owners only. */
+export async function renameWorkspace(
+  _previous: WorkspaceNameState,
+  form: FormData,
+): Promise<WorkspaceNameState> {
+  const session = await loadSession();
+  if (session.kind !== "app" || !session.gateway)
+    return { ok: false, message: "The workspace name can't be changed here." };
+  const raw = form.get("workspaceName");
+  const name = typeof raw === "string" ? raw.trim() : "";
+  if (name.length < 1 || name.length > 120)
+    return { ok: false, message: "Use between 1 and 120 characters." };
+  try {
+    const saved = await session.gateway.renameWorkspace(session.context.workspace.id, name);
+    if (!saved) return { ok: false, message: "Only the workspace owner can rename it." };
+  } catch {
+    return { ok: false, message: "The name couldn't be saved. Try again." };
+  }
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Workspace name saved." };
+}
