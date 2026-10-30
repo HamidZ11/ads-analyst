@@ -6,8 +6,9 @@
 
 import { APP_PATHS, MARKETING_PATHS } from "@/lib/routes";
 
-/** Routes reachable without a session (besides the marketing pages). */
-const PUBLIC_PATHS = ["/sign-in", "/auth/callback"];
+/** Routes reachable without a session (besides the marketing pages). Stripe's
+    webhook has no session; its signature authenticates it (D-083). */
+const PUBLIC_PATHS = ["/sign-in", "/auth/callback", "/api/billing/webhook"];
 
 /** `redirect_app` sends a signed-in visitor to the app (`APP_HOME`). */
 export type AccessDecision = "allow" | "redirect_to_sign_in" | "unauthorized" | "redirect_app";
