@@ -4,15 +4,33 @@ import { PageHeader } from "@/components/ui/page-header";
 import { formatDateRange } from "@/domain/format";
 import { buildInsightsModel } from "@/features/insights/insights-model";
 import { InsightsWorkspace } from "@/features/insights/insights-workspace";
-import { getWorkspace } from "@/features/workspace/server";
+import { EmptyWorkspace } from "@/features/onboarding/empty-workspace";
+import { ImportedNote } from "@/features/onboarding/imported-note";
+import { workspaceProgress } from "@/features/onboarding/progress";
+import { getWorkspaceContext, readyWorkspace } from "@/features/workspace/server";
 
 export const metadata: Metadata = { title: "Insights" };
 
-export default async function InsightsPage() {
-  const workspace = await getWorkspace();
-  const { client, periods, comparison } = workspace;
+export default async function InsightsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const context = await getWorkspaceContext();
+  const workspace = readyWorkspace(context);
+  if (!workspace)
+    return (
+      <EmptyWorkspace
+        page="insights"
+        workspaceName={context.workspace.name}
+        progress={workspaceProgress(context)}
+      />
+    );
+  const { client, dataSource, periods, comparison } = workspace;
   const model = buildInsightsModel(workspace);
   const count = model.findings.length;
+  // Set by the first import's redirect; only an imported client has an import to name.
+  const justImported = (await searchParams).imported === "1" && dataSource.kind === "meta_csv";
 
   return (
     <>
@@ -31,6 +49,13 @@ export default async function InsightsPage() {
           </>
         }
       />
+      {justImported ? (
+        <ImportedNote
+          client={client}
+          dataSource={dataSource}
+          progress={workspaceProgress(context)}
+        />
+      ) : null}
       <InsightsWorkspace key={`${client.id}-${workspace.preset}`} model={model} />
     </>
   );
