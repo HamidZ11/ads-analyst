@@ -26,6 +26,19 @@ type State =
   | { kind: "problem"; problem: AuditProblem; fileName: string }
   | { kind: "report"; report: AuditReport; bytes: Uint8Array; sample: boolean };
 
+export const UNREADABLE_FILE: AuditProblem = {
+  code: "unreadable_file",
+  title: "This file couldn't be read",
+  detail:
+    "Your browser couldn't open it. If it was moved, renamed or is still downloading or syncing, choose it again from its folder, or export it again from Ads Manager.",
+};
+
+const SAMPLE_UNAVAILABLE: AuditProblem = {
+  code: "sample_unavailable",
+  title: "The sample export didn't load",
+  detail: "Try again in a moment, or drop your own export here.",
+};
+
 function today() {
   return todayInTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
 }
@@ -64,27 +77,32 @@ export function AuditTool({ guide, email }: { guide: ReactNode; email: string | 
 
   async function readFile(file: File) {
     setState({ kind: "reading" });
-    // One byte over the limit is enough for the reader to name the size problem.
-    const bytes = new Uint8Array(await file.slice(0, CSV_LIMITS.maxBytes + 1).arrayBuffer());
+    let bytes: Uint8Array;
+    try {
+      // One byte over the limit is enough for the reader to name the size problem.
+      bytes = new Uint8Array(await file.slice(0, CSV_LIMITS.maxBytes + 1).arrayBuffer());
+    } catch {
+      // The browser couldn't read it: moved, deleted, or still syncing from cloud storage.
+      setState({ kind: "problem", fileName: file.name, problem: UNREADABLE_FILE });
+      return;
+    }
     run(bytes, file.name, false);
   }
 
   async function readSample() {
     setState({ kind: "reading" });
-    const response = await fetch(SAMPLE_PATH);
-    if (!response.ok) {
-      setState({
-        kind: "problem",
-        fileName: SAMPLE_FILE_NAME,
-        problem: {
-          code: "sample_unavailable",
-          title: "The sample export didn't load",
-          detail: "Try again in a moment, or drop your own export here.",
-        },
-      });
+    let bytes: Uint8Array | null = null;
+    try {
+      const response = await fetch(SAMPLE_PATH);
+      if (response.ok) bytes = new Uint8Array(await response.arrayBuffer());
+    } catch {
+      // Offline or interrupted: the same refusal as a failed response.
+    }
+    if (!bytes) {
+      setState({ kind: "problem", fileName: SAMPLE_FILE_NAME, problem: SAMPLE_UNAVAILABLE });
       return;
     }
-    run(new Uint8Array(await response.arrayBuffer()), SAMPLE_FILE_NAME, true);
+    run(bytes, SAMPLE_FILE_NAME, true);
   }
 
   function onDrop(event: DragEvent<HTMLDivElement>) {

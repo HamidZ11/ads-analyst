@@ -122,6 +122,24 @@ for (const [name, engine] of Object.entries(engines)) {
       .getByRole("heading", { name: "Luxe Skin Co. (sample data)" })
       .waitFor({ timeout: 10_000 });
     console.log(`ok   ${where}: sample export audited`);
+
+    // A file the browser cannot read (moved, or still syncing) says so instead of hanging.
+    await page.getByRole("button", { name: "Audit another file" }).click();
+    await page.evaluate(() => {
+      Blob.prototype.arrayBuffer = () =>
+        Promise.reject(new DOMException("gone", "NotFoundError"));
+    });
+    await page.setInputFiles("#audit-file", {
+      name: "moved.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from(campaignLevel),
+    });
+    const unreadable = page.locator('[role="alert"][tabindex="-1"]');
+    await unreadable.waitFor({ timeout: 10_000 });
+    const unreadableText = await unreadable.innerText();
+    if (!/couldn.t be read/.test(unreadableText) || !/moved\.csv/.test(unreadableText))
+      fail(where, `unreadable file message: ${unreadableText}`);
+    else console.log(`ok   ${where}: an unreadable file is refused with a message`);
     await context.close();
   }
   await browser.close();
