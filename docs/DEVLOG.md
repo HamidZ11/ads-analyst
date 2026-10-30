@@ -1291,3 +1291,18 @@ Owner brief (D-082). Run through the project's Impeccable skill: context loaded,
 **Checks:** `pnpm check` (367 tests), `pnpm check:browsers http://localhost:3100/` (52 crop checks), overflow probe on `/`, `/pricing`, `/privacy`, `/terms` in three engines at three widths.
 
 **Correction (follow-up commit):** `git add -A` in the D-082 commit (8f17a19) also staged four untracked iCloud conflict copies (`scripts/check-crops 2.mjs`, `crop-scale.test 2.ts`, `cta-band 2.tsx`, `cta-band.test 2.ts`), and they were pushed. Three were identical to their originals; `cta-band 2.tsx` was the pre-renumbering copy (D-074 in a comment). Nothing referenced them. They are removed, and `.gitignore` now ignores names with a space before a one- to three-digit number, which no tracked file has.
+
+---
+
+## 2026-10-30 — Launch readiness: deployment, CSP, RLS tests, health
+
+Launch brief (D-NEW-launch-csp, D-NEW-launch-rls, D-NEW-launch-deploy). Branch `feat/launch-readiness`.
+
+- **CSP:** `src/lib/csp.ts` (policy and nonce), `src/proxy.ts` (policy on every response it returns and on the forwarded request, in every mode), `next.config.ts` (no CSP; COOP, `payment=()`, `usb=()`, HSTS `includeSubDomains`). The build already rendered every page per request (the root layout loads the session), so nonces change no route from static to dynamic.
+- **RLS:** `src/data/supabase/rls.test.ts` (tables from the catalogue; read, insert, update, delete and move across tenants, with the migrations' grants and with writes re-granted; fingerprints before and after). `test-database.ts`: Supabase's `auth.uid()` over `request.jwt.claims`, Supabase's default grants on `public`, and the shared `payload` fixture (moved from `schema.test.ts`). Mutation runs: a permissive select policy, a permissive all-commands policy and an unlisted table without RLS each failed the suite; removed afterwards.
+- **Health and errors:** `src/app/api/health/route.ts` and `src/lib/health.ts` (public via `PUBLIC_PATHS`); `src/app/global-error.tsx`; `error.tsx` uses `retry()`.
+- **Deployment:** `vercel.json`, `engines.node`, `scripts/check-deploy.mjs` (`pnpm check:deploy`), `scripts/check-csp.mjs` (`pnpm check:csp`), `docs/DEPLOY.md`, README (security, scripts, Before Launch), `.env.example`, DESIGN.md §27.
+- **Verified:** production build in demo mode on port 3417: `pnpm check:csp` (13 pages each in WebKit, Chromium and Firefox, plus client navigation and an Ask Analyst question) with no violations; the same against `pnpm dev` on 3418; `pnpm check:browsers` (all crops); `pnpm check:deploy` in demo mode and in Supabase mode with a fake, unreachable project URL (the proxy makes no network call without a session cookie), where an extra run with `AD_ANALYST_DEMO_MODE=true` beside the Supabase values was flagged as intended; `check:csp` in Supabase mode (app pages land on sign-in, no violations). Global error page rendered through a temporary throw in the root layout (reverted) in Chromium and WebKit at 1440, 390 and 360px: no overflow, no violations.
+- **Rejected:** experimental SRI (Next.js inline scripts need a nonce anyway); `upgrade-insecure-requests` (everything is same-origin, and HTTPS is already enforced by HSTS and the `.app` preload); a health check that queries Supabase.
+
+**Checks:** `pnpm check`, `pnpm check:browsers`, `pnpm check:csp`, `pnpm check:deploy`.

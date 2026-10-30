@@ -435,7 +435,8 @@ Authentication is a utility, not a destination (D-049 to D-052). It uses the exi
 - Empty workspace: the sidebar replaces the client switcher with a 44px dashed `border-strong` box reading "No clients yet" in `ink-muted`; the mobile top bar omits the compact switcher. Analysis pages and Clients redirect to `/clients/import?client=new`; Settings shows the Account section, an "Import Meta CSV" header action and a Client section saying client settings appear after the first import.
 - Labels: in a signed-in deployment the Settings row reads "Workspace" with the workspace name; demo mode keeps "Agency".
 - Not found: unknown URLs answer with a 404 status and "Page not found" over "There's no page at this address." Signed out, it uses the sign-in column (product mark, 20px 600 heading) with a primary "Go to the home page" and a secondary "Pricing"; in an app session it sits inside the shell like the error boundary, with a primary "Go to Overview". Never a redirect.
-- Recoverable failure: the app-level error boundary shows "This page couldn't load", one reassurance sentence, primary "Try again" and secondary "Sign in again" inside the shell. Database messages are never shown.
+- Recoverable failure: the app-level error boundary shows "This page couldn't load", one reassurance sentence, primary "Try again" (refetches the page) and secondary "Sign in again" inside the shell. Database messages are never shown.
+- Root failure: when the root layout itself fails (the session cannot load), `global-error.tsx` replaces the document with the sign-in column: product mark, "Ad Analyst couldn't load" (20px 600), "Your data is safe. Something went wrong on our side; try again in a moment.", primary "Try again" and secondary "Go to the home page" (a full page load). It brings `globals.css` itself but not the Inter variable, so it sets in the `font-sans` fallback stack. Never shows error details.
 
 ## 28. Marketing site
 
