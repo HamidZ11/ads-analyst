@@ -1311,3 +1311,17 @@ Owner brief (D-083, D-084, D-085). Branch `feat/instant-audit`.
 **Not verified:** the page has not been seen in a browser at any width; layout at 1440, 390 and 360px was reviewed in code only. No real Ads Manager export has been through the parser.
 
 **Deferred:** optional targets on the audit; currencies beyond GBP, USD and EUR; a nav or footer link to `/audit`; moving the analysis to a Web Worker for very large files.
+
+## 2026-10-30 — Audit follow-ups: optional targets, Free audit in the nav, first browser run
+
+Owner answers to the audit's open questions (D-NEW-audit-targets-1, D-NEW-audit-nav-1). Branch `feat/instant-audit`.
+
+- **Answers.** Closing band stays on `/audit` (D-084 confirmed). Currencies stay GBP, USD and EUR (D-083 confirmed). Optional target CPA and ROAS on the audit. "Free audit" in the nav and footer.
+- **Targets.** `readTargets`, `positiveOrNull` and the target limits moved to `src/features/import/targets.ts` (pure; `service.ts` re-exports `readTargets` for Settings). `auditExport` takes `targets`, validates them with `readTargets` (ROAS dropped when the conversions carry no value) and puts them on the in-memory client; the report carries `targets`. `audit-targets.tsx`: the "Targets" section, hidden in print; "What the rules found" names the targets used. Tests: empty targets give an identical report; targets reach the rules (findings change, a target appears in them, flagged spend is still `spendInvolved`); invalid values refused with Settings' messages; a ROAS target dropped on a lead file; the report renders the inputs and the targets sentence.
+- **Nav.** "Free audit" in the inline nav, the phone menu (`aria-current="page"` on `/audit`) and the footer (test updated). At 1024px Pricing sat 14px from Sign in; links are 24px apart and the bar has a 28px column gap from 1024 to 1279px.
+- **First browser run.** Playwright's browsers are now installed. `pnpm check:audit` found two things: its refusal locator also matched Next's route announcer (`role="alert"`; now scoped to the focusable refusal), and `/audit` scrolled sideways by 22px at 390 and 50px at 360 in Chromium with a report. Cause: `Delta`'s `sr-only` text is absolutely positioned, and the ledger's scroller wasn't positioned, so those spans escaped its clipping. The scroller is now `relative`. Other app tables use the same pattern inside unpositioned scrollers and weren't checked in this pass. The targets button no longer stretches across the free grid column.
+- **Screens seen.** Chromium, `/audit` with the sample at 1440, 390 and 360 (top, report, targets before, applied and with an error, findings, ledger, closing section and footer, phone menu), and the nav at 1024 and 1280.
+
+**Checks:** `pnpm check` (417 tests). `pnpm check:audit` (45 checks across WebKit, Chromium and Firefox at 1440/390/360, no request carries the file) and `pnpm check:browsers` (52 crop checks) pass against a production server.
+
+**Not verified:** still no real Ads Manager export through the parser.
