@@ -111,6 +111,7 @@ export function AuditReportView({
           <p className="text-xs font-medium text-ink-muted">Wasted-spend audit</p>
           <h2
             id="audit-title"
+            tabIndex={-1}
             className="mt-1 text-[20px] leading-7 font-semibold tracking-[-0.02em] break-words"
           >
             {report.accountName ?? report.fileName}

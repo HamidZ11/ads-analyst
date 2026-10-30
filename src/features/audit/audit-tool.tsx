@@ -38,7 +38,12 @@ export function AuditTool({ guide, email }: { guide: ReactNode; email: string | 
 
   useEffect(() => {
     if (state.kind !== "report" && state.kind !== "problem") return;
-    resultRef.current?.focus({ preventScroll: true });
+    // Focus the report's heading, or the refusal, so the reader starts there.
+    const target =
+      state.kind === "report"
+        ? document.getElementById("audit-title")
+        : resultRef.current?.querySelector<HTMLElement>('[role="alert"]');
+    target?.focus({ preventScroll: true });
     resultRef.current?.scrollIntoView({ block: "start" });
   }, [state.kind]);
 
@@ -156,12 +161,25 @@ export function AuditTool({ guide, email }: { guide: ReactNode; email: string | 
         {guide}
       </div>
 
-      <div ref={resultRef} tabIndex={-1} className={s.result} aria-live="polite">
+      <p role="status" className="sr-only">
+        {state.kind === "reading"
+          ? "Reading the export"
+          : state.kind === "report"
+            ? `Audit ready: ${state.report.findings.length} ${state.report.findings.length === 1 ? "finding" : "findings"}.`
+            : ""}
+      </p>
+      <div ref={resultRef} className={s.result}>
         {state.kind === "reading" ? (
-          <p className={cn(s.reading, "font-sans")}>Reading the export…</p>
+          <p aria-hidden className={cn(s.reading, "font-sans")}>
+            Reading the export…
+          </p>
         ) : null}
         {state.kind === "problem" ? (
-          <div role="alert" className={cn(s.panel, s.problemPanel, "font-sans text-ink")}>
+          <div
+            role="alert"
+            tabIndex={-1}
+            className={cn(s.panel, s.problemPanel, "font-sans text-ink")}
+          >
             <p className="text-xs text-ink-muted">{state.fileName}</p>
             <h2 className="mt-1 text-[18px] leading-6 font-semibold tracking-[-0.02em]">
               {state.problem.title}
