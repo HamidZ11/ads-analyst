@@ -28,6 +28,7 @@ export default async function SettingsPage({
       portalConfigured={billing.checkout !== null}
       imports={billing.imports}
       notice={parseNotice((await searchParams).billing)}
+      clientCount={context.clients.length}
     />
   ) : null;
   const { client, dataSource } = context;

@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { WorkspaceSubscription } from "@/data/supabase/billing";
-import { BillingSection, NOTICES, parseNotice } from "./billing-section";
+import { AGENCY_CLIENT_LIMIT, BillingSection, NOTICES, parseNotice } from "./billing-section";
 import { checkoutRedirect, portalRedirect } from "./checkout";
 import {
   agencyPrices,
@@ -14,7 +14,7 @@ import {
   webhookConfig,
 } from "./config";
 import { agencySubscribeTarget } from "./links";
-import { importDecision, type BillingRead } from "./policy";
+import { GRACE_DAYS, graceEndsAt, importDecision, type BillingRead } from "./policy";
 import { isEntitled, periodLine, planLabel, STATUS_LABELS } from "./status";
 import type { BillingStripe } from "./stripe";
 
@@ -35,6 +35,7 @@ const sub = (overrides: Partial<WorkspaceSubscription> = {}): WorkspaceSubscript
   currentPeriodEnd: "2026-11-30T12:00:00.000Z",
   cancelAtPeriodEnd: false,
   stripeCustomerId: "cus_1",
+  paymentFailedAt: null,
   ...overrides,
 });
 
@@ -175,8 +176,13 @@ describe("billing configuration", () => {
 });
 
 describe("import gating policy", () => {
-  const decide = (enforce: boolean, subscription: BillingRead, checkoutConfigured = true) =>
-    importDecision({ enforce, checkoutConfigured, subscription });
+  const NOW = new Date("2026-11-10T12:00:00.000Z");
+  const decide = (
+    enforce: boolean,
+    subscription: BillingRead,
+    checkoutConfigured = true,
+    now = NOW,
+  ) => importDecision({ enforce, checkoutConfigured, subscription, now });
 
   it("allows every import while enforcement is off, whatever the subscription", () => {
     for (const subscription of [
@@ -371,6 +377,7 @@ describe("dead-link rules", () => {
         portalConfigured: true,
         imports: { allowed: true, reason: "not_enforced" },
         notice: null,
+        clientCount: 3,
         ...props,
       }),
     );
@@ -445,7 +452,7 @@ describe("dead-link rules", () => {
       }),
     ).toEqual({
       kind: "checkout",
-      href: "/settings#billing",
+      href: "/sign-in?next=%2Fsettings%23billing",
     });
     expect(
       agencySubscribeTarget({
@@ -479,7 +486,7 @@ describe("pricing page with Checkout configured", () => {
       NEXT_PUBLIC_STRIPE_PAYMENT_LINK: "https://buy.stripe.com/test_123",
     });
     expect(html).toMatch(
-      /<a class="[^"]*button[^"]*" href="\/settings#billing">Subscribe<\/a>/,
+      /<a class="[^"]*button[^"]*" href="\/sign-in\?next=%2Fsettings%23billing">Subscribe<\/a>/,
     );
     expect(html).not.toContain("buy.stripe.com");
   });
@@ -491,6 +498,120 @@ describe("pricing page with Checkout configured", () => {
       NEXT_PUBLIC_STRIPE_PAYMENT_LINK: "https://buy.stripe.com/test_123",
     });
     expect(html).toContain('href="https://buy.stripe.com/test_123"');
-    expect(html).not.toContain("/settings#billing");
+    expect(html).not.toContain("settings%23billing");
+  });
+
+  it("never shows the payment link once Checkout is configured, monthly or yearly only", async () => {
+    for (const prices of [
+      { STRIPE_PRICE_AGENCY_YEARLY: "" },
+      { STRIPE_PRICE_AGENCY_MONTHLY: "" },
+    ]) {
+      const html = await render({
+        ...configured,
+        ...prices,
+        NEXT_PUBLIC_STRIPE_PAYMENT_LINK: "https://buy.stripe.com/test_123",
+      });
+      expect(html).toContain("settings%23billing");
+      expect(html).not.toContain("buy.stripe.com");
+    }
+  });
+});
+
+describe("grace period after a failed payment", () => {
+  const failedAt = "2026-11-03T09:00:00.000Z";
+  const ends = new Date("2026-11-10T09:00:00.000Z");
+  const decide = (subscription: BillingRead, now: Date, enforce = true, checkout = true) =>
+    importDecision({ enforce, checkoutConfigured: checkout, subscription, now });
+
+  it("keeps imports open for 7 days after the first failure while past due or unpaid", () => {
+    for (const status of ["past_due", "unpaid"] as const) {
+      const subscription = sub({ status, paymentFailedAt: failedAt });
+      expect(graceEndsAt(subscription)).toEqual(ends);
+      expect(decide(subscription, new Date(ends.getTime() - 1))).toEqual({
+        allowed: true,
+        reason: "grace",
+        graceEndsAt: ends.toISOString(),
+      });
+      expect(decide(subscription, ends)).toEqual({ allowed: false, reason: "inactive" });
+    }
+    expect(GRACE_DAYS).toBe(7);
+  });
+
+  it("gives no grace without a recorded failure, or in any other status", () => {
+    const now = new Date("2026-11-04T00:00:00.000Z");
+    expect(decide(sub({ status: "past_due" }), now)).toEqual({
+      allowed: false,
+      reason: "inactive",
+    });
+    for (const status of ["canceled", "incomplete", "incomplete_expired", "paused"] as const)
+      expect(decide(sub({ status, paymentFailedAt: failedAt }), now), status).toEqual({
+        allowed: false,
+        reason: "inactive",
+      });
+    expect(graceEndsAt(sub({ status: "past_due", paymentFailedAt: "not a date" }))).toBeNull();
+  });
+
+  it("changes nothing while gating is off or Checkout isn't configured", () => {
+    const subscription = sub({
+      status: "past_due",
+      paymentFailedAt: "2026-01-01T00:00:00.000Z",
+    });
+    expect(decide(subscription, ends, false)).toEqual({
+      allowed: true,
+      reason: "not_enforced",
+    });
+    expect(decide(subscription, ends, true, false)).toEqual({
+      allowed: true,
+      reason: "not_enforced",
+    });
+  });
+
+  it("tells the workspace when imports stop", () => {
+    const html = renderToStaticMarkup(
+      createElement(BillingSection, {
+        subscription: sub({ status: "past_due", paymentFailedAt: failedAt }),
+        intervals: ["month"],
+        portalConfigured: true,
+        imports: { allowed: true, reason: "grace", graceEndsAt: ends.toISOString() },
+        notice: null,
+        clientCount: 2,
+      }),
+    );
+    expect(html).toContain("Imports continue until 10 Nov 2026");
+    expect(html).not.toContain("Imports are paused");
+  });
+});
+
+describe("the Agency plan's client accounts", () => {
+  const render = (clientCount: number, subscription: BillingRead = sub()) =>
+    renderToStaticMarkup(
+      createElement(BillingSection, {
+        subscription,
+        intervals: ["month"],
+        portalConfigured: true,
+        imports: { allowed: true, reason: "not_enforced" },
+        notice: null,
+        clientCount,
+      }),
+    );
+
+  it("shows a soft notice from 10 client accounts and blocks nothing", () => {
+    expect(render(9)).not.toContain("client accounts");
+    expect(render(10)).toContain(
+      "This workspace has 10 client accounts, the most the Agency plan includes.",
+    );
+    const over = render(14);
+    expect(over).toContain(
+      "This workspace has 14 client accounts; the Agency plan includes up to 10.",
+    );
+    expect(over).toContain("Nothing is blocked.");
+    expect(over).toContain('href="/pricing"');
+    expect(AGENCY_CLIENT_LIMIT).toBe(10);
+  });
+
+  it("only on a live Agency subscription", () => {
+    expect(render(12, sub({ plan: "custom" }))).not.toContain("client accounts");
+    expect(render(12, sub({ status: "canceled" }))).not.toContain("client accounts");
+    expect(render(12, null)).not.toContain("client accounts");
   });
 });

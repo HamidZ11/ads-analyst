@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { buttonClasses } from "@/components/ui/button";
 import { DefinitionList } from "@/components/ui/definition-list";
 import type { BillingInterval } from "@/data/supabase/billing";
@@ -20,6 +21,17 @@ export const NOTICES: Record<BillingNotice, string> = {
   error: "Stripe couldn't be reached. Nothing was charged; try again.",
 };
 
+/** Client accounts the Agency plan includes (D-055); a soft notice, never enforced. */
+export const AGENCY_CLIENT_LIMIT = 10;
+
+const formatDay = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+
 export function parseNotice(value: unknown): BillingNotice | null {
   return typeof value === "string" && value in NOTICES ? (value as BillingNotice) : null;
 }
@@ -30,6 +42,7 @@ export function BillingSection({
   portalConfigured,
   imports,
   notice,
+  clientCount,
 }: {
   subscription: BillingRead;
   /** Intervals with a configured price; empty when Checkout isn't configured. */
@@ -38,11 +51,15 @@ export function BillingSection({
   portalConfigured: boolean;
   imports: ImportDecision;
   notice: BillingNotice | null;
+  /** Clients in the workspace, for the Agency plan's soft limit. */
+  clientCount: number;
 }) {
   const known = subscription !== "unavailable" ? subscription : null;
   const live = known !== null && isLive(known.status);
   const canSubscribe = subscription !== "unavailable" && !live && intervals.length > 0;
   const canManage = portalConfigured && known !== null;
+  const atAgencyLimit =
+    known !== null && known.plan === "agency" && live && clientCount >= AGENCY_CLIENT_LIMIT;
 
   const items =
     subscription === "unavailable"
@@ -84,6 +101,28 @@ export function BillingSection({
         <p className="mt-3 text-sm leading-5 text-ink-secondary">
           Imports are paused until this workspace has an active subscription. Everything already
           imported stays readable.
+        </p>
+      ) : null}
+      {imports.allowed && imports.reason === "grace" ? (
+        <p className="mt-3 text-sm leading-5 text-ink-secondary">
+          Imports continue until {formatDay(imports.graceEndsAt)} while the payment is retried.
+          Update the card in Manage billing to keep them running after that.
+        </p>
+      ) : null}
+      {atAgencyLimit ? (
+        <p className="mt-3 text-sm leading-5 text-ink-secondary">
+          {clientCount === AGENCY_CLIENT_LIMIT
+            ? `This workspace has ${AGENCY_CLIENT_LIMIT} client accounts, the most the Agency plan includes.`
+            : `This workspace has ${clientCount} client accounts; the Agency plan includes up to ${AGENCY_CLIENT_LIMIT}.`}{" "}
+          Nothing is blocked. More than {AGENCY_CLIENT_LIMIT} client accounts is the Enterprise
+          plan, priced on request; see{" "}
+          <Link
+            href="/pricing"
+            className="font-medium text-ink underline decoration-border-strong underline-offset-2 hover:decoration-ink"
+          >
+            pricing
+          </Link>
+          .
         </p>
       ) : null}
       {canSubscribe || canManage ? (
