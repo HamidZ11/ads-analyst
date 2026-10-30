@@ -2,6 +2,7 @@ import {
   IMPORT_FIELDS,
   cleanText,
   columnKind,
+  detectDateOrder,
   inferBusinessType,
   inspectHeaders,
   isSupportedCurrency,
@@ -82,6 +83,7 @@ export function detectFile(
   const ads = new Set<string>();
   const dates = new Set<string>();
   const rowCurrencies = new Set<string>();
+  const order = detectDateOrder(table.rows.map((row) => at(row, "date"))) ?? "ymd";
   for (const row of table.rows) {
     const campaign = at(row, "campaignId") || at(row, "campaignName");
     const adSet = at(row, "adSetId") || `${campaign}/${at(row, "adSetName")}`;
@@ -89,7 +91,7 @@ export function detectFile(
     if (campaign) campaigns.add(campaign);
     if (campaign && adSet) adSets.add(adSet);
     if (campaign && ad) ads.add(ad);
-    const date = parseDate(at(row, "date"));
+    const date = parseDate(at(row, "date"), order);
     if (date) dates.add(date);
     const currency = at(row, "currency").toUpperCase();
     if (currency) rowCurrencies.add(currency);

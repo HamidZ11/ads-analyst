@@ -150,11 +150,16 @@ describe("CSV parsing", () => {
     expect(parseNumber("-5")).toBe(-5);
   });
 
-  it("parses ISO dates only", () => {
+  it("parses ISO dates by default, and day- or month-first only when asked", () => {
     expect(parseDate("2026-09-30")).toBe("2026-09-30");
     expect(parseDate("2026/09/30")).toBe("2026-09-30");
     for (const bad of ["30/09/2026", "09/30/2026", "2026-02-30", "Sep 30, 2026", ""])
       expect(parseDate(bad)).toBeNull();
+    expect(parseDate("30/09/2026", "dmy")).toBe("2026-09-30");
+    expect(parseDate("1.9.2026", "dmy")).toBe("2026-09-01");
+    expect(parseDate("09/30/2026", "mdy")).toBe("2026-09-30");
+    expect(parseDate("30/09/2026", "mdy")).toBeNull();
+    expect(parseDate("2026-09-30", "dmy")).toBe("2026-09-30");
   });
 });
 
@@ -325,7 +330,9 @@ describe("validation", () => {
     const rows = ecommerceRows();
     rows[0].Impressions = -10;
     rows[1]["Link clicks"] = "3.5";
-    rows[2].Day = "30/09/2026";
+    rows[2].Day = "Sept 30";
+    // With a Day column the reporting range only has to contain the day.
+    rows[3]["Reporting starts"] = "2026-09-20";
     rows[3]["Reporting ends"] = "2026-09-30";
     const found = codes(check(toCsv(ECOM_HEADERS, rows)).result);
     expect(found).toEqual(
