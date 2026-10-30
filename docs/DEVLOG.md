@@ -1332,3 +1332,18 @@ Owner brief: subscription billing with Stripe, built and tested entirely in test
   - Visual review of the Billing section: it needs a signed-in Supabase deployment.
 
 **Checks:** `pnpm check` (451 tests, build green). `pnpm check:browsers` not run: no Playwright browsers installed.
+
+## 2026-10-30 — Billing answers (D-NEW-billing-answers-1)
+
+Owner answers to D-083's open questions. Branch `feat/billing`.
+
+- **Recorded as built:** any workspace member manages billing; Stripe's default proration (the code sets none; BILLING.md's portal step updated); gating only with Checkout configured.
+- **Payment link retired under Checkout.** `agencySubscribeTarget` already preferred Checkout; a pricing render test now checks that the link never appears with Checkout configured by either price alone. `.env.example` describes it as the fallback.
+- **Return to Billing after sign-in.** `src/features/auth/return-path.ts`: `safeReturnPath` (single-slash app paths only after URL resolution, at most 200 characters, no backslash, control character or space), `signInHref`, `BILLING_RETURN_PATH`, `RETURN_COOKIE`. Subscribe links to `/sign-in?next=%2Fsettings%23billing`. The proxy and the sign-in page send signed-in visitors to the validated `next`; `SignInForm` carries it as a hidden field; `requestSignInLink` stores it in an httpOnly one-hour cookie; `/auth/callback` validates it again, redirects and deletes the cookie. `return-path.test.ts` covers 16 open-redirect shapes (schemes, `//`, `/\`, encoded slashes, whitespace and newlines), non-app paths, dot segments out of the app and non-string input.
+- **Grace period.** Migration `20261030130000_billing_grace_period.sql`: `payment_failed_at`, and `apply_billing_event` re-created to set it on `invoice.payment_failed` (not while active or trialing), keep it through retries, reset it for a new subscription and clear it on active or trialing. `WorkspaceSubscription.paymentFailedAt`; `importDecision` takes `now` and returns `grace` with `graceEndsAt` for `past_due`/`unpaid` within `GRACE_DAYS` (7). Tests: PGlite (first failure kept through a retry and an update, cleared when active; nothing recorded while active or on a status change alone), policy boundaries (one millisecond before and exactly at 7 days, no timestamp, other statuses, enforcement off, Checkout unconfigured), and the Settings sentence.
+- **Client accounts.** `AGENCY_CLIENT_LIMIT` (10); Settings passes the workspace's client count; a live Agency subscription at 10 or more shows a soft notice with a pricing link. Nothing is enforced. Tests for 9, 10 and 14, custom plan, cancelled and no subscription.
+- **Env.** The seven billing variables are in `.env.example` as commented placeholders matching `docs/BILLING.md`.
+
+**Checks:** `pnpm check` (464 tests). `pnpm check:browsers` (52 crop checks) against a production server in demo mode with placeholder Checkout values; `/pricing` at 1440, 390 and 360 shows Subscribe linking to `/sign-in?next=%2Fsettings%23billing` and no payment link; following it lands on `/settings#billing`; `/sign-in?next=%2F%2Fevil.example` redirects to `/insights`.
+
+**Not verified:** the Billing section's grace and client notices only render in a signed-in Supabase deployment, so they are covered by render tests but have not been seen in a browser; the email-link round trip of the return cookie needs a Supabase test project.
