@@ -1291,3 +1291,17 @@ Owner brief (D-082). Run through the project's Impeccable skill: context loaded,
 **Checks:** `pnpm check` (367 tests), `pnpm check:browsers http://localhost:3100/` (52 crop checks), overflow probe on `/`, `/pricing`, `/privacy`, `/terms` in three engines at three widths.
 
 **Correction (follow-up commit):** `git add -A` in the D-082 commit (8f17a19) also staged four untracked iCloud conflict copies (`scripts/check-crops 2.mjs`, `crop-scale.test 2.ts`, `cta-band 2.tsx`, `cta-band.test 2.ts`), and they were pushed. Three were identical to their originals; `cta-band 2.tsx` was the pre-renumbering copy (D-074 in a comment). Nothing referenced them. They are removed, and `.gitignore` now ignores names with a space before a one- to three-digit number, which no tracked file has.
+
+---
+
+## 2026-10-30 — First-run onboarding
+
+Owner brief: from first sign-in to the first real finding in about two minutes (D-NEW-onboarding-1 to 3; decision numbers are placeholders for the integrate step).
+
+- **Audit first**, in a real signed-in empty workspace: a throwaway stand-in for Supabase outside the repo (PGlite with the three migrations, answering `/auth/v1/user` and `/rest/v1/rpc/*` on 127.0.0.1, an HS256 session cookie so `getClaims` falls back to `getUser`), `pnpm dev` pointed at it. Found: every analysis page and Clients redirected to the import with Clients highlighted; one sentence of export guidance; no sense of the path; the first import ended on a summary with "View Overview"; targets easy to miss; "1 clients".
+- **Built:** `src/features/onboarding/` — `progress.ts` (`onboardingProgress`, `workspaceProgress`, null in demo mode), `export-steps.ts` (the audit branch's verified Ads Manager steps, reasons fitted to the import), `getting-started.tsx` (`GettingStarted`, `ExportGuide`, `TargetsNudge`, `stepContent`), `empty-workspace.tsx` (`EMPTY_COPY`, `EmptyWorkspace`), `imported-note.tsx` (`ImportedNote`, `FIRST_IMPORT_LANDING`). `server.ts`: `readyWorkspace()`; the six pages render their empty state instead of redirecting. `completion.ts`: `importDestination`; `import-flow.tsx` sends the first import to `/insights?imported=1`. Insights shows the import line and the targets nudge after it; Clients shows the nudge and says "1 client". Copy: Settings' empty Client section mentions targets; Review setup no longer mentions demo clients in a signed-in workspace.
+- **Verified** end to end in the stand-in: fresh workspace → every page renders its empty state (no redirects, no overflow at 1440, 390 and 360) → the sample ecommerce export imported as "Bloom Botanicals" → Insights opened about 240ms after the import returned, with the import line, the nudge and both real findings in the first viewport → "Set targets" opened `/settings#settings-targets`, a £30 target saved, and the nudge was gone from Clients and Insights. Demo mode checked separately: no onboarding anywhere, `?imported=1` ignored.
+- DESIGN.md §26, §27 and new §29; PRODUCT.md capabilities.
+- Tests: `onboarding.test.ts` (progress from state, seeded clients not counted as imports, demo returns null, step facts from the workspace, ROAS offered only with conversion value, one primary action and the export steps in the checklist, every empty page's copy with no figures, the nudge's conditions, the first-import destination, the import line).
+
+**Checks:** `pnpm check`, `pnpm check:browsers`.
