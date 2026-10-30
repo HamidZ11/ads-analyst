@@ -6,6 +6,13 @@ import {
   type SubscriptionRow,
   type WorkspaceSubscription,
 } from "./billing";
+import {
+  SHARE_LINK_COLUMNS,
+  shareLinkFromRow,
+  type NewShareLink,
+  type ShareLink,
+  type ShareLinkRow,
+} from "./share";
 import type { WorkspaceSnapshot } from "./snapshot";
 
 /**
@@ -63,6 +70,12 @@ export interface WorkspaceGateway {
   consumeRateLimit(action: RateLimitedAction): Promise<boolean>;
   /** The workspace's subscription, read through RLS; null when it has never subscribed. */
   subscription(workspaceId: string): Promise<WorkspaceSubscription | null>;
+  /** Owners only; null when the client isn't in a workspace the caller owns. */
+  createShareLink(link: NewShareLink): Promise<{ id: string; expiresAt: string } | null>;
+  /** The workspace's links that still open (not revoked, not expired), newest first. */
+  shareLinks(workspaceId: string): Promise<ShareLink[]>;
+  /** Any member; false when the link isn't in the caller's workspace. */
+  revokeShareLink(linkId: string): Promise<boolean>;
 }
 
 /** Operations with a per-user allowance, set in public.consume_rate_limit. */
@@ -121,6 +134,13 @@ const asResult = (value: unknown): ImportWriteResult => {
     daysAdded: Number(r.days_added),
     daysReplaced: Number(r.days_replaced),
   };
+};
+
+const asCreatedLink = (value: unknown) => {
+  const r = value as { id?: unknown; expires_at?: unknown } | null;
+  return r && typeof r.id === "string"
+    ? { id: r.id, expiresAt: new Date(String(r.expires_at)).toISOString() }
+    : null;
 };
 
 const asNote = (value: unknown): ReportNote | null => {
@@ -184,7 +204,36 @@ export function supabaseGateway(db: SupabaseClient): WorkspaceGateway {
       if (error) throw gatewayError(error);
       return subscriptionFromRow(data);
     },
+    createShareLink: async (link) =>
+      asCreatedLink(
+        await call<unknown>("create_report_share_link", {
+          p_client_id: link.clientId,
+          p_token: link.token,
+          p_preset: link.preset,
+          p_period_start: link.periodStart,
+          p_period_end: link.periodEnd,
+          p_days: link.days,
+        }),
+      ),
+    shareLinks: async (workspaceId) => {
+      const { data, error } = await db
+        .from("report_share_links")
+        .select(SHARE_LINK_COLUMNS)
+        .eq("workspace_id", workspaceId)
+        .is("revoked_at", null)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+        .returns<ShareLinkRow[]>();
+      if (error) throw gatewayError(error);
+      return (data ?? []).map(shareLinkFromRow);
+    },
+    revokeShareLink: (linkId) =>
+      call<boolean>("revoke_report_share_link", { p_link_id: linkId }),
   };
 }
 
-export { asResult as importWriteResult, asNote as reportNoteResult };
+export {
+  asResult as importWriteResult,
+  asNote as reportNoteResult,
+  asCreatedLink as createdShareLinkResult,
+};

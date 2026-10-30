@@ -11,12 +11,20 @@ import {
   type SubscriptionRow,
 } from "./billing";
 import {
+  createdShareLinkResult,
   gatewayError,
   importWriteResult,
   reportNoteResult,
   type WorkspaceGateway,
   type WorkspaceMembership,
 } from "./gateway";
+import {
+  SHARE_LINK_COLUMNS,
+  shareLinkFromRow,
+  sharedReportLookup,
+  type SharedReportReader,
+  type ShareLinkRow,
+} from "./share";
 import type { WorkspaceSnapshot } from "./snapshot";
 
 /**
@@ -154,6 +162,47 @@ export function sqlGateway(db: PGlite, userId: string): WorkspaceGateway {
           [workspaceId],
         );
         return subscriptionFromRow(result.rows[0] ?? null);
+      }),
+    createShareLink: async (link) =>
+      createdShareLinkResult(
+        await run<unknown>(
+          "select public.create_report_share_link($1, $2, $3, $4, $5, $6) as r",
+          [link.clientId, link.token, link.preset, link.periodStart, link.periodEnd, link.days],
+        ),
+      ),
+    shareLinks: async (workspaceId) =>
+      as(db, userId, async () => {
+        try {
+          const result = await db.query<ShareLinkRow>(
+            `select ${SHARE_LINK_COLUMNS} from public.report_share_links
+              where workspace_id = $1 and revoked_at is null and expires_at > now()
+              order by created_at desc`,
+            [workspaceId],
+          );
+          return result.rows.map(shareLinkFromRow);
+        } catch (error) {
+          throw gatewayError(error);
+        }
+      }),
+    revokeShareLink: (linkId) =>
+      run<boolean>("select public.revoke_report_share_link($1) as r", [linkId]),
+  };
+}
+
+/** The share page's reader over PGlite: anon, no session. Test-only. */
+export function sqlSharedReportReader(db: PGlite): SharedReportReader {
+  return {
+    lookup: (token, visitor) =>
+      as(db, null, async () => {
+        try {
+          const result = await db.query<{ r: unknown }>(
+            "select public.shared_client_report($1, $2) as r",
+            [token, visitor],
+          );
+          return sharedReportLookup(result.rows[0]?.r);
+        } catch (error) {
+          throw gatewayError(error);
+        }
       }),
   };
 }

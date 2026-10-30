@@ -1,6 +1,7 @@
 import type { PGlite } from "@electric-sql/pglite";
 import { beforeAll, describe, expect, it } from "vitest";
 import { ecommerceCsv, leadCsv } from "@/data/import/__fixtures__/meta-exports";
+import { newShareToken } from "@/features/report/share";
 import {
   addUser,
   as,
@@ -9,6 +10,7 @@ import {
   setBillingSecret,
   sqlBillingWriter,
   sqlGateway,
+  sqlSharedReportReader,
 } from "./test-database";
 
 /**
@@ -40,11 +42,15 @@ const TENANT_COLUMN: Record<string, string> = {
   workspace_subscriptions: "workspace_id",
   billing_events: "workspace_id",
   client_report_notes: "workspace_id",
+  report_share_links: "workspace_id",
 };
 const TABLES = Object.keys(TENANT_COLUMN);
 
-/** Tables with no tenant: nobody but the database owner may read or write them. */
-const UNTENANTED = ["billing_webhook_secret"];
+/** Tables with no tenant, with a column to try writing: nobody but the database owner may read or write them. */
+const UNTENANTED: Record<string, string> = {
+  billing_webhook_secret: "created_at",
+  share_link_lookups: "window_started_at",
+};
 
 const BILLING_SECRET = "test-db-secret-0123456789abcdefghijklmnop";
 
@@ -88,6 +94,17 @@ async function twoTenants() {
       "2026-10-07",
       `${name}'s next steps.`,
     );
+    // A share link, opened once, so the lookup counter has a row too.
+    const token = newShareToken();
+    await gateway.createShareLink({
+      clientId: rows[0].id,
+      token,
+      preset: "7d",
+      periodStart: "2026-09-24",
+      periodEnd: "2026-09-30",
+      days: 30,
+    });
+    await sqlSharedReportReader(db).lookup(token, `visitor-${name}`);
   }
   const tenant = (user: string, workspace: string): Tenant => ({
     user,
@@ -183,7 +200,7 @@ describe("row level security on every table", () => {
         where n.nspname = 'public' and c.relkind in ('r', 'p', 'v', 'm', 'f')
         order by 1`,
     );
-    expect(rows.map((r) => r.name)).toEqual([...TABLES, ...UNTENANTED].sort());
+    expect(rows.map((r) => r.name)).toEqual([...TABLES, ...Object.keys(UNTENANTED)].sort());
     for (const row of rows) expect(row.rls, row.name).toBe(true);
   });
 
@@ -228,11 +245,11 @@ describe("row level security on every table", () => {
 
   it("keeps tables with no tenant closed to every user and to anonymous callers", async () => {
     for (const user of [ANA, BEN, null])
-      for (const table of UNTENANTED)
+      for (const [table, column] of Object.entries(UNTENANTED))
         for (const sql of [
           `select 1 from public.${table}`,
           `insert into public.${table} default values`,
-          `update public.${table} set created_at = now()`,
+          `update public.${table} set ${column} = now()`,
           `delete from public.${table}`,
         ]) {
           const result = await attempt(db, user, sql);
@@ -283,7 +300,7 @@ describe("row level security without the grant boundary", () => {
         if (writes.move.error)
           expect(writes.move.error, `move ${table}`).toMatch(/row-level security|foreign key/);
       }
-    for (const table of UNTENANTED) {
+    for (const table of Object.keys(UNTENANTED)) {
       const read = await attempt(db, ANA, `select 1 from public.${table}`);
       expect(read, `read ${table}`).toEqual({ affected: 0, error: null });
       const wipe = await attempt(db, ANA, `delete from public.${table}`);
