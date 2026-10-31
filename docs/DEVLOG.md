@@ -1520,3 +1520,15 @@ Owner request (D-NEW-focus-1). One commit, no visual change beyond the ring.
 - DESIGN.md §20 records the rule. Test: `focus-ring.test.ts` (button variants and `Input` never use `transition-colors`; no control element or control class constant in the 17 files that had one does).
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-31 — Instant focus rings on links
+
+Owner request (D-NEW-focus-2). One commit, no visual change beyond the ring.
+
+- Swept every remaining `transition-colors` and bare `transition`, and every CSS-module `transition`: two links used `transition-colors` (`nav-links.tsx`, Overview's "View all" in `overview-analytics.tsx`), plus the audit tool's "Choose file" label, which draws its file input's ring and so faded too. All three now use `transition-[color,background-color,border-color]`. Links built from `buttonClasses` were already fixed; CSS-module transitions never included `outline-color`.
+- Verified against a production build in demo mode on a temporary port (3102), leaving the sign-in dev server on 3101 running: tabbing through `/overview`, the skip link, all eight sidebar links and "View all" show the accent ring at the instant of focus, with no other stop fading; on `/audit` the file picker's label ring is accent at focus.
+- DESIGN.md §20 updated. Test: `focus-ring.test.ts` now also checks `Link`, `a` and `label` elements in the covered files, including `nav-links.tsx`, `overview-analytics.tsx` and the sign-in page.
+
+**Checks:** `pnpm check`.

@@ -707,4 +707,12 @@ Threads live only in the current mounted page. Start fresh clears answers and en
 
 **Decision:** Every button, input, select and textarea (the shared `Button` and `Input`, the segmented control, and 21 feature-level controls) uses `transition-[color,background-color,border-color]` instead of `transition-colors`. Duration (120ms) and easing are unchanged. Rows, articles, drop zones, links, menu items and icons keep `transition-colors`.
 **Reason:** Owner request (2026-10-31), following the sign-in polish in D-NEW-sign-in-1. Tailwind v4's `transition-colors` includes `outline-color`, so on focus the global accent ring faded in over 120ms from the control's text colour (white on dark and accent buttons), breaking DESIGN.md §20's rule that focus rings appear instantly. CSS transitions use the new state's property list, so dropping `outline-color` from it makes the ring change instantly while hover colours still ease.
-**Consequences:** No other visual change: the same properties animate on hover, minus the outline. Links still fade their ring (they were outside this request); applying the same change to links is a one-line follow-up per link. A test fails if a control element or control class constant uses `transition-colors` again.
+**Consequences:** No other visual change: the same properties animate on hover, minus the outline. Links still fade their ring (they were outside this request); applying the same change to links is a one-line follow-up per link.
+
+**Amended** by D-NEW-focus-2: links now follow the same rule. A test fails if a control element or control class constant uses `transition-colors` again.
+
+### D-NEW-focus-2 — Links, and labels that draw a control's ring, also focus instantly
+
+**Decision:** Extends D-NEW-focus-1 to links: the sidebar navigation links and Overview's "View all" now transition colour, background and border only. The audit tool's "Choose file" label, which draws the ring of its hidden file input (`has-[:focus-visible]:outline-*`), does the same. Links styled with `buttonClasses` were already covered by D-NEW-focus-1. CSS-module links (marketing, tools) already named their transition properties without `outline-color` and are unchanged.
+**Reason:** Owner request (2026-10-31). The links and the label still faded their focus ring in from the text colour, against DESIGN.md §20.
+**Consequences:** No focusable element in the app now animates `outline-color`. The remaining `transition-colors` sit on non-focusable rows, cards, drop zones, a form, icons and Radix menu items (which draw no outline). The guard test now also covers `Link`, `a` and `label` elements.

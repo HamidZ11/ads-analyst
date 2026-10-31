@@ -357,7 +357,7 @@ function TopCampaigns({ workspace, rows }: { workspace: Workspace; rows: Campaig
         </div>
         <Link
           href="/campaigns"
-          className="inline-flex items-center gap-1 text-xs font-medium text-accent transition-colors hover:text-accent-strong"
+          className="inline-flex items-center gap-1 text-xs font-medium text-accent transition-[color,background-color,border-color] hover:text-accent-strong"
         >
           View all <ArrowUpRight aria-hidden size={13} />
         </Link>

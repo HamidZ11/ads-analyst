@@ -32,7 +32,7 @@ export function NavLinks() {
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex h-[34px] items-center gap-2.5 rounded-md border px-2.5 text-sm font-medium transition-colors",
+                      "flex h-[34px] items-center gap-2.5 rounded-md border px-2.5 text-sm font-medium transition-[color,background-color,border-color]",
                       active
                         ? "border-border bg-surface text-ink"
                         : "border-transparent text-ink-secondary hover:bg-surface-active hover:text-ink",

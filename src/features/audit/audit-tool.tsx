@@ -143,7 +143,7 @@ export function AuditTool({ guide, email }: { guide: ReactNode; email: string | 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <label
                 htmlFor="audit-file"
-                className="inline-flex h-9 cursor-pointer items-center rounded-md border border-accent bg-accent px-3.5 text-sm font-medium text-white transition-colors hover:border-accent-strong hover:bg-accent-strong has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent"
+                className="inline-flex h-9 cursor-pointer items-center rounded-md border border-accent bg-accent px-3.5 text-sm font-medium text-white transition-[color,background-color,border-color] hover:border-accent-strong hover:bg-accent-strong has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent"
               >
                 Choose file
                 <input
