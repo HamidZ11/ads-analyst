@@ -74,7 +74,7 @@ const TIMEZONES = [
 ];
 
 const INPUT =
-  "h-8 w-full rounded-md border border-border bg-surface px-2.5 text-sm text-ink transition-colors placeholder:text-ink-faint hover:border-border-strong aria-[invalid=true]:border-negative";
+  "h-8 w-full rounded-md border border-border bg-surface px-2.5 text-sm text-ink transition-[color,background-color,border-color] placeholder:text-ink-faint hover:border-border-strong aria-[invalid=true]:border-negative";
 
 type FieldErrorKey = ImportFieldKey | "name" | "targetCpa" | "targetRoas" | "currency";
 

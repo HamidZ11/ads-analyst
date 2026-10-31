@@ -97,7 +97,7 @@ export function FindingRow({
         aria-haspopup={desktop ? undefined : "dialog"}
         onClick={(event) => onSelect(event.currentTarget)}
         className={cn(
-          "relative flex w-full items-start gap-4 rounded-md px-3 py-3 text-left transition-colors before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:rounded-full focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent",
+          "relative flex w-full items-start gap-4 rounded-md px-3 py-3 text-left transition-[color,background-color,border-color] before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:rounded-full focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent",
           selected && desktop
             ? "bg-surface-subtle before:bg-accent"
             : cn("hover:bg-surface-hover", GROUP_RULE[finding.priority]),
@@ -202,7 +202,7 @@ export function InsightsWorkspace({ model }: { model: InsightsModel }) {
                 aria-pressed={pressed}
                 onClick={() => applyFilter(tab.value)}
                 className={cn(
-                  "-mb-px flex h-9 items-center gap-1.5 border-b-2 text-sm font-medium whitespace-nowrap transition-colors",
+                  "-mb-px flex h-9 items-center gap-1.5 border-b-2 text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color]",
                   pressed
                     ? "border-accent text-ink"
                     : "border-transparent text-ink-muted hover:text-ink",
@@ -298,7 +298,7 @@ export function InsightsWorkspace({ model }: { model: InsightsModel }) {
             className="fixed inset-y-0 right-0 z-40 flex w-full flex-col border-l border-border bg-surface shadow-md focus:outline-none data-[state=closed]:animate-fade-out data-[state=open]:animate-rise-in motion-reduce:animate-none sm:w-[480px]"
           >
             <div className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border px-3">
-              <Dialog.Close className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-sm font-medium text-ink-secondary transition-colors hover:bg-surface-hover hover:text-ink">
+              <Dialog.Close className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-sm font-medium text-ink-secondary transition-[color,background-color,border-color] hover:bg-surface-hover hover:text-ink">
                 <ChevronLeft aria-hidden size={16} />
                 All findings
               </Dialog.Close>

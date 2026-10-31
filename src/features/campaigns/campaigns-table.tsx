@@ -199,7 +199,7 @@ export function CampaignsTable({
           type="button"
           onClick={() => toggleSort(key)}
           className={cn(
-            "flex h-9 w-full items-center gap-1 text-xs font-medium transition-colors hover:text-ink",
+            "flex h-9 w-full items-center gap-1 text-xs font-medium transition-[color,background-color,border-color] hover:text-ink",
             numeric ? "flex-row-reverse" : "",
             group ? "pl-6 min-[1400px]:pl-8" : edge === "first" ? "pl-0" : "pl-3",
             edge === "last" ? "pr-0" : "pr-3",
@@ -242,7 +242,7 @@ export function CampaignsTable({
                 aria-pressed={selected}
                 onClick={() => setStatus(tab.value)}
                 className={cn(
-                  "-mb-px flex h-9 items-center gap-1.5 border-b-2 text-sm font-medium transition-colors",
+                  "-mb-px flex h-9 items-center gap-1.5 border-b-2 text-sm font-medium transition-[color,background-color,border-color]",
                   selected
                     ? "border-accent text-ink"
                     : "border-transparent text-ink-muted hover:text-ink",

@@ -168,7 +168,7 @@ function CreateLink({
           id="share-days"
           name="days"
           defaultValue={DEFAULT_SHARE_EXPIRY_DAYS}
-          className="h-8 rounded-md border border-border-strong bg-surface px-2.5 text-sm text-ink transition-colors hover:border-ink-faint focus-visible:border-accent-border focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent"
+          className="h-8 rounded-md border border-border-strong bg-surface px-2.5 text-sm text-ink transition-[color,background-color,border-color] hover:border-ink-faint focus-visible:border-accent-border focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent"
         >
           {SHARE_EXPIRY_DAYS.map((days) => (
             <option key={days} value={days}>

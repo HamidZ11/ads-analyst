@@ -7,7 +7,7 @@ import { readTargets } from "@/features/import/targets";
 import type { AuditTargets } from "./audit";
 
 const INPUT =
-  "mt-1 h-8 w-full rounded-md border border-border bg-surface px-2.5 text-sm text-ink tabular transition-colors placeholder:text-ink-faint hover:border-border-strong focus-visible:border-accent-border focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent disabled:cursor-not-allowed disabled:bg-surface-subtle";
+  "mt-1 h-8 w-full rounded-md border border-border bg-surface px-2.5 text-sm text-ink tabular transition-[color,background-color,border-color] placeholder:text-ink-faint hover:border-border-strong focus-visible:border-accent-border focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent disabled:cursor-not-allowed disabled:bg-surface-subtle";
 
 /** Blank is no target; anything else must be a number, which `readTargets` then checks. */
 const toNumber = (raw: string) => (raw.trim() === "" ? null : Number(raw));

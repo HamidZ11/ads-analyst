@@ -119,7 +119,7 @@ export function CreativeInspector({
                 </div>
                 <Dialog.Close
                   aria-label="Close inspector"
-                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink"
+                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-ink-muted transition-[color,background-color,border-color] hover:bg-surface-hover hover:text-ink"
                 >
                   <X aria-hidden size={16} />
                 </Dialog.Close>

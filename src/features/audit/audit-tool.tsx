@@ -161,7 +161,7 @@ export function AuditTool({ guide, email }: { guide: ReactNode; email: string | 
               <button
                 type="button"
                 onClick={() => void readSample()}
-                className="inline-flex h-9 items-center rounded-md border border-border-strong bg-surface px-3.5 text-sm font-medium text-ink transition-colors hover:bg-surface-hover"
+                className="inline-flex h-9 items-center rounded-md border border-border-strong bg-surface px-3.5 text-sm font-medium text-ink transition-[color,background-color,border-color] hover:bg-surface-hover"
               >
                 Try the sample export
               </button>

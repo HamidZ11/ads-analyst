@@ -6,7 +6,7 @@ import type { CurrencyCode } from "@/domain/types";
 import { saveClientTargets, type TargetFormState } from "./actions";
 
 const INPUT =
-  "mt-1 h-8 w-full rounded-md border border-border bg-surface px-2.5 text-sm text-ink tabular transition-colors hover:border-border-strong";
+  "mt-1 h-8 w-full rounded-md border border-border bg-surface px-2.5 text-sm text-ink tabular transition-[color,background-color,border-color] hover:border-border-strong";
 
 /** Optional targets for an imported client; blank clears a target. */
 export function TargetForm({

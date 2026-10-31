@@ -1508,3 +1508,15 @@ Owner briefs with two reference screenshots (D-NEW-sign-in-1). Fonts proposed fi
 - Tests: `sign-in-page.test.ts` (one email field and no password, the same submit, hidden `next`, the expired-link message, the chart mark, the session redirect and return path, the mosaic as decoration from 1024px, the legal links, the committed WebP at 1440 × 1800 under 200,000 bytes, and the generator on a synthetic image producing only palette and ground colours).
 
 **Checks:** `pnpm check`.
+
+---
+
+## 2026-10-31 — Instant focus rings on every control
+
+Owner request (D-NEW-focus-1). One commit, no visual change beyond the ring.
+
+- Classified all 37 `transition-colors` uses by element: 24 sit on buttons, inputs, selects or textareas (including the shared `buttonClasses` and `Input`, the segmented control, and class constants such as `INPUT` and `SELECT`); 13 sit on rows, articles, drop zones, a form, a label, links, menu items or icons. Only the 24 changed, to `transition-[color,background-color,border-color]`.
+- Verified on the demo dev server in Chromium: tabbing through up to 45 focus stops each on `/overview`, `/campaigns`, `/creatives`, `/insights`, `/ask`, `/clients` and `/settings`, every button, input, select and textarea reported the accent ring at the instant of focus (none fading); computed transitions on a button and an input are `color, background-color, border-color` at 0.12s with the standard easing, and a table row keeps its full list. Links still fade, as before.
+- DESIGN.md §20 records the rule. Test: `focus-ring.test.ts` (button variants and `Input` never use `transition-colors`; no control element or control class constant in the 17 files that had one does).
+
+**Checks:** `pnpm check`.

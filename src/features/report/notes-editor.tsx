@@ -69,7 +69,7 @@ export function NotesEditor({
           value={text}
           onChange={(event) => setText(event.target.value)}
           placeholder="The changes you are making next, in your own words. This is the only part of the report you write."
-          className="block w-full resize-y rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 text-ink transition-colors placeholder:text-ink-faint hover:border-border-strong focus-visible:border-accent-border focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent"
+          className="block w-full resize-y rounded-md border border-border bg-surface px-3 py-2 text-sm leading-6 text-ink transition-[color,background-color,border-color] placeholder:text-ink-faint hover:border-border-strong focus-visible:border-accent-border focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent"
           aria-describedby="report-note-status"
         />
         <div className="mt-3 flex flex-wrap items-center gap-2">

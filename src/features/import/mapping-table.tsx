@@ -2,7 +2,7 @@ import type { ColumnMapping, CsvTable, ImportField, ImportFieldKey } from "@/dat
 import { cn } from "@/lib/cn";
 
 const SELECT =
-  "h-8 w-full min-w-0 rounded-md border border-border bg-surface px-2 text-sm text-ink transition-colors hover:border-border-strong aria-[invalid=true]:border-negative";
+  "h-8 w-full min-w-0 rounded-md border border-border bg-surface px-2 text-sm text-ink transition-[color,background-color,border-color] hover:border-border-strong aria-[invalid=true]:border-negative";
 
 export function sampleOf(table: CsvTable, index: number | undefined) {
   if (index === undefined) return "";

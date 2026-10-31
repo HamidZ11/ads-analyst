@@ -96,7 +96,7 @@ export function SegmentedControl<T extends string>({
             title={option.title}
             onClick={() => onChange(option.value)}
             className={cn(
-              "relative rounded-sm font-medium whitespace-nowrap transition-colors",
+              "relative rounded-sm font-medium whitespace-nowrap transition-[color,background-color,border-color]",
               size === "sm" ? "h-6 px-2 text-xs" : "h-7 px-2.5 text-xs",
               selected
                 ? cn("text-accent-strong", !indicator && "bg-accent-soft")

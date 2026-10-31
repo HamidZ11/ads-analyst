@@ -209,7 +209,7 @@ export function AskAnalyst({ scope }: { scope: AskScope }) {
                   key={text}
                   type="button"
                   onClick={() => void ask(text)}
-                  className="flex w-full items-center justify-between gap-4 rounded-sm border-b border-border py-3 text-left text-sm text-ink-secondary transition-colors hover:text-accent"
+                  className="flex w-full items-center justify-between gap-4 rounded-sm border-b border-border py-3 text-left text-sm text-ink-secondary transition-[color,background-color,border-color] hover:text-accent"
                 >
                   <span>{text}</span>
                   <ArrowRight size={14} aria-hidden className="shrink-0 text-ink-faint" />
@@ -266,7 +266,7 @@ export function AskAnalyst({ scope }: { scope: AskScope }) {
                 key={text}
                 type="button"
                 onClick={() => void ask(text)}
-                className="rounded-sm py-1.5 text-left text-xs leading-5 text-ink-secondary transition-colors hover:text-accent"
+                className="rounded-sm py-1.5 text-left text-xs leading-5 text-ink-secondary transition-[color,background-color,border-color] hover:text-accent"
               >
                 {text}
                 <ArrowRight className="ml-1.5 inline" size={12} aria-hidden />
@@ -314,7 +314,7 @@ export function AskAnalyst({ scope }: { scope: AskScope }) {
                 cancel();
               }
             }}
-            className="flex size-9 shrink-0 items-center justify-center rounded-md bg-ink text-surface transition-colors hover:bg-ink-secondary disabled:bg-border disabled:text-ink-faint"
+            className="flex size-9 shrink-0 items-center justify-center rounded-md bg-ink text-surface transition-[color,background-color,border-color] hover:bg-ink-secondary disabled:bg-border disabled:text-ink-faint"
           >
             {busy ? (
               <Square size={13} aria-hidden />

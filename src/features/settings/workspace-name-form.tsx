@@ -5,7 +5,7 @@ import { buttonClasses } from "@/components/ui/button";
 import { renameWorkspace, type WorkspaceNameState } from "./actions";
 
 const INPUT =
-  "mt-1 h-8 w-full rounded-md border border-border bg-surface px-2.5 text-sm text-ink transition-colors hover:border-border-strong";
+  "mt-1 h-8 w-full rounded-md border border-border bg-surface px-2.5 text-sm text-ink transition-[color,background-color,border-color] hover:border-border-strong";
 
 /** The workspace's name, which heads every client report it sends. */
 export function WorkspaceNameForm({ name }: { name: string }) {

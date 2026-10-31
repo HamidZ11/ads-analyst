@@ -147,7 +147,7 @@ function Action({ row, selected }: { row: ClientListRow; selected: boolean }) {
       <button
         type="submit"
         aria-label={`Select ${row.client.name}`}
-        className="group -mr-2 inline-flex h-11 items-center gap-1 rounded-md px-2 text-sm font-medium text-ink-secondary transition-colors hover:bg-surface-hover hover:text-ink md:h-8"
+        className="group -mr-2 inline-flex h-11 items-center gap-1 rounded-md px-2 text-sm font-medium text-ink-secondary transition-[color,background-color,border-color] hover:bg-surface-hover hover:text-ink md:h-8"
       >
         Select
         <ChevronRight

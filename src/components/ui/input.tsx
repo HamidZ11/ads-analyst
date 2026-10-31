@@ -15,7 +15,7 @@ export function Input({ leading, className, ...props }: InputProps) {
       ) : null}
       <input
         className={cn(
-          "h-8 w-full rounded-md border border-border bg-surface text-sm text-ink transition-colors placeholder:text-ink-faint hover:border-border-strong focus-visible:border-accent-border focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent",
+          "h-8 w-full rounded-md border border-border bg-surface text-sm text-ink transition-[color,background-color,border-color] placeholder:text-ink-faint hover:border-border-strong focus-visible:border-accent-border focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent",
           leading ? "pr-2.5 pl-8" : "px-2.5",
         )}
         {...props}

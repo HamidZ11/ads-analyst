@@ -99,7 +99,7 @@ export function PerformanceChart({
                 setHoverIndex(null);
               }}
               className={cn(
-                "border-b-2 px-0.5 pt-1 pb-3 text-left transition-colors hover:bg-surface-subtle",
+                "border-b-2 px-0.5 pt-1 pb-3 text-left transition-[color,background-color,border-color] hover:bg-surface-subtle",
                 key === activeKey
                   ? "border-accent text-ink"
                   : "border-transparent text-ink-muted",

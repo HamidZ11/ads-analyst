@@ -311,7 +311,7 @@ export function CreativeBoard({ model }: { model: CreativeBoardModel }) {
                   setSelectedId(null);
                 }}
                 className={cn(
-                  "-mb-px flex h-9 items-center gap-1.5 border-b-2 text-sm font-medium transition-colors",
+                  "-mb-px flex h-9 items-center gap-1.5 border-b-2 text-sm font-medium transition-[color,background-color,border-color]",
                   pressed
                     ? "border-accent text-ink"
                     : "border-transparent text-ink-muted hover:text-ink",
@@ -329,7 +329,7 @@ export function CreativeBoard({ model }: { model: CreativeBoardModel }) {
             <select
               value={sortKey}
               onChange={(event) => setSortKey(event.target.value as SortKey)}
-              className="h-8 max-w-[220px] rounded-md border border-border bg-surface px-2 text-sm text-ink transition-colors hover:border-border-strong focus-visible:border-accent-border"
+              className="h-8 max-w-[220px] rounded-md border border-border bg-surface px-2 text-sm text-ink transition-[color,background-color,border-color] hover:border-border-strong focus-visible:border-accent-border"
             >
               <option value="spend">Spend</option>
               <option value="conversions">{vocabulary.plural}</option>
