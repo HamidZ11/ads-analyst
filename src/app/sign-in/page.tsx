@@ -1,13 +1,31 @@
 import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ProductMark } from "@/components/shell/product-mark";
-import { SignInForm } from "@/features/auth/sign-in-form";
+import { signInDisplay, signInMono } from "@/features/auth/fonts";
 import { safeReturnPath } from "@/features/auth/return-path";
+import { SignInForm } from "@/features/auth/sign-in-form";
 import { loadSession } from "@/features/workspace/server";
+import { cn } from "@/lib/cn";
 import { APP_HOME } from "@/lib/routes";
 
 export const metadata: Metadata = { title: "Sign in" };
 
+const EYEBROW =
+  "font-[family-name:var(--font-sign-in-mono)] text-2xs leading-4 tracking-[0.16em] text-ink-muted uppercase";
+const HEADLINE =
+  "mt-3 font-[family-name:var(--font-sign-in-display)] text-[clamp(2.125rem,3.6vw,3.25rem)] leading-[1.05] font-semibold tracking-[-0.025em] text-balance text-ink";
+const LINE =
+  "mt-3 max-w-[32rem] text-[15px] leading-6 text-pretty text-ink-secondary lg:mt-4 lg:text-[17px] lg:leading-7";
+
+/**
+ * Sign-in as a split screen (D-NEW-sign-in-1): the form on white at the left,
+ * between the product mark and the legal links; a dot mosaic of a photograph,
+ * inset with the standard radius, at the right from 1024px. The auth itself is unchanged: an
+ * emailed one-time link, the same validation and errors, and the validated
+ * `?next=` return path.
+ */
 export default async function SignInPage({
   searchParams,
 }: {
@@ -21,40 +39,66 @@ export default async function SignInPage({
   return (
     <main
       id="main"
-      className="flex min-h-dvh items-start justify-center bg-surface px-4 pt-[18vh]"
+      className={cn(
+        signInDisplay.variable,
+        signInMono.variable,
+        "grid min-h-dvh bg-surface lg:grid-cols-2",
+      )}
     >
-      <div className="w-full max-w-[360px]">
+      <div className="flex min-h-dvh flex-col px-5 py-6 sm:px-10 sm:py-10 lg:px-12 lg:py-11">
         <ProductMark />
-        {session.kind === "unconfigured" ? (
-          <section className="mt-8" aria-labelledby="setup-title">
-            <h1 id="setup-title" className="text-xl font-semibold tracking-[-0.02em] text-ink">
-              Not connected yet
-            </h1>
-            <p className="mt-2 text-sm leading-5 text-ink-muted">
-              This deployment has no database. Set NEXT_PUBLIC_SUPABASE_URL and
-              NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, or AD_ANALYST_DEMO_MODE=true for read-only
-              demo data.
-            </p>
-          </section>
-        ) : (
-          <section className="mt-8" aria-labelledby="sign-in-title">
-            <h1
-              id="sign-in-title"
-              className="text-xl font-semibold tracking-[-0.02em] text-ink"
-            >
-              Sign in
-            </h1>
-            <p className="mt-1 text-sm leading-5 text-ink-muted">
-              We&apos;ll email you a one-time link. No password needed.
-            </p>
-            {session.kind === "unavailable" ? (
-              <p role="alert" className="mt-4 text-sm text-negative">
-                Your workspace couldn&apos;t be loaded. Try signing in again.
+        <div className="flex flex-1 items-start pt-[10vh] pb-12 lg:items-center lg:pt-0">
+          {session.kind === "unconfigured" ? (
+            <section className="w-full max-w-[36rem]" aria-labelledby="setup-title">
+              <p className={EYEBROW}>Setup needed</p>
+              <h1 id="setup-title" className={HEADLINE}>
+                Not connected yet.
+              </h1>
+              <p className={LINE}>
+                This deployment has no database. Set NEXT_PUBLIC_SUPABASE_URL and
+                NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, or AD_ANALYST_DEMO_MODE=true for read-only
+                demo data.
               </p>
-            ) : null}
-            <SignInForm linkError={linkError} next={next} />
-          </section>
-        )}
+            </section>
+          ) : (
+            <section className="w-full max-w-[36rem]" aria-labelledby="sign-in-title">
+              <p className={EYEBROW}>Welcome back</p>
+              <h1 id="sign-in-title" className={HEADLINE}>
+                Sign in to your agencies.
+              </h1>
+              <p className={LINE}>We&apos;ll email you a one-time link. No password needed.</p>
+              {session.kind === "unavailable" ? (
+                <p role="alert" className="mt-5 text-sm text-negative">
+                  Your workspace couldn&apos;t be loaded. Try signing in again.
+                </p>
+              ) : null}
+              <SignInForm linkError={linkError} next={next} />
+            </section>
+          )}
+        </div>
+        <nav aria-label="Legal" className="flex gap-5 text-xs text-ink-muted">
+          <Link href="/privacy" className="transition-[color] hover:text-ink">
+            Privacy
+          </Link>
+          <Link href="/terms" className="transition-[color] hover:text-ink">
+            Terms
+          </Link>
+        </nav>
+      </div>
+      {/* Decorative: a dot mosaic generated by scripts/gen-mosaic.mjs from a
+          free-licence photograph. Lazy, so phones, where the panel is hidden,
+          never download it. */}
+      <div aria-hidden className="hidden p-4 lg:block">
+        <div className="relative h-full overflow-hidden rounded-lg bg-ink">
+          <Image
+            src="/sign-in-mosaic.webp"
+            alt=""
+            fill
+            unoptimized
+            sizes="50vw"
+            className="object-cover select-none"
+          />
+        </div>
       </div>
     </main>
   );

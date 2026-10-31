@@ -17,10 +17,14 @@ export function ProductMark({
         aria-hidden
         className="flex size-7 shrink-0 items-center justify-center rounded-md bg-ink text-white"
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        {/* The chart mark, as in the favicon and on the marketing site (D-NEW-sign-in-1). */}
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
           <path
-            d="M2 11.5 6.2 2.5h1.6L12 11.5h-1.9l-1-2.3H4.9l-1 2.3H2Zm3.5-3.8h3L7 4.2 5.5 7.7Z"
-            fill="currentColor"
+            d="M6 16.5 10.2 12l3 2.6L18 8.5"
+            stroke="currentColor"
+            strokeWidth="1.9"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
       </span>
